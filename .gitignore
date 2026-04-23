@@ -1,0 +1,80 @@
+# ── Build ────────────────────────────────────────────────────────────────────
+build/
+out/
+cmake-build-*/
+*.cmake
+!CMakeLists.txt
+CMakeCache.txt
+CMakeFiles/
+_deps/
+install/
+
+# ── Compiled / generated artifacts ───────────────────────────────────────────
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.lib
+
+# ── Plugin binaries ───────────────────────────────────────────────────────────
+*.vst3
+*.component
+*.vst
+*.aaxplugin
+
+# ── IDEs ─────────────────────────────────────────────────────────────────────
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+DerivedData/
+
+# Visual Studio
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.suo
+*.user
+.vs/
+
+# JetBrains / CLion
+.idea/
+cmake-build-debug/
+cmake-build-release/
+
+# VS Code
+.vscode/
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ── WSL alternate data streams ────────────────────────────────────────────────
+*:Zone.Identifier
+
+# ── JUCE ─────────────────────────────────────────────────────────────────────
+JuceLibraryCode/
+*.jucer
+
+# ── AI assistant files ────────────────────────────────────────────────────────
+CLAUDE.md
+docs/CLAUDE.md
+.claude/
+
+# ── Logs / temp ───────────────────────────────────────────────────────────────
+*.log
+*.tmp
+*.swp
+*~
+
+# ── User presets (runtime-generated, not source) ─────────────────────────────
+presets/user/

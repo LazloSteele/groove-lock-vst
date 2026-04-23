@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "meta": {
+    "name": "Turf Dance",
+    "genre": "Hyphy",
+    "region": "East Oakland",
+    "mood": "Percussive / physical",
+    "tempoMin": 108,
+    "tempoMax": 115,
+    "swingPercent": 65,
+    "description": "Built for movement. Toms create second rhythmic layer. Kick and clap alternate in call-response. Heavier swing. Clap flam on beat 4 for emphasis."
+  },
+  "drums": [
+    {
+      "label": "Kick",
+      "steps": [4, 0, 0, 0, 0, 2, 0, 0, 4, 0, 0, 2, 0, 0, 1, 0],
+      "timing": ["grid","grid","grid","grid","grid","push","grid","grid","grid","grid","grid","push","grid","grid","lay","grid"]
+    },
+    {
+      "label": "Clap",
+      "steps": [0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","flam","grid","grid","grid"]
+    },
+    {
+      "label": "Tom",
+      "steps": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid"]
+    }
+  ],
+  "bass": [
+    {
+      "label": "Bass",
+      "steps": [0, 2, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0],
+      "timing": ["grid","bend","grid","grid","grid","grid","bend","grid","grid","bend","grid","grid","grid","grid","grid","grid"]
+    },
+    {
+      "label": "Gate",
+      "steps": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "timing": ["grid","legato","grid","grid","grid","grid","legato","grid","grid","legato","grid","grid","grid","grid","grid","grid"]
+    }
+  ],
+  "locks": [
+    { "step": 0,  "type": "alternate", "description": "Kick hits, bass silent. The space IS the pocket." },
+    { "step": 1,  "type": "fill",      "description": "Bass answers with pitch bend. Legato. The call-response engine." },
+    { "step": 5,  "type": "alternate", "description": "Kick hits pushed early. Bass waits." },
+    { "step": 6,  "type": "fill",      "description": "Bass answer. Pitch bend. Legato sustain." },
+    { "step": 10, "type": "fill",      "description": "Tom hit — bass drops out. Tom + bass freq separation crucial." }
+  ]
+}

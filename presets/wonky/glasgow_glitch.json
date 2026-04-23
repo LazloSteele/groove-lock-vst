@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "meta": {
+    "name": "Glasgow Glitch",
+    "genre": "Wonky",
+    "region": "Glasgow",
+    "mood": "Off-kilter / cerebral",
+    "tempoMin": 125,
+    "tempoMax": 135,
+    "swingPercent": 72,
+    "description": "HudMo / Rustie territory. Deep swing makes the grid elastic. Kick avoids obvious downbeats. CR-78 hats in uneven groupings. Found sound spring boing as signature."
+  },
+  "drums": [
+    {
+      "label": "Kick",
+      "steps": [0, 0, 4, 0, 0, 0, 0, 3, 0, 0, 0, 2, 0, 0, 4, 0],
+      "timing": ["grid","grid","lay","grid","grid","grid","grid","grid","grid","grid","grid","push","grid","grid","lay","grid"]
+    },
+    {
+      "label": "Snare",
+      "steps": [0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0],
+      "timing": ["grid","grid","grid","grid","grid","lay","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid"]
+    },
+    {
+      "label": "CR78",
+      "steps": [3, 0, 2, 0, 3, 0, 2, 0, 3, 0, 2, 0, 3, 0, 2, 0],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid"]
+    }
+  ],
+  "bass": [
+    {
+      "label": "Bass",
+      "steps": [2, 0, 0, 0, 3, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0],
+      "timing": ["slide","grid","grid","grid","slide","grid","grid","grid","slide","grid","grid","grid","slide","grid","grid","grid"]
+    },
+    {
+      "label": "Gate",
+      "steps": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "timing": ["legato","grid","grid","grid","legato","grid","grid","grid","legato","grid","grid","grid","legato","grid","grid","grid"]
+    }
+  ],
+  "locks": [
+    { "step": 0,  "type": "alternate", "description": "Bass on 1 while kick avoids it. Slide articulation." },
+    { "step": 2,  "type": "alternate", "description": "Kick enters after bass sustains. They never collide." },
+    { "step": 4,  "type": "alternate", "description": "Bass accent on the 'and' of 1. Kick silent. Displacement IS the groove." },
+    { "step": 7,  "type": "alternate", "description": "Kick full hit. Bass resting. Clean separation." },
+    { "step": 12, "type": "alternate", "description": "Bass accent, snare medium. EQ separation critical." }
+  ]
+}

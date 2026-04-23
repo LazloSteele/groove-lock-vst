@@ -1,0 +1,174 @@
+#include "GrooveTemplate.h"
+
+static juce::String drumTimingStr(DrumTiming t)
+{
+    switch (t) {
+        case DrumTiming::PUSH: return "push";
+        case DrumTiming::LAY:  return "lay";
+        case DrumTiming::FLAM: return "flam";
+        case DrumTiming::DRAG: return "drag";
+        default:               return "grid";
+    }
+}
+
+static juce::String bassArtStr(BassArt a)
+{
+    switch (a) {
+        case BassArt::PUSH:     return "push";
+        case BassArt::LAY:      return "lay";
+        case BassArt::SLIDE:    return "slide";
+        case BassArt::BEND:     return "bend";
+        case BassArt::STACCATO: return "staccato";
+        case BassArt::LEGATO:   return "legato";
+        default:                return "grid";
+    }
+}
+
+static juce::String lockTypeStr(LockType t)
+{
+    switch (t) {
+        case LockType::ALTERNATE:  return "alternate";
+        case LockType::ANTICIPATE: return "anticipate";
+        case LockType::FILL:       return "fill";
+        default:                   return "unison";
+    }
+}
+
+bool GrooveTemplate::loadFromJSON(const juce::File& file)
+{
+    return loadFromJSON(file.loadFileAsString());
+}
+
+bool GrooveTemplate::loadFromJSON(const juce::String& jsonText)
+{
+    juce::var root;
+    if (juce::JSON::parse(jsonText, root).failed())
+        return false;
+
+    auto* meta = root["meta"].getDynamicObject();
+    if (!meta) return false;
+
+    name          = meta->getProperty("name").toString();
+    genre         = meta->getProperty("genre").toString();
+    region        = meta->getProperty("region").toString();
+    mood          = meta->getProperty("mood").toString();
+    description   = meta->getProperty("description").toString();
+    tempoMin      = (float)(double)meta->getProperty("tempoMin");
+    tempoMax      = (float)(double)meta->getProperty("tempoMax");
+    swingPercent  = (float)(double)meta->getProperty("swingPercent");
+
+    drums.clear();
+    auto& drumArr = *root["drums"].getArray();
+    for (auto& rowVar : drumArr)
+    {
+        auto* rowObj = rowVar.getDynamicObject();
+        if (!rowObj) continue;
+        auto* row = drums.add(new DrumRow());
+        row->label = rowObj->getProperty("label").toString();
+        auto& steps  = *rowObj->getProperty("steps").getArray();
+        auto& timing = *rowObj->getProperty("timing").getArray();
+        for (int i = 0; i < 16; ++i)
+        {
+            row->steps[i]  = i < steps.size()  ? (int)steps[i]            : 0;
+            row->timing[i] = i < timing.size() ? parseDrumTiming(timing[i].toString()) : DrumTiming::GRID;
+        }
+    }
+
+    bass.clear();
+    auto& bassArr = *root["bass"].getArray();
+    for (auto& rowVar : bassArr)
+    {
+        auto* rowObj = rowVar.getDynamicObject();
+        if (!rowObj) continue;
+        auto* row = bass.add(new BassRow());
+        row->label = rowObj->getProperty("label").toString();
+        auto& steps  = *rowObj->getProperty("steps").getArray();
+        auto& timing = *rowObj->getProperty("timing").getArray();
+        for (int i = 0; i < 16; ++i)
+        {
+            row->steps[i]  = i < steps.size()  ? (int)steps[i]           : 0;
+            row->timing[i] = i < timing.size() ? parseBassArt(timing[i].toString()) : BassArt::GRID;
+        }
+    }
+
+    locks.clear();
+    if (auto* lockArr = root["locks"].getArray())
+    {
+        for (auto& lVar : *lockArr)
+        {
+            auto* lObj = lVar.getDynamicObject();
+            if (!lObj) continue;
+            LockPoint lp;
+            lp.step        = (int)lObj->getProperty("step");
+            lp.type        = parseLockType(lObj->getProperty("type").toString());
+            lp.description = lObj->getProperty("description").toString();
+            locks.add(lp);
+        }
+    }
+
+    return true;
+}
+
+juce::String GrooveTemplate::toJSON() const
+{
+    juce::DynamicObject::Ptr root = new juce::DynamicObject();
+    root->setProperty("version", 1);
+
+    juce::DynamicObject::Ptr metaObj = new juce::DynamicObject();
+    metaObj->setProperty("name",         name);
+    metaObj->setProperty("genre",        genre);
+    metaObj->setProperty("region",       region);
+    metaObj->setProperty("mood",         mood);
+    metaObj->setProperty("description",  description);
+    metaObj->setProperty("tempoMin",     tempoMin);
+    metaObj->setProperty("tempoMax",     tempoMax);
+    metaObj->setProperty("swingPercent", swingPercent);
+    root->setProperty("meta", juce::var(metaObj.get()));
+
+    juce::Array<juce::var> drumsArr;
+    for (auto* r : drums)
+    {
+        juce::DynamicObject::Ptr rowObj = new juce::DynamicObject();
+        rowObj->setProperty("label", r->label);
+        juce::Array<juce::var> sv, tv;
+        for (int i = 0; i < 16; ++i) { sv.add(r->steps[i]); tv.add(drumTimingStr(r->timing[i])); }
+        rowObj->setProperty("steps",  sv);
+        rowObj->setProperty("timing", tv);
+        drumsArr.add(juce::var(rowObj.get()));
+    }
+    root->setProperty("drums", drumsArr);
+
+    juce::Array<juce::var> bassArr;
+    for (auto* r : bass)
+    {
+        juce::DynamicObject::Ptr rowObj = new juce::DynamicObject();
+        rowObj->setProperty("label", r->label);
+        juce::Array<juce::var> sv, tv;
+        for (int i = 0; i < 16; ++i) { sv.add(r->steps[i]); tv.add(bassArtStr(r->timing[i])); }
+        rowObj->setProperty("steps",  sv);
+        rowObj->setProperty("timing", tv);
+        bassArr.add(juce::var(rowObj.get()));
+    }
+    root->setProperty("bass", bassArr);
+
+    juce::Array<juce::var> locksArr;
+    for (auto& lp : locks)
+    {
+        juce::DynamicObject::Ptr lObj = new juce::DynamicObject();
+        lObj->setProperty("step",        lp.step);
+        lObj->setProperty("type",        lockTypeStr(lp.type));
+        lObj->setProperty("description", lp.description);
+        locksArr.add(juce::var(lObj.get()));
+    }
+    root->setProperty("locks", locksArr);
+
+    return juce::JSON::toString(juce::var(root.get()), true);
+}
+
+std::optional<LockPoint> GrooveTemplate::lockAt(int step) const
+{
+    for (auto& lp : locks)
+        if (lp.step == step)
+            return lp;
+    return std::nullopt;
+}

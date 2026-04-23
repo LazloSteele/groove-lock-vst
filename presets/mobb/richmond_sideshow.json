@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "meta": {
+    "name": "Richmond Sideshow",
+    "genre": "Mobb",
+    "region": "Richmond, CA",
+    "mood": "Aggressive / heavy",
+    "tempoMin": 78,
+    "tempoMax": 84,
+    "swingPercent": 50,
+    "description": "Heavier Richmond variant. Kick doubles on 'and' of 3. Barely perceptible swing. Snare flam. Tom fill once every 4 bars."
+  },
+  "drums": [
+    {
+      "label": "Kick",
+      "steps": [4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 2, 0, 0, 0, 0, 0],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","lay","grid","grid","grid","grid","grid"]
+    },
+    {
+      "label": "Snare",
+      "steps": [0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","grid","flam","grid","grid","grid","grid","grid","grid","grid"]
+    },
+    {
+      "label": "Tom",
+      "steps": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 1],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","lay"]
+    }
+  ],
+  "bass": [
+    {
+      "label": "Bass",
+      "steps": [4, 0, 0, 0, 0, 0, 0, 1, 4, 0, 2, 0, 0, 0, 0, 0],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","slide","grid","grid","lay","grid","grid","grid","grid","grid"]
+    },
+    {
+      "label": "Gate",
+      "steps": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "timing": ["legato","grid","grid","grid","grid","grid","grid","staccato","legato","grid","staccato","grid","grid","grid","grid","grid"]
+    }
+  ],
+  "locks": [
+    { "step": 0,  "type": "unison",     "description": "Beat 1 lock. Both on grid, both accent." },
+    { "step": 7,  "type": "anticipate", "description": "Bass chromatic approach — slide into beat 3. Ghost velocity, staccato." },
+    { "step": 8,  "type": "unison",     "description": "Beat 3 triple impact: kick + snare flam + bass. Massive." },
+    { "step": 10, "type": "unison",     "description": "Kick double = bass octave drop. Both laid back." },
+    { "step": 13, "type": "fill",       "description": "Bass drops out. Tom fill speaks alone. Re-enter hard on next bar." }
+  ]
+}

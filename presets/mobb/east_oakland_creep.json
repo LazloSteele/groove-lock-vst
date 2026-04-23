@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "meta": {
+    "name": "East Oakland Creep",
+    "genre": "Mobb",
+    "region": "East Oakland",
+    "mood": "Dark / menacing",
+    "tempoMin": 80,
+    "tempoMax": 86,
+    "swingPercent": 0,
+    "description": "Half-time. Snare on 3 only. Long 808 kick with max sustain. Cold, mechanical, zero swing. Every hit is deliberate. Stark and threatening."
+  },
+  "drums": [
+    {
+      "label": "Kick",
+      "steps": [4, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid"]
+    },
+    {
+      "label": "Snare",
+      "steps": [0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid"]
+    },
+    {
+      "label": "CH",
+      "steps": [3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid"]
+    }
+  ],
+  "bass": [
+    {
+      "label": "Bass",
+      "steps": [4, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid"]
+    },
+    {
+      "label": "Gate",
+      "steps": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "timing": ["legato","grid","grid","grid","grid","grid","grid","grid","legato","grid","grid","grid","grid","grid","grid","grid"]
+    }
+  ],
+  "locks": [
+    { "step": 0, "type": "unison", "description": "Beat 1. Both accent. Bass sustains through the entire half. Sidechain the bass under kick." },
+    { "step": 8, "type": "unison", "description": "Beat 3 with snare. Triple lock — kick, snare, bass all hit. Maximum impact." }
+  ]
+}

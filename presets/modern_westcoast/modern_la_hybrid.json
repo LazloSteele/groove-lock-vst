@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "meta": {
+    "name": "Modern LA Hybrid",
+    "genre": "Modern West Coast",
+    "region": "Los Angeles",
+    "mood": "Polished / versatile",
+    "tempoMin": 94,
+    "tempoMax": 100,
+    "swingPercent": 58,
+    "description": "Contemporary hybrid. G-funk spacing with modern layering. 808 kick + CR-78 click layer. Clap + found sound slap on backbeat. Moderate swing. Clean but characterful."
+  },
+  "drums": [
+    {
+      "label": "Kick",
+      "steps": [4, 0, 0, 0, 0, 0, 2, 0, 4, 0, 0, 0, 0, 0, 0, 1],
+      "timing": ["grid","grid","grid","grid","grid","grid","lay","grid","grid","grid","grid","grid","grid","grid","grid","lay"]
+    },
+    {
+      "label": "Clap",
+      "steps": [0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid"]
+    },
+    {
+      "label": "CH",
+      "steps": [3, 1, 2, 1, 3, 1, 2, 1, 3, 1, 2, 1, 3, 1, 2, 1],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid"]
+    }
+  ],
+  "bass": [
+    {
+      "label": "Bass",
+      "steps": [4, 0, 0, 0, 2, 1, 2, 0, 4, 0, 0, 1, 0, 2, 0, 1],
+      "timing": ["grid","grid","grid","grid","legato","slide","lay","grid","grid","grid","grid","slide","grid","legato","grid","slide"]
+    },
+    {
+      "label": "Gate",
+      "steps": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "timing": ["legato","grid","grid","grid","legato","staccato","legato","grid","legato","grid","grid","staccato","grid","legato","grid","staccato"]
+    }
+  ],
+  "locks": [
+    { "step": 0,  "type": "unison",     "description": "Clean beat 1 lock. Both accent, both on grid." },
+    { "step": 4,  "type": "alternate",  "description": "Bass sustains under clap. Sidechain ducks bass 3-4dB. Legato gate." },
+    { "step": 5,  "type": "anticipate", "description": "Bass ghost approach — slide into the kick on step 7. Staccato." },
+    { "step": 6,  "type": "unison",     "description": "Kick + bass. Both laid back. Legato bass." },
+    { "step": 11, "type": "anticipate", "description": "Chromatic approach slide before snare on step 13." },
+    { "step": 15, "type": "anticipate", "description": "Turnaround slide. Ghost velocity, staccato. Sets up next bar." }
+  ]
+}

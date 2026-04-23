@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "meta": {
+    "name": "Aqua Crunk",
+    "genre": "Wonky",
+    "region": "Glasgow",
+    "mood": "Heavy / maximalist",
+    "tempoMin": 130,
+    "tempoMax": 140,
+    "swingPercent": 70,
+    "description": "Heavier Glasgow variant. 808 kick pitched low with distortion. Clap = layered clap + noise burst. Everything swings hard. Controlled madness."
+  },
+  "drums": [
+    {
+      "label": "Kick",
+      "steps": [4, 0, 0, 0, 0, 0, 0, 3, 0, 0, 4, 0, 0, 0, 0, 2],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","lay","grid","grid","grid","grid","grid","grid","grid","push"]
+    },
+    {
+      "label": "Clap",
+      "steps": [0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0],
+      "timing": ["grid","grid","grid","grid","flam","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid"]
+    },
+    {
+      "label": "CH",
+      "steps": [3, 1, 2, 1, 3, 1, 2, 1, 3, 1, 2, 1, 3, 1, 2, 1],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid"]
+    }
+  ],
+  "bass": [
+    {
+      "label": "Bass",
+      "steps": [1, 0, 0, 2, 0, 1, 0, 2, 0, 3, 1, 0, 2, 0, 0, 3],
+      "timing": ["grid","grid","grid","slide","grid","staccato","grid","lay","grid","slide","grid","grid","bend","grid","grid","push"]
+    },
+    {
+      "label": "Gate",
+      "steps": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "timing": ["staccato","grid","grid","legato","grid","staccato","grid","legato","grid","legato","staccato","grid","legato","grid","grid","staccato"]
+    }
+  ],
+  "locks": [
+    { "step": 0,  "type": "unison",     "description": "Kick accent + bass ghost. Velocity inversion — kick dominates, bass provides sub bed." },
+    { "step": 3,  "type": "fill",       "description": "Bass slide into step 4's clap zone. Medium vel, legato." },
+    { "step": 7,  "type": "unison",     "description": "Kick full + bass medium. Kick leads, bass supports laid back." },
+    { "step": 9,  "type": "fill",       "description": "Bass accent solo. No kick. Bass owns the sub here, slide in." },
+    { "step": 15, "type": "anticipate", "description": "Bass pushes early while kick pushes early. Both anticipate beat 1. Staccato bass." }
+  ]
+}

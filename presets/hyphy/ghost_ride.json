@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "meta": {
+    "name": "Ghost Ride",
+    "genre": "Hyphy",
+    "region": "East Oakland",
+    "mood": "Bouncy / energetic",
+    "tempoMin": 105,
+    "tempoMax": 112,
+    "swingPercent": 62,
+    "description": "Classic hyphy bounce. Kick is active — 5 hits per bar. 32nd hat roll on beat 4. Cowbell on 'e' of 2 is the signature. Everything pushes forward."
+  },
+  "drums": [
+    {
+      "label": "Kick",
+      "steps": [4, 0, 0, 2, 0, 0, 2, 0, 4, 0, 0, 0, 0, 2, 0, 1],
+      "timing": ["grid","grid","grid","push","grid","grid","grid","grid","grid","grid","grid","grid","grid","push","grid","lay"]
+    },
+    {
+      "label": "Snare",
+      "steps": [0, 0, 0, 0, 4, 0, 0, 1, 0, 0, 0, 0, 4, 0, 0, 0],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","lay","grid","grid","grid","grid","drag","grid","grid","grid"]
+    },
+    {
+      "label": "CH",
+      "steps": [3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 3, 3, 3],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","push","push","push","push"]
+    }
+  ],
+  "bass": [
+    {
+      "label": "Bass",
+      "steps": [4, 0, 2, 2, 0, 1, 2, 1, 4, 0, 1, 0, 0, 2, 1, 1],
+      "timing": ["grid","grid","staccato","push","grid","staccato","push","staccato","grid","grid","staccato","grid","grid","push","staccato","lay"]
+    },
+    {
+      "label": "Gate",
+      "steps": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "timing": ["legato","grid","staccato","staccato","grid","staccato","staccato","staccato","legato","grid","staccato","grid","grid","staccato","staccato","staccato"]
+    }
+  ],
+  "locks": [
+    { "step": 0,  "type": "unison",     "description": "Beat 1 lock. Accent, legato gate." },
+    { "step": 2,  "type": "fill",       "description": "Bass fill between kicks. Staccato, medium velocity." },
+    { "step": 3,  "type": "unison",     "description": "Both pushed early. Bass matches kick's anticipation." },
+    { "step": 5,  "type": "fill",       "description": "Bass ghost fill. Staccato. 16th bounce without clutter." },
+    { "step": 6,  "type": "anticipate", "description": "Bass pushes early to anticipate beat 3. Kick stays on grid. Tension IS the groove." },
+    { "step": 13, "type": "unison",     "description": "Both pushed. Bass staccato under 32nd hat roll." }
+  ]
+}

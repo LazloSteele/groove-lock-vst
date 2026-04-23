@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "meta": {
+    "name": "Sunset Strip Cruise",
+    "genre": "G-Funk",
+    "region": "Los Angeles",
+    "mood": "Smooth / laid-back",
+    "tempoMin": 90,
+    "tempoMax": 96,
+    "swingPercent": 55,
+    "description": "Classic LA cruising pattern. Long 808 kick tails. Snare reverb is key. Hats are a steady pulse, open hat lifts before the snare. Everything behind the grid slightly."
+  },
+  "drums": [
+    {
+      "label": "Kick",
+      "steps": [4, 0, 0, 0, 0, 0, 2, 0, 4, 0, 0, 0, 0, 0, 0, 1],
+      "timing": ["grid","grid","grid","grid","grid","grid","lay","grid","grid","grid","grid","grid","grid","grid","grid","lay"]
+    },
+    {
+      "label": "Snare",
+      "steps": [0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0],
+      "timing": ["grid","grid","grid","grid","lay","grid","grid","grid","grid","grid","grid","grid","lay","grid","grid","grid"]
+    },
+    {
+      "label": "CH",
+      "steps": [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid"]
+    }
+  ],
+  "bass": [
+    {
+      "label": "Bass",
+      "steps": [4, 0, 0, 0, 0, 0, 2, 0, 4, 0, 0, 0, 0, 0, 0, 2],
+      "timing": ["grid","grid","grid","grid","grid","grid","lay","grid","grid","grid","grid","grid","grid","grid","grid","slide"]
+    },
+    {
+      "label": "Gate",
+      "steps": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "timing": ["legato","grid","grid","grid","grid","grid","legato","grid","legato","grid","grid","grid","grid","grid","grid","staccato"]
+    }
+  ],
+  "locks": [
+    { "step": 0,  "type": "unison",     "description": "Kick + bass hit together on 1. Bass matches kick timing exactly. Accent velocity on both." },
+    { "step": 6,  "type": "unison",     "description": "Both laid back 8-15ms. Bass legato sustains into beat 3." },
+    { "step": 8,  "type": "unison",     "description": "Beat 3 unison. Bass accent matches kick." },
+    { "step": 15, "type": "anticipate", "description": "Bass turnaround. Slide into root. Staccato gate so it doesn't bleed into beat 1." }
+  ]
+}

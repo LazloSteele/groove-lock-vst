@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "meta": {
+    "name": "Bay Area Slide",
+    "genre": "Modern West Coast",
+    "region": "East Oakland",
+    "mood": "Smooth / head-nod",
+    "tempoMin": 88,
+    "tempoMax": 96,
+    "swingPercent": 60,
+    "description": "Oakland-inflected modern. Deeper swing than LA. Kick borrows mobb weight but stays lighter. Autovari64 hat texture layer for organic warmth. Everything grooves."
+  },
+  "drums": [
+    {
+      "label": "Kick",
+      "steps": [4, 0, 0, 0, 0, 2, 0, 0, 4, 0, 0, 0, 0, 0, 2, 0],
+      "timing": ["grid","grid","grid","grid","grid","lay","grid","grid","grid","grid","grid","grid","grid","grid","lay","grid"]
+    },
+    {
+      "label": "Clap",
+      "steps": [0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0],
+      "timing": ["grid","grid","grid","grid","lay","grid","grid","grid","grid","grid","grid","grid","lay","grid","grid","grid"]
+    },
+    {
+      "label": "CH",
+      "steps": [3, 1, 2, 1, 3, 1, 2, 1, 3, 1, 2, 1, 3, 1, 2, 1],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid"]
+    }
+  ],
+  "bass": [
+    {
+      "label": "Bass",
+      "steps": [4, 0, 0, 0, 0, 2, 2, 0, 4, 0, 0, 2, 0, 0, 2, 0],
+      "timing": ["lay","grid","grid","grid","grid","lay","bend","grid","lay","grid","grid","bend","grid","grid","lay","grid"]
+    },
+    {
+      "label": "Gate",
+      "steps": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "timing": ["legato","grid","grid","grid","grid","legato","legato","grid","legato","grid","grid","legato","grid","grid","legato","grid"]
+    }
+  ],
+  "locks": [
+    { "step": 0,  "type": "unison", "description": "Both laid back. Accent. The shared lateness IS the Oakland slide." },
+    { "step": 5,  "type": "unison", "description": "Kick + bass together. Both laid back. Bass legato." },
+    { "step": 6,  "type": "fill",   "description": "Bass melodic fill. Pitch bend. No kick. Expression moment." },
+    { "step": 8,  "type": "unison", "description": "Beat 3 lock. Both laid back." },
+    { "step": 11, "type": "fill",   "description": "Bass fill with pitch bend. Legato into beat 4's kick." },
+    { "step": 14, "type": "unison", "description": "Both laid back. Bass legato sustains to bar end." }
+  ]
+}

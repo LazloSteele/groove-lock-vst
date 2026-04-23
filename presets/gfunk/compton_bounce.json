@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "meta": {
+    "name": "Compton Bounce",
+    "genre": "G-Funk",
+    "region": "Los Angeles",
+    "mood": "Bouncy / party",
+    "tempoMin": 94,
+    "tempoMax": 100,
+    "swingPercent": 60,
+    "description": "More active than Sunset Strip. Double kick before beat 3 creates the bounce. Clap layered with snare. Cowbell on the 'e' of 2 every other bar."
+  },
+  "drums": [
+    {
+      "label": "Kick",
+      "steps": [4, 0, 0, 0, 0, 0, 3, 2, 4, 0, 0, 0, 0, 2, 0, 0],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","push","grid","grid","grid","grid","grid","lay","grid","grid"]
+    },
+    {
+      "label": "Clap",
+      "steps": [0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0],
+      "timing": ["grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid"]
+    },
+    {
+      "label": "Rim",
+      "steps": [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0],
+      "timing": ["grid","grid","lay","grid","grid","grid","grid","lay","grid","grid","grid","lay","grid","grid","lay","grid"]
+    }
+  ],
+  "bass": [
+    {
+      "label": "Bass",
+      "steps": [4, 0, 1, 0, 0, 0, 3, 2, 4, 0, 0, 1, 0, 2, 1, 0],
+      "timing": ["grid","grid","lay","grid","grid","grid","grid","push","grid","grid","grid","lay","grid","lay","lay","grid"]
+    },
+    {
+      "label": "Gate",
+      "steps": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "timing": ["legato","grid","staccato","grid","grid","grid","staccato","staccato","legato","grid","grid","staccato","grid","legato","staccato","grid"]
+    }
+  ],
+  "locks": [
+    { "step": 0,  "type": "unison",    "description": "Beat 1 lock. Both accent, both on grid." },
+    { "step": 2,  "type": "alternate", "description": "Bass ghost mirrors rim ghost. Both laid back. Staccato gate." },
+    { "step": 6,  "type": "unison",    "description": "Bounce moment — bass octave jump matches double kick exactly." },
+    { "step": 7,  "type": "unison",    "description": "Second bounce hit. Both pushed early for pickup energy." },
+    { "step": 13, "type": "alternate", "description": "Bass fills where kick hits. Both laid back. Legato gate sustains through." }
+  ]
+}
