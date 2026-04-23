@@ -46,5 +46,19 @@
     { "step": 6,  "type": "unison",     "description": "Kick + bass. Both laid back. Legato bass." },
     { "step": 11, "type": "anticipate", "description": "Chromatic approach slide before snare on step 13." },
     { "step": 15, "type": "anticipate", "description": "Turnaround slide. Ghost velocity, staccato. Sets up next bar." }
-  ]
+  ],
+  "pitch": {
+    "densityHint": 3,
+    "allowChromaticApproach": true,
+    "preferredIntervals": ["root", "b7", "5"],
+    "stepHints": [
+      { "step": 0,  "role": "root" },
+      { "step": 4,  "role": "b7" },
+      { "step": 5,  "role": "approach" },
+      { "step": 6,  "role": "root" },
+      { "step": 11, "role": "approach" },
+      { "step": 13, "role": "5" },
+      { "step": 15, "role": "approach" }
+    ]
+  }
 }

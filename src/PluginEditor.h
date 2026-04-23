@@ -41,6 +41,18 @@ private:
     juce::Label   swingLabel, humanizeLabel, velOffLabel,
                   timingOffLabel, gateScaleLabel, glideLabel;
 
+    //=== Sidebar — Pitch panel ===
+    juce::ToggleButton  pitchEnabledToggle  { "Pitch hints" };
+    juce::ComboBox      pitchRootBox;
+    juce::ComboBox      pitchScaleBox;
+    juce::Slider        pitchDensitySlider;
+    juce::Label         pitchDensityLabel;
+    juce::ToggleButton  pitchChromaticToggle { "Chromatic" };
+    juce::TextButton    octaveDownButton    { "Oct -" };
+    juce::TextButton    octaveUpButton      { "Oct +" };
+    juce::Label         octaveDisplayLabel;
+    int                 currentOctave = 2;
+
     //=== Sidebar — I/O config ===
     juce::ToggleButton inputModeToggle { "Live MIDI in" };
     juce::ComboBox     outputChannelBox;

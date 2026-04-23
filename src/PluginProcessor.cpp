@@ -54,6 +54,13 @@ void GrooveLockProcessor::syncParams()
     p.outputChannel   = outputChannel.get();
     p.outputRootNote  = outputRootNote.get();
     p.pitchBendRange  = pitchBendRange.get();
+
+    p.pitch.rootMidiNote      = outputRootNote.get();
+    p.pitch.scaleType         = static_cast<ScaleType>(pitchScale.get());
+    p.pitch.densityOverride   = pitchDensity.get();
+    p.pitch.chromaticApproach = pitchChromatic.get() != 0;
+    p.pitch.pitchEnabled      = pitchEnabled.get() != 0;
+
     lockEngine.setParams(p);
 }
 
@@ -120,6 +127,10 @@ void GrooveLockProcessor::getStateInformation(juce::MemoryBlock& dest)
     state.setProperty("outputRootNote",  outputRootNote.get(),  nullptr);
     state.setProperty("pitchBendRange",  pitchBendRange.get(),  nullptr);
     state.setProperty("inputMode",       inputMode.get(),       nullptr);
+    state.setProperty("pitchEnabled",    pitchEnabled.get(),    nullptr);
+    state.setProperty("pitchScale",      pitchScale.get(),      nullptr);
+    state.setProperty("pitchDensity",    pitchDensity.get(),    nullptr);
+    state.setProperty("pitchChromatic",  pitchChromatic.get(),  nullptr);
 
     juce::MemoryOutputStream mos(dest, true);
     state.writeToStream(mos);
@@ -147,6 +158,10 @@ void GrooveLockProcessor::setStateInformation(const void* data, int size)
     outputRootNote.set  (getI("outputRootNote",   36));
     pitchBendRange.set  (getI("pitchBendRange",    2));
     inputMode.set       (getI("inputMode",         1));
+    pitchEnabled.set    (getI("pitchEnabled",      0));
+    pitchScale.set      (getI("pitchScale",        0));
+    pitchDensity.set    (getI("pitchDensity",      0));
+    pitchChromatic.set  (getI("pitchChromatic",    1));
     loadTemplate        (getI("templateIndex",     0));
 }
 

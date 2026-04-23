@@ -37,6 +37,7 @@ target_sources(GrooveLock PRIVATE
     src/GrooveTemplate.cpp
     src/PatternAnalyzer.cpp
     src/LockEngine.cpp
+    src/PitchEngine.cpp
     src/MidiOutputManager.cpp
     src/TemplateBrowser.cpp
     src/StepSequencerView.cpp

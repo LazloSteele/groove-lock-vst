@@ -45,5 +45,17 @@
     { "step": 6,  "type": "unison",    "description": "Bounce moment — bass octave jump matches double kick exactly." },
     { "step": 7,  "type": "unison",    "description": "Second bounce hit. Both pushed early for pickup energy." },
     { "step": 13, "type": "alternate", "description": "Bass fills where kick hits. Both laid back. Legato gate sustains through." }
-  ]
+  ],
+  "pitch": {
+    "densityHint": 3,
+    "allowChromaticApproach": true,
+    "preferredIntervals": ["root", "5", "octave"],
+    "stepHints": [
+      { "step": 0,  "role": "root" },
+      { "step": 2,  "role": "b7" },
+      { "step": 6,  "role": "octave" },
+      { "step": 7,  "role": "octave" },
+      { "step": 13, "role": "5" }
+    ]
+  }
 }

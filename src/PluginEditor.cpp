@@ -1,4 +1,5 @@
 #include "PluginEditor.h"
+#include "GenreProfile.h"
 
 // ─── ListBox model ────────────────────────────────────────────────────────────
 
@@ -180,6 +181,82 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     panicButton.onClick = [this] { proc.sendPanic(); };
     panicButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xffaa2200));
 
+    // Pitch panel
+    addAndMakeVisible(pitchEnabledToggle);
+    pitchEnabledToggle.setToggleState(false, juce::dontSendNotification);
+    pitchEnabledToggle.onStateChange = [this] {
+        proc.pitchEnabled.set(pitchEnabledToggle.getToggleState() ? 1 : 0);
+    };
+
+    static const char* noteNames[] = {"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"};
+    addAndMakeVisible(pitchRootBox);
+    for (int i = 0; i < 12; ++i)
+        pitchRootBox.addItem(noteNames[i], i + 1);
+    pitchRootBox.setSelectedId(1, juce::dontSendNotification); // C
+    pitchRootBox.onChange = [this] {
+        int noteClass = pitchRootBox.getSelectedId() - 1;
+        proc.outputRootNote.set(noteClass + (currentOctave + 1) * 12);
+        octaveDisplayLabel.setText(juce::String(noteNames[noteClass]) +
+                                   juce::String(currentOctave), juce::dontSendNotification);
+    };
+
+    addAndMakeVisible(pitchScaleBox);
+    pitchScaleBox.addItem("Minor Pentatonic", 1);
+    pitchScaleBox.addItem("Natural Minor",    2);
+    pitchScaleBox.addItem("Dorian",           3);
+    pitchScaleBox.addItem("Blues",            4);
+    pitchScaleBox.addItem("Phrygian",         5);
+    pitchScaleBox.addItem("Chromatic",        6);
+    pitchScaleBox.setSelectedId(1, juce::dontSendNotification);
+    pitchScaleBox.onChange = [this] {
+        proc.pitchScale.set(pitchScaleBox.getSelectedId() - 1);
+    };
+
+    addAndMakeVisible(pitchDensitySlider);
+    addAndMakeVisible(pitchDensityLabel);
+    pitchDensitySlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    pitchDensitySlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 24, 18);
+    pitchDensitySlider.setRange(0, 5, 1);
+    pitchDensitySlider.setValue(0, juce::dontSendNotification);
+    pitchDensitySlider.setTextValueSuffix("");
+    pitchDensitySlider.onValueChange = [this] {
+        proc.pitchDensity.set((int)pitchDensitySlider.getValue());
+    };
+    pitchDensityLabel.setText("Density", juce::dontSendNotification);
+    pitchDensityLabel.setFont(juce::Font(9.f));
+    pitchDensityLabel.setColour(juce::Label::textColourId, juce::Colour(0xff666666));
+
+    addAndMakeVisible(pitchChromaticToggle);
+    pitchChromaticToggle.setToggleState(true, juce::dontSendNotification);
+    pitchChromaticToggle.onStateChange = [this] {
+        proc.pitchChromatic.set(pitchChromaticToggle.getToggleState() ? 1 : 0);
+    };
+
+    addAndMakeVisible(octaveDownButton);
+    addAndMakeVisible(octaveUpButton);
+    addAndMakeVisible(octaveDisplayLabel);
+    octaveDisplayLabel.setText("C2", juce::dontSendNotification);
+    octaveDisplayLabel.setJustificationType(juce::Justification::centred);
+    octaveDisplayLabel.setFont(juce::Font(12.f, juce::Font::bold));
+    octaveDisplayLabel.setColour(juce::Label::textColourId, juce::Colours::white);
+
+    octaveDownButton.onClick = [this] {
+        currentOctave = juce::jmax(0, currentOctave - 1);
+        int noteClass = pitchRootBox.getSelectedId() - 1;
+        proc.outputRootNote.set(noteClass + (currentOctave + 1) * 12);
+        static const char* nn[] = {"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"};
+        octaveDisplayLabel.setText(juce::String(nn[noteClass]) +
+                                   juce::String(currentOctave), juce::dontSendNotification);
+    };
+    octaveUpButton.onClick = [this] {
+        currentOctave = juce::jmin(7, currentOctave + 1);
+        int noteClass = pitchRootBox.getSelectedId() - 1;
+        proc.outputRootNote.set(noteClass + (currentOctave + 1) * 12);
+        static const char* nn[] = {"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"};
+        octaveDisplayLabel.setText(juce::String(nn[noteClass]) +
+                                   juce::String(currentOctave), juce::dontSendNotification);
+    };
+
     // Transport
     addAndMakeVisible(tempoLabel);
     tempoLabel.setFont(juce::Font(11.f));
@@ -288,6 +365,25 @@ void GrooveLockEditor::resized()
         rootNoteBox.setBounds(s.removeFromTop(22));
         s.removeFromTop(4);
         panicButton.setBounds(s.removeFromTop(26));
+
+        s.removeFromTop(6);
+
+        // Pitch panel
+        pitchEnabledToggle.setBounds(s.removeFromTop(22));
+        pitchRootBox.setBounds(s.removeFromTop(22));
+        pitchScaleBox.setBounds(s.removeFromTop(22));
+        {
+            auto densRow = s.removeFromTop(22);
+            pitchDensityLabel.setBounds(densRow.removeFromLeft(50));
+            pitchDensitySlider.setBounds(densRow);
+        }
+        pitchChromaticToggle.setBounds(s.removeFromTop(22));
+        {
+            auto octRow = s.removeFromTop(26);
+            octaveDownButton.setBounds(octRow.removeFromLeft(40));
+            octaveUpButton.setBounds(octRow.removeFromRight(40));
+            octaveDisplayLabel.setBounds(octRow);
+        }
     }
 
     // Main area: drum / lock / bass / info
@@ -330,6 +426,15 @@ void GrooveLockEditor::refreshFromTemplate()
     bassView.setBassRows(&t->bass);
     bassView.setDrumRows(nullptr);
     lockView.setLocks(&t->locks);
+
+    // Auto-update scale to genre default (user can override after)
+    auto profile = GenreProfile::forGenre(t->genre);
+    int scaleId = (int)profile.defaultScale + 1;
+    pitchScaleBox.setSelectedId(scaleId, juce::sendNotification);
+
+    // Sync density hint from template if present
+    if (t->pitch.hasPitchData)
+        pitchDensitySlider.setValue(t->pitch.densityHint, juce::sendNotification);
 }
 
 void GrooveLockEditor::rebuildTemplateList()

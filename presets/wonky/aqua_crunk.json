@@ -45,5 +45,18 @@
     { "step": 7,  "type": "unison",     "description": "Kick full + bass medium. Kick leads, bass supports laid back." },
     { "step": 9,  "type": "fill",       "description": "Bass accent solo. No kick. Bass owns the sub here, slide in." },
     { "step": 15, "type": "anticipate", "description": "Bass pushes early while kick pushes early. Both anticipate beat 1. Staccato bass." }
-  ]
+  ],
+  "pitch": {
+    "densityHint": 4,
+    "allowChromaticApproach": true,
+    "preferredIntervals": ["root", "b7", "b3", "5"],
+    "stepHints": [
+      { "step": 0,  "role": "root" },
+      { "step": 3,  "role": "b3" },
+      { "step": 7,  "role": "5" },
+      { "step": 9,  "role": "b7" },
+      { "step": 12, "role": "b3" },
+      { "step": 15, "role": "approach" }
+    ]
+  }
 }

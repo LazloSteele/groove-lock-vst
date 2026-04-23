@@ -45,5 +45,16 @@
     { "step": 8,  "type": "unison",     "description": "Beat 3 triple impact: kick + snare flam + bass. Massive." },
     { "step": 10, "type": "unison",     "description": "Kick double = bass octave drop. Both laid back." },
     { "step": 13, "type": "fill",       "description": "Bass drops out. Tom fill speaks alone. Re-enter hard on next bar." }
-  ]
+  ],
+  "pitch": {
+    "densityHint": 2,
+    "allowChromaticApproach": false,
+    "preferredIntervals": ["root", "5"],
+    "stepHints": [
+      { "step": 0,  "role": "root" },
+      { "step": 7,  "role": "approach" },
+      { "step": 8,  "role": "root" },
+      { "step": 10, "role": "root" }
+    ]
+  }
 }

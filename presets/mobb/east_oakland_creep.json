@@ -42,5 +42,14 @@
   "locks": [
     { "step": 0, "type": "unison", "description": "Beat 1. Both accent. Bass sustains through the entire half. Sidechain the bass under kick." },
     { "step": 8, "type": "unison", "description": "Beat 3 with snare. Triple lock — kick, snare, bass all hit. Maximum impact." }
-  ]
+  ],
+  "pitch": {
+    "densityHint": 1,
+    "allowChromaticApproach": false,
+    "preferredIntervals": ["root"],
+    "stepHints": [
+      { "step": 0, "role": "root" },
+      { "step": 8, "role": "root" }
+    ]
+  }
 }

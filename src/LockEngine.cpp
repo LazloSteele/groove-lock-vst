@@ -6,6 +6,7 @@ void LockEngine::reset()
 {
     lastStep         = -1;
     lastNoteOnSample = -1;
+    pitchEngine.reset();
 }
 
 void LockEngine::setTemplate(const GrooveTemplate* t)
@@ -133,8 +134,11 @@ void LockEngine::processStep(int step, int64 stepSamplePos, double sampleRate,
         bendOffSamples = (int)(profile.pitchBendDurationMs * sampleRate / 1000.0);
     }
 
+    int midiNote = pitchEngine.getNoteForStep(step);
+    if (midiNote < 0) midiNote = params.outputRootNote;
+
     out.scheduleNote(noteOnSample, noteOff,
-                     params.outputChannel, params.outputRootNote,
+                     params.outputChannel, midiNote,
                      finalVel, bendVal, bendOffSamples);
 
     lastNoteOnSample = (int)noteOnSample;
@@ -174,6 +178,14 @@ void LockEngine::process(MidiOutputManager& midiOut,
 
         if (step != lastStep)
         {
+            // Recompute pitch bar at the top of each bar
+            if (step == 0)
+            {
+                PitchEngineParams pp = params.pitch;
+                pp.rootMidiNote = params.outputRootNote;
+                pitchEngine.computeBar(tmpl, profile, pp);
+            }
+
             lastStep = step;
             int64 stepSample = blockStartSample + s + swingDelaySamples(step);
             processStep(step, stepSample, sampleRate, midiOut);

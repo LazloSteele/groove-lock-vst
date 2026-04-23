@@ -46,5 +46,18 @@
     { "step": 8,  "type": "unison", "description": "Beat 3 lock. Both laid back." },
     { "step": 11, "type": "fill",   "description": "Bass fill with pitch bend. Legato into beat 4's kick." },
     { "step": 14, "type": "unison", "description": "Both laid back. Bass legato sustains to bar end." }
-  ]
+  ],
+  "pitch": {
+    "densityHint": 3,
+    "allowChromaticApproach": true,
+    "preferredIntervals": ["root", "5", "4"],
+    "stepHints": [
+      { "step": 0,  "role": "root" },
+      { "step": 5,  "role": "root" },
+      { "step": 6,  "role": "4" },
+      { "step": 8,  "role": "root" },
+      { "step": 11, "role": "5" },
+      { "step": 14, "role": "root" }
+    ]
+  }
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include "PitchTypes.h"
 
 // Velocity tiers: 0=OFF 1=GHOST 2=MED 3=FULL 4=ACCENT
 enum class VelTier { OFF = 0, GHOST = 1, MED = 2, FULL = 3, ACCENT = 4 };
@@ -62,6 +63,22 @@ struct LockPoint
     juce::String description;
 };
 
+struct PitchStepHint
+{
+    int       step = 0;
+    PitchRole role = PitchRole::ROOT;
+};
+
+struct PitchBlock
+{
+    int                        densityHint           = 2;
+    bool                       allowChromaticApproach = true;
+    juce::Array<PitchRole>     preferredIntervals;
+    juce::Array<PitchStepHint> stepHints;
+
+    bool hasPitchData = false; // false = block was absent, use genre defaults
+};
+
 struct GrooveTemplate
 {
     // meta
@@ -73,6 +90,7 @@ struct GrooveTemplate
     juce::OwnedArray<DrumRow>  drums;
     juce::OwnedArray<BassRow>  bass;
     juce::Array<LockPoint>     locks;
+    PitchBlock                 pitch;
 
     bool loadFromJSON(const juce::File& file);
     bool loadFromJSON(const juce::String& jsonText);

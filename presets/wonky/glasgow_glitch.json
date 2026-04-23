@@ -45,5 +45,16 @@
     { "step": 4,  "type": "alternate", "description": "Bass accent on the 'and' of 1. Kick silent. Displacement IS the groove." },
     { "step": 7,  "type": "alternate", "description": "Kick full hit. Bass resting. Clean separation." },
     { "step": 12, "type": "alternate", "description": "Bass accent, snare medium. EQ separation critical." }
-  ]
+  ],
+  "pitch": {
+    "densityHint": 3,
+    "allowChromaticApproach": true,
+    "preferredIntervals": ["root", "5", "b7"],
+    "stepHints": [
+      { "step": 0,  "role": "root" },
+      { "step": 4,  "role": "b7" },
+      { "step": 8,  "role": "5" },
+      { "step": 12, "role": "b7" }
+    ]
+  }
 }

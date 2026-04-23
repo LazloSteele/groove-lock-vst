@@ -46,5 +46,19 @@
     { "step": 5,  "type": "fill",       "description": "Bass ghost fill. Staccato. 16th bounce without clutter." },
     { "step": 6,  "type": "anticipate", "description": "Bass pushes early to anticipate beat 3. Kick stays on grid. Tension IS the groove." },
     { "step": 13, "type": "unison",     "description": "Both pushed. Bass staccato under 32nd hat roll." }
-  ]
+  ],
+  "pitch": {
+    "densityHint": 4,
+    "allowChromaticApproach": true,
+    "preferredIntervals": ["root", "5", "octave", "b7"],
+    "stepHints": [
+      { "step": 0,  "role": "root" },
+      { "step": 2,  "role": "b3" },
+      { "step": 3,  "role": "octave" },
+      { "step": 5,  "role": "b7" },
+      { "step": 6,  "role": "approach" },
+      { "step": 8,  "role": "root" },
+      { "step": 13, "role": "octave" }
+    ]
+  }
 }

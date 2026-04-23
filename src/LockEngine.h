@@ -3,18 +3,21 @@
 #include "GrooveTemplate.h"
 #include "GenreProfile.h"
 #include "MidiOutputManager.h"
+#include "PitchEngine.h"
 
 struct LockEngineParams
 {
-    float swingPercent       = 55.f;   // 0-100
-    float humanizePercent    = 20.f;   // 0-100
-    float velOffset          = 0.f;    // -64..+64
-    float timingOffsetMs     = 0.f;    // -20..+20
-    float gateLengthScale    = 1.0f;   // 0.5..1.5
+    float swingPercent       = 55.f;
+    float humanizePercent    = 20.f;
+    float velOffset          = 0.f;
+    float timingOffsetMs     = 0.f;
+    float gateLengthScale    = 1.0f;
     float glideTimeMs        = 100.f;
-    int   outputChannel      = 2;      // 1-16
-    int   outputRootNote     = 36;     // C2
-    int   pitchBendRange     = 2;      // semitones
+    int   outputChannel      = 2;
+    int   outputRootNote     = 36;
+    int   pitchBendRange     = 2;
+
+    PitchEngineParams pitch;
 };
 
 class LockEngine
@@ -42,6 +45,8 @@ private:
     int    lastStep               = -1;
     int    lastNoteOnSample       = -1;
     double currentStepDurSamples  = 0.0;
+
+    PitchEngine pitchEngine;
 
     juce::Random random;
 

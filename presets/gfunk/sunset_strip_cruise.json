@@ -44,5 +44,16 @@
     { "step": 6,  "type": "unison",     "description": "Both laid back 8-15ms. Bass legato sustains into beat 3." },
     { "step": 8,  "type": "unison",     "description": "Beat 3 unison. Bass accent matches kick." },
     { "step": 15, "type": "anticipate", "description": "Bass turnaround. Slide into root. Staccato gate so it doesn't bleed into beat 1." }
-  ]
+  ],
+  "pitch": {
+    "densityHint": 2,
+    "allowChromaticApproach": true,
+    "preferredIntervals": ["root", "b7", "5"],
+    "stepHints": [
+      { "step": 0,  "role": "root" },
+      { "step": 6,  "role": "root" },
+      { "step": 8,  "role": "root" },
+      { "step": 15, "role": "approach" }
+    ]
+  }
 }

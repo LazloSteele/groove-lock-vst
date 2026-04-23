@@ -51,10 +51,16 @@ public:
     juce::Atomic<int>   outputChannel   { 2    };
     juce::Atomic<int>   outputRootNote  { 36   };
     juce::Atomic<int>   pitchBendRange  { 2    };
-    juce::Atomic<int>   inputMode       { 1    }; // 0=live 1=internal
+    juce::Atomic<int>   inputMode       { 1    };
     juce::Atomic<int>   patternActive   { 1    };
     juce::Atomic<int>   templateIndex   { 0    };
     juce::Atomic<int>   panicFlag       { 0    };
+
+    // Pitch system
+    juce::Atomic<int>   pitchEnabled    { 0    }; // master toggle
+    juce::Atomic<int>   pitchScale      { 0    }; // ScaleType enum
+    juce::Atomic<int>   pitchDensity    { 0    }; // 0=auto, 1-5=override
+    juce::Atomic<int>   pitchChromatic  { 1    }; // chromatic approach on/off
 
     // Current template for UI reads (written audio-thread-safe via double buffer)
     const GrooveTemplate* getCurrentTemplate() const { return activeTmpl.load(); }

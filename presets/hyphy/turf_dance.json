@@ -45,5 +45,15 @@
     { "step": 5,  "type": "alternate", "description": "Kick hits pushed early. Bass waits." },
     { "step": 6,  "type": "fill",      "description": "Bass answer. Pitch bend. Legato sustain." },
     { "step": 10, "type": "fill",      "description": "Tom hit — bass drops out. Tom + bass freq separation crucial." }
-  ]
+  ],
+  "pitch": {
+    "densityHint": 2,
+    "allowChromaticApproach": false,
+    "preferredIntervals": ["root", "5"],
+    "stepHints": [
+      { "step": 1, "role": "5" },
+      { "step": 6, "role": "5" },
+      { "step": 9, "role": "5" }
+    ]
+  }
 }

@@ -106,6 +106,31 @@ bool GrooveTemplate::loadFromJSON(const juce::String& jsonText)
         }
     }
 
+    pitch = PitchBlock();
+    if (auto* pitchObj = root["pitch"].getDynamicObject())
+    {
+        pitch.hasPitchData            = true;
+        pitch.densityHint             = (int)pitchObj->getProperty("densityHint");
+        pitch.allowChromaticApproach  = (bool)pitchObj->getProperty("allowChromaticApproach");
+
+        if (auto* intArr = pitchObj->getProperty("preferredIntervals").getArray())
+            for (auto& v : *intArr)
+                pitch.preferredIntervals.add(parsePitchRole(v.toString()));
+
+        if (auto* hintArr = pitchObj->getProperty("stepHints").getArray())
+        {
+            for (auto& hVar : *hintArr)
+            {
+                auto* hObj = hVar.getDynamicObject();
+                if (!hObj) continue;
+                PitchStepHint h;
+                h.step = (int)hObj->getProperty("step");
+                h.role = parsePitchRole(hObj->getProperty("role").toString());
+                pitch.stepHints.add(h);
+            }
+        }
+    }
+
     return true;
 }
 
@@ -161,6 +186,43 @@ juce::String GrooveTemplate::toJSON() const
         locksArr.add(juce::var(lObj.get()));
     }
     root->setProperty("locks", locksArr);
+
+    if (pitch.hasPitchData)
+    {
+        static auto roleStr = [](PitchRole r) -> juce::String {
+            switch (r) {
+                case PitchRole::ROOT:    return "root";
+                case PitchRole::FIFTH:   return "5";
+                case PitchRole::FLAT7:   return "b7";
+                case PitchRole::FLAT3:   return "b3";
+                case PitchRole::FOURTH:  return "4";
+                case PitchRole::FLAT5:   return "b5";
+                case PitchRole::OCTAVE:  return "octave";
+                case PitchRole::APPROACH:return "approach";
+                case PitchRole::ANY:     return "any";
+                default:                 return "root";
+            }
+        };
+
+        juce::DynamicObject::Ptr pObj = new juce::DynamicObject();
+        pObj->setProperty("densityHint",            pitch.densityHint);
+        pObj->setProperty("allowChromaticApproach", pitch.allowChromaticApproach);
+
+        juce::Array<juce::var> prefArr;
+        for (auto r : pitch.preferredIntervals) prefArr.add(roleStr(r));
+        pObj->setProperty("preferredIntervals", prefArr);
+
+        juce::Array<juce::var> hintArr;
+        for (auto& h : pitch.stepHints)
+        {
+            juce::DynamicObject::Ptr hObj = new juce::DynamicObject();
+            hObj->setProperty("step", h.step);
+            hObj->setProperty("role", roleStr(h.role));
+            hintArr.add(juce::var(hObj.get()));
+        }
+        pObj->setProperty("stepHints", hintArr);
+        root->setProperty("pitch", juce::var(pObj.get()));
+    }
 
     return juce::JSON::toString(juce::var(root.get()), true);
 }

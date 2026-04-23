@@ -1,9 +1,20 @@
 #pragma once
 #include <JuceHeader.h>
+#include "PitchTypes.h"
 
 struct GenreProfile
 {
     juce::String name;
+
+    // Pitch
+    ScaleType              defaultScale           = ScaleType::MINOR_PENTATONIC;
+    int                    pitchDensityMin        = 2;
+    int                    pitchDensityMax        = 4;
+    bool                   allowChromaticApproach = true;
+    juce::Array<PitchRole> preferredIntervals;  // ordered, most to least used
+    int                    bassMidiMin            = 24;  // C1
+    int                    bassMidiMax            = 48;  // C3
+    bool                   allowOctaveJumps       = true;
 
     // Timing
     float defaultTimingOffsetMs     = 0.f;
@@ -47,6 +58,13 @@ struct GenreProfile
 
         if (genre == "G-Funk")
         {
+            p.defaultScale           = ScaleType::MINOR_PENTATONIC;
+            p.pitchDensityMin        = 2; p.pitchDensityMax = 4;
+            p.allowChromaticApproach = true;
+            p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FLAT7, PitchRole::FIFTH,
+                                         PitchRole::FLAT3, PitchRole::FOURTH };
+            p.bassMidiMin = 24; p.bassMidiMax = 48; // C1-C3
+            p.allowOctaveJumps = true;
             p.defaultTimingOffsetMs    = 8.f;
             p.swingMin = 50.f; p.swingMax = 65.f;
             p.unisonTimingToleranceMs  = 2.f;
@@ -66,6 +84,12 @@ struct GenreProfile
         }
         else if (genre == "Mobb")
         {
+            p.defaultScale           = ScaleType::NATURAL_MINOR;
+            p.pitchDensityMin        = 1; p.pitchDensityMax = 2;
+            p.allowChromaticApproach = false;
+            p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FIFTH, PitchRole::OCTAVE };
+            p.bassMidiMin = 24; p.bassMidiMax = 43; // C1-G2
+            p.allowOctaveJumps = false;
             p.defaultTimingOffsetMs    = 0.f;
             p.swingMin = 0.f; p.swingMax = 52.f;
             p.unisonTimingToleranceMs  = 0.5f;
@@ -86,6 +110,13 @@ struct GenreProfile
         }
         else if (genre == "Hyphy")
         {
+            p.defaultScale           = ScaleType::MINOR_PENTATONIC;
+            p.pitchDensityMin        = 3; p.pitchDensityMax = 5;
+            p.allowChromaticApproach = true;
+            p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FIFTH, PitchRole::OCTAVE,
+                                         PitchRole::FLAT7, PitchRole::FLAT3, PitchRole::FOURTH };
+            p.bassMidiMin = 24; p.bassMidiMax = 48;
+            p.allowOctaveJumps = true;
             p.defaultTimingOffsetMs    = -7.f;
             p.swingMin = 58.f; p.swingMax = 68.f;
             p.unisonTimingToleranceMs  = 5.f;
@@ -103,6 +134,13 @@ struct GenreProfile
         }
         else if (genre == "Wonky")
         {
+            p.defaultScale           = ScaleType::DORIAN;
+            p.pitchDensityMin        = 3; p.pitchDensityMax = 5;
+            p.allowChromaticApproach = true;
+            p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FLAT7, PitchRole::FIFTH,
+                                         PitchRole::FLAT3, PitchRole::FOURTH, PitchRole::FLAT5 };
+            p.bassMidiMin = 24; p.bassMidiMax = 52; // C1-E3
+            p.allowOctaveJumps = true;
             p.defaultTimingOffsetMs    = 0.f;
             p.swingMin = 65.f; p.swingMax = 80.f;
             p.unisonTimingToleranceMs  = 12.f;
@@ -122,6 +160,13 @@ struct GenreProfile
         }
         else // Modern West Coast (default)
         {
+            p.defaultScale           = ScaleType::MINOR_PENTATONIC;
+            p.pitchDensityMin        = 2; p.pitchDensityMax = 4;
+            p.allowChromaticApproach = true;
+            p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FLAT7, PitchRole::FIFTH,
+                                         PitchRole::FOURTH, PitchRole::FLAT3 };
+            p.bassMidiMin = 24; p.bassMidiMax = 48;
+            p.allowOctaveJumps = true;
             p.defaultTimingOffsetMs    = 0.f;
             p.swingMin = 55.f; p.swingMax = 62.f;
             p.unisonTimingToleranceMs  = 3.f;
