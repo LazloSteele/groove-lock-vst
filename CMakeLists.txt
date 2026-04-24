@@ -26,7 +26,7 @@ juce_add_plugin(GrooveLock
     IS_SYNTH                FALSE
     EDITOR_WANTS_KEYBOARD_FOCUS FALSE
     COPY_PLUGIN_AFTER_BUILD FALSE
-    VST3_CATEGORIES         "Fx|MIDI"
+    VST3_CATEGORIES         Fx MIDI
 )
 
 juce_generate_juce_header(GrooveLock)
