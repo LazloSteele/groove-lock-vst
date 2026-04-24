@@ -309,11 +309,9 @@ void GrooveLockEditor::paint(juce::Graphics& g)
 
 void GrooveLockEditor::resized()
 {
-    auto area  = getLocalBounds();
-    int  W     = area.getWidth();
-    int  H     = area.getHeight();
+    auto area    = getLocalBounds();
+    int  W       = area.getWidth();
     int  sidebar = (int)(W * 0.30f);
-    int  mainW   = W - sidebar;
 
     // Header (30px)
     auto header = area.removeFromTop(30);
