@@ -188,7 +188,6 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
         proc.pitchEnabled.set(pitchEnabledToggle.getToggleState() ? 1 : 0);
     };
 
-    static const char* noteNames[] = {"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"};
     addAndMakeVisible(pitchRootBox);
     for (int i = 0; i < 12; ++i)
         pitchRootBox.addItem(noteNames[i], i + 1);
@@ -301,7 +300,7 @@ void GrooveLockEditor::paint(juce::Graphics& g)
     // Divider lines
     int sidebarX = (int)(getWidth() * 0.70f);
     g.setColour(juce::Colour(0xff222222));
-    g.drawVerticalLine(sidebarX, 30, getHeight() - 28);
+    g.drawVerticalLine(sidebarX, 30.0f, (float)(getHeight() - 28));
 
     g.setColour(juce::Colour(0xff1a1a1a));
     g.drawHorizontalLine(30, 0, (float)getWidth());

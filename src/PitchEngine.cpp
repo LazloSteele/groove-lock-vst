@@ -16,6 +16,7 @@ PitchRole PitchEngine::roleForStep(int step,
                                     const GrooveTemplate* tmpl,
                                     const GenreProfile& profile) const
 {
+    juce::ignoreUnused(profile);
     // 1. Explicit step hint in template takes priority
     if (tmpl && tmpl->pitch.hasPitchData)
     {
@@ -112,6 +113,7 @@ int PitchEngine::pickFromPreferred(const juce::Array<PitchRole>& preferred,
 
 int PitchEngine::clampToRange(int midiNote, int rootMidi, int rangeMin, int rangeMax) const
 {
+    juce::ignoreUnused(rootMidi);
     while (midiNote > rangeMax) midiNote -= 12;
     while (midiNote < rangeMin) midiNote += 12;
     return juce::jlimit(0, 127, midiNote);

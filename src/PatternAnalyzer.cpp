@@ -19,6 +19,7 @@ void PatternAnalyzer::process(const juce::MidiBuffer& midi,
                                const juce::AudioPlayHead::CurrentPositionInfo& pos,
                                double sampleRate, int numSamples)
 {
+    juce::ignoreUnused(numSamples);
     if (!pos.isPlaying) return;
 
     const double beatsPerBar  = 4.0;

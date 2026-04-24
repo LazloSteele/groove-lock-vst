@@ -48,7 +48,7 @@ private:
 
     PitchEngine pitchEngine;
 
-    juce::Random random;
+    mutable juce::Random random;
 
     void processStep(int step, int64 stepSamplePos, double sampleRate,
                      MidiOutputManager& out);

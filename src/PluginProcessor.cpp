@@ -88,7 +88,11 @@ void GrooveLockProcessor::processBlock(juce::AudioBuffer<float>& audio,
 
     juce::AudioPlayHead::CurrentPositionInfo pos;
     if (auto* ph = getPlayHead())
+    {
+        JUCE_BEGIN_IGNORE_WARNINGS_MSVC (4996)
         ph->getCurrentPosition(pos);
+        JUCE_END_IGNORE_WARNINGS_MSVC
+    }
 
     if (!pos.isPlaying || !patternActive.get()) return;
 
