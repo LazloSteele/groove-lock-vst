@@ -62,11 +62,13 @@ target_link_libraries(GrooveLock PRIVATE
 
 # Ableton 12 rejects any VST3 plugin whose sub-category contains "Fx" but has
 # no audio input bus — even the standard "Fx|MIDI" MIDI-effect category.
-# JUCE forces "Fx" into every non-instrument category, so we override
-# JucePlugin_Vst3Category at the preprocessor level via a force-included header.
+# JUCE forces "Fx" into every non-instrument category.  Override it by adding a
+# second /D on GrooveLock_VST3 that redefines the macro; MSVC last-definition-
+# wins behaviour gives us "MIDI".  /wd4005 suppresses the redefinition warning.
 if(MSVC)
-    target_compile_options(GrooveLock_VST3 PRIVATE
-        "/FI${CMAKE_CURRENT_SOURCE_DIR}/src/ableton_compat.h")
+    target_compile_definitions(GrooveLock_VST3 PRIVATE
+        "JucePlugin_Vst3Category=\"MIDI\"")
+    target_compile_options(GrooveLock_VST3 PRIVATE /wd4005)
 endif()
 
 # Copy presets next to the plugin
