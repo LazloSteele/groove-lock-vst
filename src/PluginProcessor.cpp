@@ -2,7 +2,8 @@
 #include "PluginEditor.h"
 
 GrooveLockProcessor::GrooveLockProcessor()
-    : AudioProcessor(BusesProperties())
+    : AudioProcessor(BusesProperties()
+        .withOutput("Output", juce::AudioChannelSet::stereo(), true))
 {
     // Load presets from directory next to the plugin binary
     juce::File pluginDir = juce::File::getSpecialLocation(juce::File::currentApplicationFile)

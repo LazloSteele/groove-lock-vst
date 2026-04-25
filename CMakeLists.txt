@@ -20,13 +20,13 @@ juce_add_plugin(GrooveLock
     PLUGIN_CODE             Glck
     FORMATS                 VST3 AU Standalone
     PRODUCT_NAME            "Groove Lock"
-    IS_MIDI_EFFECT          TRUE
+    IS_MIDI_EFFECT          FALSE
     NEEDS_MIDI_INPUT        TRUE
     NEEDS_MIDI_OUTPUT       TRUE
-    IS_SYNTH                FALSE
+    IS_SYNTH                TRUE
     EDITOR_WANTS_KEYBOARD_FOCUS FALSE
     COPY_PLUGIN_AFTER_BUILD FALSE
-    VST3_CATEGORIES         Fx MIDI
+    VST3_CATEGORIES         Instrument MIDI
 )
 
 juce_generate_juce_header(GrooveLock)
@@ -60,22 +60,6 @@ target_link_libraries(GrooveLock PRIVATE
     juce::juce_recommended_warning_flags
 )
 
-# Ableton 12 rejects any VST3 plugin whose sub-category contains "Fx" but has
-# no audio input bus — even the standard "Fx|MIDI" MIDI-effect category.
-# JUCE forces "Fx" into every non-instrument category.  Override it by adding a
-# second /D on GrooveLock_VST3 that redefines the macro; MSVC last-definition-
-# wins behaviour gives us "MIDI".  /wd4005 suppresses the redefinition warning.
-if(MSVC)
-    # kSimpleModeSupported (= 1) tells VST3 hosts that this plugin runs with
-    # zero audio I/O.  JUCE only sets this flag for synths; MIDI effects need
-    # it too or Ableton 12 rejects any non-instrument with no audio input bus.
-    # JucePlugin_Vst3ComponentFlags uses #ifndef in JUCE source, so a /D
-    # override takes priority without any redefinition warning.
-    target_compile_definitions(GrooveLock_VST3 PRIVATE
-        "JucePlugin_Vst3ComponentFlags=1"
-        "JucePlugin_Vst3Category=\"MIDI\"")
-    target_compile_options(GrooveLock_VST3 PRIVATE /wd4005)
-endif()
 
 # Copy presets next to the plugin
 add_custom_command(TARGET GrooveLock POST_BUILD
