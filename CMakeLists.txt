@@ -66,7 +66,13 @@ target_link_libraries(GrooveLock PRIVATE
 # second /D on GrooveLock_VST3 that redefines the macro; MSVC last-definition-
 # wins behaviour gives us "MIDI".  /wd4005 suppresses the redefinition warning.
 if(MSVC)
+    # kSimpleModeSupported (= 1) tells VST3 hosts that this plugin runs with
+    # zero audio I/O.  JUCE only sets this flag for synths; MIDI effects need
+    # it too or Ableton 12 rejects any non-instrument with no audio input bus.
+    # JucePlugin_Vst3ComponentFlags uses #ifndef in JUCE source, so a /D
+    # override takes priority without any redefinition warning.
     target_compile_definitions(GrooveLock_VST3 PRIVATE
+        "JucePlugin_Vst3ComponentFlags=1"
         "JucePlugin_Vst3Category=\"MIDI\"")
     target_compile_options(GrooveLock_VST3 PRIVATE /wd4005)
 endif()
