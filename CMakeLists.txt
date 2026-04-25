@@ -66,12 +66,12 @@ target_link_libraries(GrooveLock PRIVATE
 # rewriting the JucePlugin_Vst3Category compile definition on the shared-code
 # target after juce_add_plugin has set it.
 foreach(_prop COMPILE_DEFINITIONS INTERFACE_COMPILE_DEFINITIONS)
-    get_target_property(_defs GrooveLock_SharedCode ${_prop})
+    get_target_property(_defs GrooveLock ${_prop})
     if(_defs)
         list(TRANSFORM _defs REPLACE
             "JucePlugin_Vst3Category=.*"
             "JucePlugin_Vst3Category=\"MIDI\"")
-        set_target_properties(GrooveLock_SharedCode PROPERTIES ${_prop} "${_defs}")
+        set_target_properties(GrooveLock PROPERTIES ${_prop} "${_defs}")
     endif()
 endforeach()
 
