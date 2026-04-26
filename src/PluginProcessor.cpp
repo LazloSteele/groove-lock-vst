@@ -5,10 +5,15 @@ GrooveLockProcessor::GrooveLockProcessor()
     : AudioProcessor(BusesProperties()
         .withOutput("Output", juce::AudioChannelSet::stereo(), true))
 {
-    // Load presets from directory next to the plugin binary
-    juce::File pluginDir = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
-                               .getParentDirectory();
-    juce::File presetsDir = pluginDir.getChildFile("presets");
+    // Locate presets. For VST3 the DLL lives at bundle.vst3/Contents/x86_64-win/
+    // so walk three parent dirs up to reach bundle.vst3/, then look for presets/.
+    juce::File dllFile = juce::File::getSpecialLocation(juce::File::currentApplicationFile);
+    juce::File presetsDir = dllFile.getParentDirectory()   // x86_64-win/
+                                   .getParentDirectory()   // Contents/
+                                   .getParentDirectory()   // bundle.vst3/
+                                   .getChildFile("presets");
+    if (!presetsDir.isDirectory())
+        presetsDir = dllFile.getParentDirectory().getChildFile("presets");
     if (!presetsDir.isDirectory())
         presetsDir = juce::File::getCurrentWorkingDirectory().getChildFile("presets");
 

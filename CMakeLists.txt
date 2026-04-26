@@ -61,10 +61,12 @@ target_link_libraries(GrooveLock PRIVATE
 )
 
 
-# Copy presets next to the plugin
-add_custom_command(TARGET GrooveLock POST_BUILD
+# Copy presets into the VST3 bundle (bundle.vst3/presets/).
+# The DLL sits two dirs deep inside the bundle: bundle.vst3/Contents/x86_64-win/
+# so ../../ from TARGET_FILE_DIR reaches the bundle root.
+add_custom_command(TARGET GrooveLock_VST3 POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/presets
-        $<TARGET_FILE_DIR:GrooveLock>/presets
-    COMMENT "Copying presets"
-)
+        "${CMAKE_SOURCE_DIR}/presets"
+        "$<TARGET_FILE_DIR:GrooveLock_VST3>/../../presets"
+    COMMENT "Copying presets into VST3 bundle"
+    VERBATIM)
