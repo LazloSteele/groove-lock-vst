@@ -252,3 +252,113 @@ void PitchEngine::computeBar(const GrooveTemplate* tmpl,
     for (int step = 0; step < 16; ++step)
         if (barNotes[step] < 0) barNotes[step] = params.rootMidiNote;
 }
+
+void PitchEngine::computeBarFromState(const BarPitchState&     state,
+                                       const GenreProfile&      profile,
+                                       const PitchEngineParams& params)
+{
+    std::fill(barNotes, barNotes + 16, -1);
+    ready = true;
+
+    if (!params.pitchEnabled)
+    {
+        std::fill(barNotes, barNotes + 16, params.rootMidiNote);
+        return;
+    }
+
+    int density = params.densityOverride > 0 ? params.densityOverride
+                : profile.pitchDensityMin + 1;
+    density = juce::jlimit(1, 5, density);
+
+    bool chromatic = params.chromaticApproach && profile.allowChromaticApproach;
+
+    const auto& preferred = profile.preferredIntervals;
+
+    int uniqueSemitones[5]; int uniqueCount = 0;
+    int recentSemitone = -1;
+    int preferredIdx   = 0;
+
+    // ── Pass 1: resolve non-approach steps ──────────────────────────────────
+    for (int step = 0; step < 16; ++step)
+    {
+        PitchRole role = state.stepRoles[step];
+
+        if (role == PitchRole::NONE)
+        {
+            barNotes[step] = params.rootMidiNote;
+            continue;
+        }
+        if (role == PitchRole::APPROACH)
+        {
+            barNotes[step] = -2; // resolve in pass 2
+            continue;
+        }
+
+        int semi;
+        if (role == PitchRole::ANY)
+            semi = pickFromPreferred(preferred, preferredIdx, recentSemitone);
+        else
+            semi = resolveRoleToSemitone(role, preferredIdx, preferred);
+
+        if (role != PitchRole::FLAT5 && role != PitchRole::OCTAVE)
+            semi = snapToScale(semi, params.scaleType);
+
+        if (role != PitchRole::ROOT)
+        {
+            bool alreadyUsed = false;
+            for (int i = 0; i < uniqueCount; ++i)
+                if (uniqueSemitones[i] == semi) { alreadyUsed = true; break; }
+            if (!alreadyUsed && uniqueCount >= density)
+                semi = 0; // fall back to root
+        }
+
+        int pitchClass = semi % 12;
+        bool tracked = false;
+        for (int i = 0; i < uniqueCount; ++i)
+            if (uniqueSemitones[i] % 12 == pitchClass) { tracked = true; break; }
+        if (!tracked && uniqueCount < 5)
+            uniqueSemitones[uniqueCount++] = semi;
+
+        int midiNote = params.rootMidiNote + semi;
+        midiNote    += state.stepOctaveOffset[step] * 12; // phrase octave displacement
+        midiNote     = clampToRange(midiNote, params.rootMidiNote, profile.bassMidiMin, profile.bassMidiMax);
+        barNotes[step] = midiNote;
+        recentSemitone = semi;
+    }
+
+    // ── Pass 2: resolve approach steps ──────────────────────────────────────
+    for (int step = 0; step < 16; ++step)
+    {
+        if (barNotes[step] != -2) continue;
+
+        int targetNote = params.rootMidiNote;
+        for (int d = 1; d <= 16; ++d)
+        {
+            int next = (step + d) % 16;
+            if (barNotes[next] >= 0) { targetNote = barNotes[next]; break; }
+        }
+
+        int approachNote;
+        if (chromatic)
+        {
+            approachNote = targetNote - 1;
+        }
+        else
+        {
+            int targetSemi = (targetNote - params.rootMidiNote) % 12;
+            int count = 0;
+            const int* ints = scaleIntervals(params.scaleType, count);
+            int belowSemi = 0;
+            for (int i = 0; i < count; ++i)
+                if (ints[i] < targetSemi) belowSemi = ints[i];
+            approachNote = params.rootMidiNote + belowSemi;
+        }
+
+        approachNote = clampToRange(approachNote, params.rootMidiNote,
+                                    profile.bassMidiMin, profile.bassMidiMax);
+        barNotes[step] = approachNote;
+    }
+
+    for (int step = 0; step < 16; ++step)
+        if (barNotes[step] < 0) barNotes[step] = params.rootMidiNote;
+}

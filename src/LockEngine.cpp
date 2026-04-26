@@ -178,12 +178,20 @@ void LockEngine::process(MidiOutputManager& midiOut,
 
         if (step != lastStep)
         {
-            // Recompute pitch bar at the top of each bar
+            // Recompute pitch at the start of each bar
             if (step == 0)
             {
+                int absoluteBar  = (int)(absPPQ / beatsPerBar);
+                int phraseBar    = absoluteBar % 8;
+                currentPhraseBar = phraseBar;
+
                 PitchEngineParams pp = params.pitch;
                 pp.rootMidiNote = params.outputRootNote;
-                pitchEngine.computeBar(tmpl, profile, pp);
+
+                if (expandedPhrase && expandedPhrase->isValid && pp.pitchEnabled)
+                    pitchEngine.computeBarFromState(expandedPhrase->bars[phraseBar], profile, pp);
+                else
+                    pitchEngine.computeBar(tmpl, profile, pp);
             }
 
             lastStep = step;

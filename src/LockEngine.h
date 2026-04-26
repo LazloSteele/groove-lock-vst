@@ -28,6 +28,10 @@ public:
     void setTemplate(const GrooveTemplate* t);
     void setParams(const LockEngineParams& p);
 
+    // Provide the 8-bar phrase for per-bar pitch selection.
+    // Pass nullptr to fall back to single-bar template-based pitch.
+    void setExpandedPhrase(const ExpandedPhrase* p) { expandedPhrase = p; }
+
     // Called each processBlock. Returns MIDI events via manager.
     void process(MidiOutputManager& midiOut,
                  const juce::AudioPlayHead::CurrentPositionInfo& pos,
@@ -37,13 +41,19 @@ public:
 
     void reset();
 
+    // Returns which of the 8 phrase bars is currently playing (0-7). Audio thread only.
+    int getCurrentPhraseBar() const { return currentPhraseBar; }
+
 private:
     const GrooveTemplate* tmpl    = nullptr;
     LockEngineParams       params;
     GenreProfile           profile;
 
+    const ExpandedPhrase* expandedPhrase     = nullptr; // set from processor
+
     int    lastStep               = -1;
     int    lastNoteOnSample       = -1;
+    int    currentPhraseBar       = 0;   // 0-7, audio thread only
     double currentStepDurSamples  = 0.0;
 
     PitchEngine pitchEngine;

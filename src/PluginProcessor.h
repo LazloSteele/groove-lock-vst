@@ -5,6 +5,7 @@
 #include "LockEngine.h"
 #include "MidiOutputManager.h"
 #include "TemplateBrowser.h"
+#include "PhraseExpander.h"
 
 class GrooveLockProcessor : public juce::AudioProcessor
 {
@@ -62,11 +63,25 @@ public:
     juce::Atomic<int>   pitchDensity    { 0    }; // 0=auto, 1-5=override
     juce::Atomic<int>   pitchChromatic  { 1    }; // chromatic approach on/off
 
+    // 8-bar phrase expansion controls
+    juce::Atomic<float> density         { 0.5f }; // 0=sparse, 1=busy
+    juce::Atomic<float> tension         { 0.5f }; // 0=safe, 1=adventurous
+    juce::Atomic<int>   regenMode       { 1    }; // 0=fixed, 1=per-loop, 2=manual
+    juce::Atomic<int>   clampOverride   { 0    }; // 1=ignore genre clamps
+
     // Current template for UI reads (written audio-thread-safe via double buffer)
     const GrooveTemplate* getCurrentTemplate() const { return currentTmpl.load(std::memory_order_relaxed); }
 
-    // Step position indicator for UI (written by audio thread, read by UI)
-    juce::Atomic<int> currentStep { 0 };
+    // Step and phrase-bar position for UI (written by audio thread, read by UI)
+    juce::Atomic<int> currentStep      { 0 };
+    juce::Atomic<int> currentPhraseBar { 0 };
+
+    // Regenerate the 8-bar phrase. Call from message thread only.
+    void regeneratePhrase();
+
+    // Dirty flag: set from editor when density/tension change so timer can regen
+    juce::Atomic<int> phraseParamsDirty { 1 }; // start dirty for initial generation
+    juce::Atomic<int> needsRegen        { 0 }; // set by audio thread (per-loop)
 
 private:
     TemplateBrowser  browser;
@@ -77,10 +92,17 @@ private:
     // Browser templates are read-only and live for the plugin's lifetime,
     // so both threads can safely read through this atomic pointer.
     std::atomic<const GrooveTemplate*> currentTmpl { nullptr };
-    const GrooveTemplate*              lastAppliedTmpl { nullptr };  // audio thread only
+    const GrooveTemplate*              lastAppliedTmpl { nullptr }; // audio thread only
 
     double currentSampleRate  = 44100.0;
     int64  totalSamplesPlayed = 0;
+
+    // Phrase expansion — double-buffered so message thread can write while audio thread reads
+    PhraseExpander          phraseExpander;        // message thread only
+    ExpandedPhrase          phraseBuffers[2];
+    std::atomic<int>        activePhraseIdx { 0 }; // index of buffer audio thread reads
+    int                     inactiveBuffer  { 1 }; // message thread only
+    int                     lastPhraseBar   { -1 }; // audio thread only, for per-loop detection
 
     void syncParams();
 

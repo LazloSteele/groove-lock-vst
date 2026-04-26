@@ -57,6 +57,34 @@ static inline const int* scaleIntervals(ScaleType t, int& count)
     count = 5; return minPent;
 }
 
+// Pre-computed pitch roles for one bar (output from PhraseExpander)
+struct BarPitchState
+{
+    PitchRole stepRoles[16];        // PitchRole per step (NONE = no bass hit)
+    int       stepOctaveOffset[16]; // 0 = base octave, 1 = +1, -1 = -1
+    float     deviationLevel;       // 0.0–1.0 how far this bar deviates from seed
+
+    BarPitchState() : deviationLevel(0.f)
+    {
+        std::fill(stepRoles, stepRoles + 16, PitchRole::ROOT);
+        std::fill(stepOctaveOffset, stepOctaveOffset + 16, 0);
+    }
+};
+
+// 8-bar phrase with per-bar pitch state (double-buffered in processor)
+struct ExpandedPhrase
+{
+    BarPitchState bars[8];
+    float         phraseArc[8]; // deviation level per bar
+    bool          isValid;
+
+    ExpandedPhrase() : isValid(false)
+    {
+        float arc[] = {0.0f, 0.1f, 0.2f, 0.4f, 0.3f, 0.5f, 0.7f, 0.2f};
+        std::copy(arc, arc + 8, phraseArc);
+    }
+};
+
 // Snap semitone offset to nearest tone in the scale
 static inline int snapToScale(int semitone, ScaleType t)
 {

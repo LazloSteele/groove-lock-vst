@@ -1,6 +1,110 @@
 #include "PluginEditor.h"
 #include "GenreProfile.h"
 
+// ─── DensityTensionPad ────────────────────────────────────────────────────────
+
+class GrooveLockEditor::DensityTensionPad : public juce::Component
+{
+public:
+    std::function<void(float, float)> onValueChange;
+
+    void setValues(float x, float y, bool notify = false)
+    {
+        xVal = juce::jlimit(0.f, 1.f, x);
+        yVal = juce::jlimit(0.f, 1.f, y);
+        repaint();
+        if (notify && onValueChange) onValueChange(xVal, yVal);
+    }
+
+    void setGenreClamp(float xMin, float xMax, float yMin, float yMax)
+    {
+        cxMin = xMin; cxMax = xMax; cyMin = yMin; cyMax = yMax;
+        repaint();
+    }
+
+    float getDensity() const { return xVal; }
+    float getTension() const { return yVal; }
+
+    void paint(juce::Graphics& g) override
+    {
+        auto b = getLocalBounds().toFloat();
+        g.fillAll(juce::Colour(0xff0d0d0d));
+
+        // Genre-clamped region (slightly brighter)
+        float cx1 = b.getX() + cxMin * b.getWidth();
+        float cy1 = b.getY() + (1.f - cyMax) * b.getHeight();
+        float cx2 = b.getX() + cxMax * b.getWidth();
+        float cy2 = b.getY() + (1.f - cyMin) * b.getHeight();
+        g.setColour(juce::Colour(0xff1a1a1a));
+        g.fillRect(cx1, cy1, cx2 - cx1, cy2 - cy1);
+
+        // Centre grid lines
+        g.setColour(juce::Colour(0xff242424));
+        g.drawLine(b.getCentreX(), b.getY(), b.getCentreX(), b.getBottom(), 0.5f);
+        g.drawLine(b.getX(), b.getCentreY(), b.getRight(), b.getCentreY(), 0.5f);
+
+        // Border
+        g.setColour(juce::Colour(0xff333333));
+        g.drawRect(b, 1.f);
+
+        // Crosshair through cursor
+        float dotX = b.getX() + xVal * b.getWidth();
+        float dotY = b.getY() + (1.f - yVal) * b.getHeight();
+        g.setColour(juce::Colour(0xff444444));
+        g.drawLine(dotX, b.getY(), dotX, b.getBottom(), 0.5f);
+        g.drawLine(b.getX(), dotY, b.getRight(), dotY, 0.5f);
+
+        // Cursor dot
+        g.setColour(juce::Colour(0xffff6622));
+        g.fillEllipse(dotX - 5.f, dotY - 5.f, 10.f, 10.f);
+        g.setColour(juce::Colours::white.withAlpha(0.6f));
+        g.drawEllipse(dotX - 5.f, dotY - 5.f, 10.f, 10.f, 1.f);
+    }
+
+    void mouseDown    (const juce::MouseEvent& e) override { updateFromMouse(e); }
+    void mouseDrag    (const juce::MouseEvent& e) override { updateFromMouse(e); }
+    void mouseDoubleClick(const juce::MouseEvent&)  override { setValues(0.5f, 0.5f, true); }
+
+private:
+    float xVal = 0.5f, yVal = 0.5f;
+    float cxMin = 0.f, cxMax = 1.f, cyMin = 0.f, cyMax = 1.f;
+
+    void updateFromMouse(const juce::MouseEvent& e)
+    {
+        auto b  = getLocalBounds().toFloat();
+        float nx = juce::jlimit(0.f, 1.f, (e.x - b.getX()) / b.getWidth());
+        float ny = juce::jlimit(0.f, 1.f, 1.f - (e.y - b.getY()) / b.getHeight());
+        setValues(nx, ny, true);
+    }
+};
+
+// ─── PhraseBarIndicator ───────────────────────────────────────────────────────
+
+class GrooveLockEditor::PhraseBarIndicator : public juce::Component
+{
+public:
+    void setCurrentBar(int bar) { currentBar = bar & 7; repaint(); }
+
+    void paint(juce::Graphics& g) override
+    {
+        auto b = getLocalBounds();
+        int w = b.getWidth() / 8;
+        for (int i = 0; i < 8; ++i)
+        {
+            juce::Rectangle<int> cell(b.getX() + i * w, b.getY(), w - 1, b.getHeight());
+            bool active = (i == currentBar);
+            g.setColour(active ? juce::Colour(0xffff6622) : juce::Colour(0xff2a2a2a));
+            g.fillRoundedRectangle(cell.toFloat().reduced(1.f), 2.f);
+            g.setFont(juce::Font(8.f));
+            g.setColour(active ? juce::Colours::white : juce::Colour(0xff555555));
+            g.drawText(juce::String(i + 1), cell, juce::Justification::centred);
+        }
+    }
+
+private:
+    int currentBar = 0;
+};
+
 // ─── ListBox model ────────────────────────────────────────────────────────────
 
 class GrooveLockEditor::TemplateListModel : public juce::ListBoxModel
@@ -138,6 +242,44 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     templateList.setRowHeight(40);
     templateList.setColour(juce::ListBox::backgroundColourId, juce::Colour(0xff141414));
 
+    // XY pad — Density (X) / Tension (Y)
+    xyPad = std::make_unique<DensityTensionPad>();
+    addAndMakeVisible(*xyPad);
+
+    xyPad->setValues(proc.density.get(), proc.tension.get());
+    xyPad->onValueChange = [this](float d, float t) {
+        proc.density.set(d);
+        proc.tension.set(t);
+        proc.phraseParamsDirty.set(1);
+        xyCoordLabel.setText("D " + juce::String(d, 2) + "  T " + juce::String(t, 2),
+                             juce::dontSendNotification);
+    };
+
+    addAndMakeVisible(xyCoordLabel);
+    xyCoordLabel.setFont(juce::Font(9.f));
+    xyCoordLabel.setColour(juce::Label::textColourId, juce::Colour(0xff666666));
+    xyCoordLabel.setJustificationType(juce::Justification::centred);
+    xyCoordLabel.setText("D 0.50  T 0.50", juce::dontSendNotification);
+
+    addAndMakeVisible(regenModeBox);
+    regenModeBox.addItem("Fixed",    1);
+    regenModeBox.addItem("Per-Loop", 2);
+    regenModeBox.addItem("Manual",   3);
+    regenModeBox.setSelectedId(proc.regenMode.get() + 1, juce::dontSendNotification);
+    regenModeBox.onChange = [this] {
+        proc.regenMode.set(regenModeBox.getSelectedId() - 1);
+        regenButton.setVisible(regenModeBox.getSelectedId() == 3);
+    };
+
+    addAndMakeVisible(regenButton);
+    regenButton.setVisible(proc.regenMode.get() == 2);
+    regenButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff224488));
+    regenButton.onClick = [this] { proc.regeneratePhrase(); };
+
+    // Phrase bar indicator
+    phraseBarIndicator = std::make_unique<PhraseBarIndicator>();
+    addAndMakeVisible(*phraseBarIndicator);
+
     // Knobs
     setupKnob(swingKnob,      swingLabel,      "Swing",    0,   100, 55,  "%");
     setupKnob(humanizeKnob,   humanizeLabel,   "Humanize", 0,   100, 20,  "%");
@@ -156,6 +298,8 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     // I/O config
     addAndMakeVisible(inputModeToggle);
     inputModeToggle.setToggleState(proc.inputMode.get() == 0, juce::dontSendNotification);
+    inputModeToggle.setColour(juce::ToggleButton::tickColourId,         juce::Colour(0xffff6622));
+    inputModeToggle.setColour(juce::ToggleButton::tickDisabledColourId, juce::Colour(0xff555555));
     inputModeToggle.onStateChange = [this] {
         proc.inputMode.set(inputModeToggle.getToggleState() ? 0 : 1);
     };
@@ -184,6 +328,8 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     // Pitch panel
     addAndMakeVisible(pitchEnabledToggle);
     pitchEnabledToggle.setToggleState(false, juce::dontSendNotification);
+    pitchEnabledToggle.setColour(juce::ToggleButton::tickColourId,         juce::Colour(0xffff6622));
+    pitchEnabledToggle.setColour(juce::ToggleButton::tickDisabledColourId, juce::Colour(0xff555555));
     pitchEnabledToggle.onStateChange = [this] {
         proc.pitchEnabled.set(pitchEnabledToggle.getToggleState() ? 1 : 0);
     };
@@ -227,6 +373,8 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
 
     addAndMakeVisible(pitchChromaticToggle);
     pitchChromaticToggle.setToggleState(true, juce::dontSendNotification);
+    pitchChromaticToggle.setColour(juce::ToggleButton::tickColourId,         juce::Colour(0xffff6622));
+    pitchChromaticToggle.setColour(juce::ToggleButton::tickDisabledColourId, juce::Colour(0xff555555));
     pitchChromaticToggle.onStateChange = [this] {
         proc.pitchChromatic.set(pitchChromaticToggle.getToggleState() ? 1 : 0);
     };
@@ -323,6 +471,7 @@ void GrooveLockEditor::resized()
     // Transport bar (28px bottom)
     auto transport = area.removeFromBottom(28);
     tempoLabel.setBounds(transport.removeFromRight(160));
+    phraseBarIndicator->setBounds(transport.removeFromLeft(130).reduced(2, 4));
 
     // Main + sidebar
     auto sidebar_area = area.removeFromRight(sidebar).reduced(4);
@@ -334,10 +483,25 @@ void GrooveLockEditor::resized()
         // Browser header
         searchBox.setBounds(s.removeFromTop(24));
         genreFilter.setBounds(s.removeFromTop(24));
-        int listH = (int)(s.getHeight() * 0.45f);
+        int listH = (int)(s.getHeight() * 0.35f); // reduced to make room for XY pad
         templateList.setBounds(s.removeFromTop(listH));
 
-        s.removeFromTop(6);
+        s.removeFromTop(4);
+
+        // Density/Tension XY pad
+        int xySize = juce::jmin(s.getWidth(), 160);
+        xyPad->setBounds(s.removeFromTop(xySize));
+        xyCoordLabel.setBounds(s.removeFromTop(14));
+        {
+            auto regenRow = s.removeFromTop(22);
+            regenModeBox.setBounds(regenButton.isVisible()
+                                    ? regenRow.removeFromLeft(regenRow.getWidth() - 54)
+                                    : regenRow);
+            if (regenButton.isVisible())
+                regenButton.setBounds(regenRow);
+        }
+
+        s.removeFromTop(4);
 
         // Global controls (2×3 grid of knobs)
         int knobW = s.getWidth() / 3;
@@ -407,6 +571,14 @@ void GrooveLockEditor::timerCallback()
     drumView.setCurrentStep(step);
     bassView.setCurrentStep(step);
     lockView.setCurrentStep(step);
+
+    phraseBarIndicator->setCurrentBar(proc.currentPhraseBar.get());
+
+    // Regenerate phrase when parameters changed or per-loop boundary was crossed
+    if (proc.phraseParamsDirty.compareAndSetBool(0, 1))
+        proc.regeneratePhrase();
+    else if (proc.regenMode.get() == 1 && proc.needsRegen.compareAndSetBool(0, 1))
+        proc.regeneratePhrase();
 }
 
 void GrooveLockEditor::refreshFromTemplate()
@@ -428,6 +600,10 @@ void GrooveLockEditor::refreshFromTemplate()
     auto profile = GenreProfile::forGenre(t->genre);
     int scaleId = (int)profile.defaultScale + 1;
     pitchScaleBox.setSelectedId(scaleId, juce::sendNotification);
+
+    // Update XY pad clamp region to reflect genre's accessible range
+    xyPad->setGenreClamp(profile.densityClampMin, profile.densityClampMax,
+                         profile.tensionClampMin, profile.tensionClampMax);
 
     // Sync density hint from template if present
     if (t->pitch.hasPitchData)

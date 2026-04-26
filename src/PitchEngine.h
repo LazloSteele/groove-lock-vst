@@ -16,11 +16,17 @@ struct PitchEngineParams
 class PitchEngine
 {
 public:
-    // Pre-compute all 16 MIDI note numbers for the bar.
+    // Pre-compute all 16 MIDI note numbers for the bar from the template directly.
     // Call this at step 0 of each bar before processStep fires.
     void computeBar(const GrooveTemplate* tmpl,
                     const GenreProfile&   profile,
                     const PitchEngineParams& params);
+
+    // Pre-compute from a PhraseExpander BarPitchState (used for 8-bar expansion).
+    // Roles and octave offsets come from the phrase; scale/density resolution is unchanged.
+    void computeBarFromState(const BarPitchState&     state,
+                              const GenreProfile&      profile,
+                              const PitchEngineParams& params);
 
     // Returns MIDI note for this step, or params.rootMidiNote if pitch is disabled
     // or the step has no active bass hit.

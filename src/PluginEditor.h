@@ -41,6 +41,13 @@ private:
     juce::Label   swingLabel, humanizeLabel, velOffLabel,
                   timingOffLabel, gateScaleLabel, glideLabel;
 
+    //=== Sidebar — Density/Tension XY pad ===
+    class DensityTensionPad;
+    std::unique_ptr<DensityTensionPad> xyPad;
+    juce::Label         xyCoordLabel;
+    juce::ComboBox      regenModeBox;
+    juce::TextButton    regenButton { "Regen" };
+
     //=== Sidebar — Pitch panel ===
     juce::ToggleButton  pitchEnabledToggle  { "Pitch hints" };
     juce::ComboBox      pitchRootBox;
@@ -52,6 +59,10 @@ private:
     juce::TextButton    octaveUpButton      { "Oct +" };
     juce::Label         octaveDisplayLabel;
     int                 currentOctave = 2;
+
+    //=== Transport — phrase bar indicator ===
+    class PhraseBarIndicator;
+    std::unique_ptr<PhraseBarIndicator> phraseBarIndicator;
 
     //=== Sidebar — I/O config ===
     juce::ToggleButton inputModeToggle { "Live MIDI in" };

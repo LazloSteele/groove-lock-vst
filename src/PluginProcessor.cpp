@@ -39,6 +39,31 @@ void GrooveLockProcessor::loadTemplate(int index)
     if (!t) return;
     templateIndex.set(index);
     currentTmpl.store(t, std::memory_order_release);
+    phraseParamsDirty.set(1); // new template → regenerate phrase
+}
+
+void GrooveLockProcessor::regeneratePhrase()
+{
+    auto* t     = currentTmpl.load(std::memory_order_relaxed);
+    auto  genre = t ? t->genre : juce::String("Modern West Coast");
+    auto  prof  = GenreProfile::forGenre(genre);
+
+    float d  = density.get();
+    float tn = tension.get();
+
+    // Ignore genre clamps when override is active
+    if (clampOverride.get())
+    {
+        prof.densityClampMin = 0.f; prof.densityClampMax = 1.f;
+        prof.tensionClampMin = 0.f; prof.tensionClampMax = 1.f;
+    }
+
+    phraseExpander.compute(t, prof, d, tn);
+
+    // Write to inactive buffer, then atomically make it active
+    phraseBuffers[inactiveBuffer] = phraseExpander.getPhrase();
+    activePhraseIdx.store(inactiveBuffer, std::memory_order_release);
+    inactiveBuffer = 1 - inactiveBuffer;
 }
 
 void GrooveLockProcessor::sendPanic() { panicFlag.set(1); }
@@ -61,6 +86,11 @@ void GrooveLockProcessor::syncParams()
     p.pitch.densityOverride   = pitchDensity.get();
     p.pitch.chromaticApproach = pitchChromatic.get() != 0;
     p.pitch.pitchEnabled      = pitchEnabled.get() != 0;
+
+    // Pass active phrase buffer pointer — acquire ordering sees completed phrase write
+    const ExpandedPhrase* activePhrase =
+        &phraseBuffers[activePhraseIdx.load(std::memory_order_acquire)];
+    lockEngine.setExpandedPhrase(activePhrase->isValid ? activePhrase : nullptr);
 
     lockEngine.setParams(p);
 }
@@ -102,7 +132,7 @@ void GrooveLockProcessor::processBlock(juce::AudioBuffer<float>& audio,
     if (inputMode.get() == 0)
         analyzer.process(midi, pos, currentSampleRate, audio.getNumSamples());
 
-    // Update step position for UI
+    // Update step + phrase-bar position for UI
     if (pos.isPlaying)
     {
         double barPos = std::fmod(pos.ppqPosition, 4.0);
@@ -113,6 +143,13 @@ void GrooveLockProcessor::processBlock(juce::AudioBuffer<float>& audio,
     juce::MidiBuffer outBuf;
     lockEngine.process(midiOut, pos, currentSampleRate, totalSamplesPlayed, audio.getNumSamples());
     midiOut.flush(outBuf, totalSamplesPlayed, audio.getNumSamples());
+
+    // Expose phrase-bar for UI and detect per-loop boundary
+    int pBar = lockEngine.getCurrentPhraseBar();
+    currentPhraseBar.set(pBar);
+    if (regenMode.get() == 1 && pBar == 0 && lastPhraseBar == 7)
+        needsRegen.set(1);
+    lastPhraseBar = pBar;
     totalSamplesPlayed += audio.getNumSamples();
 
     midi.clear();
@@ -137,6 +174,9 @@ void GrooveLockProcessor::getStateInformation(juce::MemoryBlock& dest)
     state.setProperty("pitchScale",      pitchScale.get(),      nullptr);
     state.setProperty("pitchDensity",    pitchDensity.get(),    nullptr);
     state.setProperty("pitchChromatic",  pitchChromatic.get(),  nullptr);
+    state.setProperty("density",         density.get(),         nullptr);
+    state.setProperty("tension",         tension.get(),         nullptr);
+    state.setProperty("regenMode",       regenMode.get(),       nullptr);
 
     juce::MemoryOutputStream mos(dest, true);
     state.writeToStream(mos);
@@ -168,6 +208,9 @@ void GrooveLockProcessor::setStateInformation(const void* data, int size)
     pitchScale.set      (getI("pitchScale",        0));
     pitchDensity.set    (getI("pitchDensity",      0));
     pitchChromatic.set  (getI("pitchChromatic",    1));
+    density.set         (getF("density",         0.5f));
+    tension.set         (getF("tension",         0.5f));
+    regenMode.set       (getI("regenMode",          1));
     loadTemplate        (getI("templateIndex",     0));
 }
 
