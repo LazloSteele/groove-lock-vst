@@ -38,12 +38,7 @@ void GrooveLockProcessor::loadTemplate(int index)
     auto* t = browser.getTemplate(index);
     if (!t) return;
     templateIndex.set(index);
-
-    auto* copy = new GrooveTemplate();
-    // Copy via JSON round-trip (safe, not called on audio thread)
-    copy->loadFromJSON(t->toJSON());
-    stagingTmpl.reset(copy);
-    templateSwapFlag.set(1);
+    currentTmpl.store(t, std::memory_order_release);
 }
 
 void GrooveLockProcessor::sendPanic() { panicFlag.set(1); }
@@ -83,11 +78,12 @@ void GrooveLockProcessor::processBlock(juce::AudioBuffer<float>& audio,
         return;
     }
 
-    // Template swap
-    if (templateSwapFlag.compareAndSetBool(0, 1) && stagingTmpl)
+    // Pick up template changes written by the message thread
+    auto* t = currentTmpl.load(std::memory_order_acquire);
+    if (t != lastAppliedTmpl)
     {
-        activeTmpl.store(stagingTmpl.get());
-        lockEngine.setTemplate(activeTmpl.load());
+        lastAppliedTmpl = t;
+        lockEngine.setTemplate(t);
     }
 
     syncParams();

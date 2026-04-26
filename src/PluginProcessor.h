@@ -63,7 +63,7 @@ public:
     juce::Atomic<int>   pitchChromatic  { 1    }; // chromatic approach on/off
 
     // Current template for UI reads (written audio-thread-safe via double buffer)
-    const GrooveTemplate* getCurrentTemplate() const { return activeTmpl.load(); }
+    const GrooveTemplate* getCurrentTemplate() const { return currentTmpl.load(std::memory_order_relaxed); }
 
     // Step position indicator for UI (written by audio thread, read by UI)
     juce::Atomic<int> currentStep { 0 };
@@ -74,10 +74,10 @@ private:
     LockEngine       lockEngine;
     MidiOutputManager midiOut;
 
-    // Double-buffer template swap
-    std::unique_ptr<GrooveTemplate> stagingTmpl;
-    std::atomic<GrooveTemplate*>    activeTmpl  { nullptr };
-    juce::Atomic<int>               templateSwapFlag { 0 };
+    // Browser templates are read-only and live for the plugin's lifetime,
+    // so both threads can safely read through this atomic pointer.
+    std::atomic<const GrooveTemplate*> currentTmpl { nullptr };
+    const GrooveTemplate*              lastAppliedTmpl { nullptr };  // audio thread only
 
     double currentSampleRate  = 44100.0;
     int64  totalSamplesPlayed = 0;
