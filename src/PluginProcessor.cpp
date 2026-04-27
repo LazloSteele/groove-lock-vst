@@ -92,6 +92,9 @@ void GrooveLockProcessor::syncParams()
         &phraseBuffers[activePhraseIdx.load(std::memory_order_acquire)];
     lockEngine.setExpandedPhrase(activePhrase->isValid ? activePhrase : nullptr);
 
+    // Live drum gating: pass analyzer state when in live input mode
+    p.liveDrums = (inputMode.get() == 0) ? &analyzer.getState() : nullptr;
+
     lockEngine.setParams(p);
 }
 

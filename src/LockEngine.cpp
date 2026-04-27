@@ -76,6 +76,45 @@ void LockEngine::processStep(int step, int64 stepSamplePos, double sampleRate,
 
     // Lock-point adjustments
     auto lp = tmpl->lockAt(step);
+
+    // Live drum gating: when liveDrums is set, suppress or allow steps per lock type
+    if (params.liveDrums != nullptr)
+    {
+        const DrumState& ld = *params.liveDrums;
+        if (lp)
+        {
+            switch (lp->type)
+            {
+                case LockType::UNISON:
+                    if (ld.kickHits[step] == 0) return;
+                    break;
+                case LockType::ALTERNATE:
+                    if (ld.kickHits[step] > 0 || ld.snareHits[step] > 0) return;
+                    break;
+                case LockType::ANTICIPATE:
+                {
+                    // Fire only if the next UNISON lock step will have a kick hit
+                    bool nextKick = false;
+                    for (int i = 1; i <= 16; ++i)
+                    {
+                        int s = (step + i) & 15;
+                        auto lp2 = tmpl->lockAt(s);
+                        if (lp2 && lp2->type == LockType::UNISON)
+                        {
+                            nextKick = ld.kickHits[s] > 0;
+                            break;
+                        }
+                    }
+                    if (!nextKick) return;
+                    break;
+                }
+                case LockType::FILL:
+                    break; // fire freely
+            }
+        }
+        // No lock point: fire as normal (safe default)
+    }
+
     if (lp)
     {
         switch (lp->type)
@@ -96,6 +135,15 @@ void LockEngine::processStep(int step, int64 stepSamplePos, double sampleRate,
 
     // Velocity
     float vel = velForTier(velTier);
+
+    // UNISON velocity matching: scale bass velocity to track the live kick velocity
+    if (params.liveDrums != nullptr && lp && lp->type == LockType::UNISON)
+    {
+        float kickVel  = (float)params.liveDrums->kickHits[step];
+        float humanize = params.humanizePercent / 100.f;
+        float randomVel = velForTier(velTier);
+        vel = vel * (kickVel / 127.f) * (1.f - humanize) + randomVel * humanize;
+    }
     float velHumanize = (params.humanizePercent / 100.f) * profile.timingToVelocityRatio;
     vel += (random.nextFloat() * 2.f - 1.f) * profile.velocityJitterMax * velHumanize;
     vel += params.velOffset;
