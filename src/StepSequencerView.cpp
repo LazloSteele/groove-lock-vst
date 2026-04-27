@@ -32,16 +32,43 @@ void StepSequencerView::setBassRows(const juce::OwnedArray<BassRow>* r)
     bassRows = r; repaint();
 }
 
+void StepSequencerView::setLiveDrumState(const DrumState* s)
+{
+    liveDrumState = s; repaint();
+}
+
 void StepSequencerView::setCurrentStep(int s) { currentStep = s; repaint(); }
+
+static int velToTier(int vel)
+{
+    if (vel <= 0)  return 0;
+    if (vel <= 32) return 1;
+    if (vel <= 64) return 2;
+    if (vel <= 96) return 3;
+    return 4;
+}
+
+static const char* kLiveRowLabels[3] = { "Kick", "Snare", "Hat" };
 
 int StepSequencerView::numRows() const
 {
+    if (colorMode == 0 && liveDrumState) return 3;
     if (colorMode == 0) return drumRows ? drumRows->size() : 0;
     return bassRows ? bassRows->size() : 0;
 }
 
 int StepSequencerView::getVelTier(int row, int step) const
 {
+    if (colorMode == 0 && liveDrumState)
+    {
+        switch (row)
+        {
+            case 0: return velToTier(liveDrumState->kickHits[step]);
+            case 1: return velToTier(liveDrumState->snareHits[step]);
+            case 2: return velToTier(liveDrumState->hatHits[step]);
+            default: return 0;
+        }
+    }
     if (colorMode == 0 && drumRows && row < drumRows->size())
         return (*drumRows)[row]->steps[step];
     if (colorMode == 1 && bassRows && row < bassRows->size())
@@ -51,6 +78,8 @@ int StepSequencerView::getVelTier(int row, int step) const
 
 juce::String StepSequencerView::getTimingLabel(int row, int step) const
 {
+    if (colorMode == 0 && liveDrumState)
+        return {};
     if (colorMode == 0 && drumRows && row < drumRows->size())
         return drumTimingSymbol((*drumRows)[row]->timing[step]);
     if (colorMode == 1 && bassRows && row < bassRows->size())
@@ -146,8 +175,9 @@ void StepSequencerView::paint(juce::Graphics& g)
     {
         // Row label
         juce::String label;
-        if (colorMode == 0 && drumRows) label = (*drumRows)[row]->label;
-        if (colorMode == 1 && bassRows) label = (*bassRows)[row]->label;
+        if (colorMode == 0 && liveDrumState && row < 3) label = kLiveRowLabels[row];
+        else if (colorMode == 0 && drumRows)             label = (*drumRows)[row]->label;
+        else if (colorMode == 1 && bassRows)             label = (*bassRows)[row]->label;
         g.setFont(10.f);
         g.setColour(colorMode == 0 ? juce::Colour(0xff999999) : juce::Colour(0xff6699cc));
         g.drawText(label, 0, row * kRowH, kLabelW - 4, kRowH, juce::Justification::centredRight);

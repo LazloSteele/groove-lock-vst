@@ -76,6 +76,9 @@ public:
     juce::Atomic<int> currentStep      { 0 };
     juce::Atomic<int> currentPhraseBar { 0 };
 
+    // Live drum state snapshot for display (written by audio thread, read by UI timer)
+    DrumState liveDrumDisplay;
+
     // Regenerate the 8-bar phrase. Call from message thread only.
     void regeneratePhrase();
 

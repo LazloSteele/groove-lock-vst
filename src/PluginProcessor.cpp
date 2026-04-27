@@ -133,7 +133,10 @@ void GrooveLockProcessor::processBlock(juce::AudioBuffer<float>& audio,
 
     // Feed drum MIDI to analyzer (live mode)
     if (inputMode.get() == 0)
+    {
         analyzer.process(midi, pos, currentSampleRate, audio.getNumSamples());
+        liveDrumDisplay = analyzer.getState();
+    }
 
     // Update step + phrase-bar position for UI
     if (pos.isPlaying)

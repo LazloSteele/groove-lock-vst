@@ -1,6 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "GrooveTemplate.h"
+#include "PatternAnalyzer.h"
 
 // Renders a row-based step sequencer grid.
 // mode: 0 = drums (amber), 1 = bass (blue)
@@ -11,6 +12,10 @@ public:
 
     void setDrumRows(const juce::OwnedArray<DrumRow>* rows);
     void setBassRows(const juce::OwnedArray<BassRow>* rows);
+
+    // When set, overrides drumRows with live hit data (kick/snare/hat rows).
+    // Pass nullptr to revert to template drum display.
+    void setLiveDrumState(const DrumState* s);
 
     void setCurrentStep(int step);   // -1 = not playing
 
@@ -24,8 +29,9 @@ public:
 private:
     int colorMode = 0;
 
-    const juce::OwnedArray<DrumRow>* drumRows = nullptr;
-    const juce::OwnedArray<BassRow>* bassRows = nullptr;
+    const juce::OwnedArray<DrumRow>* drumRows    = nullptr;
+    const juce::OwnedArray<BassRow>* bassRows    = nullptr;
+    const DrumState*                  liveDrumState = nullptr;
 
     int currentStep  = -1;
     int hoveredRow   = -1;

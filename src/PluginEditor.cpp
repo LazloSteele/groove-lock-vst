@@ -576,6 +576,12 @@ void GrooveLockEditor::timerCallback()
     bassView.setCurrentStep(step);
     lockView.setCurrentStep(step);
 
+    // Switch drum grid between live input and template display
+    if (proc.inputMode.get() == 0)
+        drumView.setLiveDrumState(&proc.liveDrumDisplay);
+    else
+        drumView.setLiveDrumState(nullptr);
+
     phraseBarIndicator->setCurrentBar(proc.currentPhraseBar.get());
 
     // Regenerate phrase when parameters changed or per-loop boundary was crossed
