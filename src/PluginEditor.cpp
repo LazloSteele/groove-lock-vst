@@ -175,9 +175,9 @@ private:
 GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     : AudioProcessorEditor(p), proc(p)
 {
-    setSize(780, 560);
+    setSize(900, 700);
     setResizable(true, false);
-    setResizeLimits(640, 480, 1600, 1000);
+    setResizeLimits(800, 600, 1600, 1200);
 
     // Header
     addAndMakeVisible(titleLabel);
@@ -484,13 +484,13 @@ void GrooveLockEditor::resized()
         // Browser header
         searchBox.setBounds(s.removeFromTop(24));
         genreFilter.setBounds(s.removeFromTop(24));
-        int listH = (int)(s.getHeight() * 0.35f); // reduced to make room for XY pad
+        int listH = (int)(s.getHeight() * 0.20f);
         templateList.setBounds(s.removeFromTop(listH));
 
         s.removeFromTop(4);
 
         // Density/Tension XY pad (guard: resized() fires from setSize() before xyPad is constructed)
-        int xySize = juce::jmin(s.getWidth(), 160);
+        int xySize = juce::jmin(s.getWidth(), 80);
         if (xyPad)
             xyPad->setBounds(s.removeFromTop(xySize));
         else
@@ -527,7 +527,7 @@ void GrooveLockEditor::resized()
         s.removeFromTop(6);
         inputModeToggle.setBounds(s.removeFromTop(22));
         outputChannelBox.setBounds(s.removeFromTop(22));
-        rootNoteBox.setBounds(s.removeFromTop(22));
+        // rootNoteBox omitted — root note is set via the pitch panel's Root + Oct controls
         s.removeFromTop(4);
         panicButton.setBounds(s.removeFromTop(26));
 
