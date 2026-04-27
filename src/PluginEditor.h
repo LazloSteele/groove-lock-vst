@@ -66,6 +66,8 @@ private:
 
     //=== Sidebar — I/O config ===
     juce::ToggleButton inputModeToggle { "Live MIDI in" };
+    class DrumMapPanel;
+    std::unique_ptr<DrumMapPanel> drumMapPanel;
     juce::ComboBox     outputChannelBox;
     juce::ComboBox     rootNoteBox;
     juce::TextButton   panicButton { "PANIC" };

@@ -105,6 +105,159 @@ private:
     int currentBar = 0;
 };
 
+// ─── DrumMapPanel ─────────────────────────────────────────────────────────────
+
+class GrooveLockEditor::DrumMapPanel : public juce::Component
+{
+public:
+    explicit DrumMapPanel(GrooveLockProcessor& p) : proc(p)
+    {
+        addAndMakeVisible(presetBox);
+        presetBox.addItem("Custom", 1);
+        int id = 2;
+        for (auto& preset : DrumMappingPresets::getAll())
+            presetBox.addItem(preset.name, id++);
+        presetBox.setSelectedId(1, juce::dontSendNotification);
+        presetBox.setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff1a1a1a));
+
+        presetBox.onChange = [this] {
+            int sel = presetBox.getSelectedId();
+            if (sel <= 1) return; // Custom selected — no action
+            const auto& presets = DrumMappingPresets::getAll();
+            size_t idx = (size_t)(sel - 2);
+            if (idx < presets.size())
+            {
+                proc.applyMapping(presets[idx].mapping);
+                refreshNoteLabels(proc.currentMapping);
+            }
+        };
+
+        static const char* kCatNames[3] = { "Kick", "Snare", "Hat" };
+        for (int i = 0; i < 3; ++i)
+        {
+            auto& row = rows[i];
+            row.catLabel.setText(kCatNames[i], juce::dontSendNotification);
+            row.catLabel.setFont(juce::Font(10.f));
+            row.catLabel.setColour(juce::Label::textColourId, juce::Colour(0xff888888));
+            addAndMakeVisible(row.catLabel);
+
+            row.notesLabel.setFont(juce::Font(9.f));
+            row.notesLabel.setColour(juce::Label::textColourId, juce::Colour(0xffcccccc));
+            addAndMakeVisible(row.notesLabel);
+
+            auto makeBtn = [this](juce::TextButton& b, const juce::String& text) {
+                b.setButtonText(text);
+                b.setColour(juce::TextButton::buttonColourId,  juce::Colour(0xff2a2a2a));
+                b.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffaaaaaa));
+                addAndMakeVisible(b);
+            };
+            makeBtn(row.learnBtn, "Learn");
+            makeBtn(row.clearBtn, "x");
+
+            int category = i + 1; // 1=kick 2=snare 3=hat
+            row.learnBtn.onClick = [this, category] {
+                // Toggle: clicking again cancels
+                proc.learnState.set(proc.learnState.get() == category ? 0 : category);
+            };
+
+            row.clearBtn.onClick = [this, i] {
+                auto m = proc.currentMapping;
+                if      (i == 0) m.kickNotes.clear();
+                else if (i == 1) m.snareNotes.clear();
+                else             m.hatNotes.clear();
+                proc.applyMapping(m);
+                refreshNoteLabels(proc.currentMapping);
+                presetBox.setSelectedId(1, juce::dontSendNotification); // Custom
+            };
+        }
+
+        refreshNoteLabels(proc.currentMapping);
+    }
+
+    // Called from timerCallback when audio thread captured a learn note
+    void onLearnCapture(int category, int note)
+    {
+        auto m = proc.currentMapping;
+        switch (category)
+        {
+            case 1: if (!m.kickNotes.contains(note))  m.kickNotes.add(note);  break;
+            case 2: if (!m.snareNotes.contains(note)) m.snareNotes.add(note); break;
+            case 3: if (!m.hatNotes.contains(note))   m.hatNotes.add(note);   break;
+            default: return;
+        }
+        proc.applyMapping(m);
+        refreshNoteLabels(proc.currentMapping);
+        presetBox.setSelectedId(1, juce::dontSendNotification); // Custom
+    }
+
+    // Called from timerCallback to keep Learn button state in sync
+    void updateLearnButtons(int learnState)
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            bool active = (learnState == i + 1);
+            rows[i].learnBtn.setColour(juce::TextButton::buttonColourId,
+                active ? juce::Colour(0xffcc4400) : juce::Colour(0xff2a2a2a));
+            rows[i].learnBtn.setButtonText(active ? "..." : "Learn");
+        }
+    }
+
+    void resized() override
+    {
+        auto b = getLocalBounds().reduced(3, 2);
+        presetBox.setBounds(b.removeFromTop(20));
+        b.removeFromTop(2);
+        for (auto& row : rows)
+        {
+            auto r = b.removeFromTop(20);
+            row.catLabel.setBounds(r.removeFromLeft(36));
+            row.clearBtn.setBounds(r.removeFromRight(16));
+            r.removeFromRight(2);
+            row.learnBtn.setBounds(r.removeFromRight(38));
+            r.removeFromRight(2);
+            row.notesLabel.setBounds(r);
+        }
+    }
+
+    void paint(juce::Graphics& g) override
+    {
+        g.setColour(juce::Colour(0xff161616));
+        g.fillRoundedRectangle(getLocalBounds().toFloat(), 3.f);
+        g.setColour(juce::Colour(0xff2a2a2a));
+        g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(0.5f), 3.f, 1.f);
+    }
+
+private:
+    GrooveLockProcessor& proc;
+
+    juce::ComboBox presetBox;
+
+    struct Row
+    {
+        juce::Label      catLabel;
+        juce::Label      notesLabel;
+        juce::TextButton learnBtn;
+        juce::TextButton clearBtn;
+    };
+    Row rows[3];
+
+    void refreshNoteLabels(const DrumMapping& m)
+    {
+        rows[0].notesLabel.setText(notesToString(m.kickNotes),  juce::dontSendNotification);
+        rows[1].notesLabel.setText(notesToString(m.snareNotes), juce::dontSendNotification);
+        rows[2].notesLabel.setText(notesToString(m.hatNotes),   juce::dontSendNotification);
+    }
+
+    static juce::String notesToString(const juce::Array<int>& notes)
+    {
+        if (notes.isEmpty()) return "(none)";
+        juce::StringArray names;
+        for (int n : notes)
+            names.add(juce::MidiMessage::getMidiNoteName(n, true, true, 4));
+        return names.joinIntoString(", ");
+    }
+};
+
 // ─── ListBox model ────────────────────────────────────────────────────────────
 
 class GrooveLockEditor::TemplateListModel : public juce::ListBoxModel
@@ -298,8 +451,16 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     inputModeToggle.setColour(juce::ToggleButton::tickColourId,         juce::Colour(0xffff6622));
     inputModeToggle.setColour(juce::ToggleButton::tickDisabledColourId, juce::Colour(0xff555555));
     inputModeToggle.onStateChange = [this] {
-        proc.inputMode.set(inputModeToggle.getToggleState() ? 0 : 1);
+        bool live = inputModeToggle.getToggleState();
+        proc.inputMode.set(live ? 0 : 1);
+        if (!live) proc.learnState.set(0); // cancel any active learn on mode exit
+        drumMapPanel->setVisible(live);
+        resized();
     };
+
+    drumMapPanel = std::make_unique<DrumMapPanel>(proc);
+    addAndMakeVisible(*drumMapPanel);
+    drumMapPanel->setVisible(proc.inputMode.get() == 0);
 
     addAndMakeVisible(outputChannelBox);
     for (int i = 1; i <= 16; ++i)
@@ -525,6 +686,12 @@ void GrooveLockEditor::resized()
 
         s.removeFromTop(6);
         inputModeToggle.setBounds(s.removeFromTop(22));
+        if (drumMapPanel && drumMapPanel->isVisible())
+        {
+            s.removeFromTop(2);
+            drumMapPanel->setBounds(s.removeFromTop(86)); // 20px preset + 3*20px rows + 6px padding
+            s.removeFromTop(2);
+        }
         outputChannelBox.setBounds(s.removeFromTop(22));
         // rootNoteBox omitted — root note is set via the pitch panel's Root + Oct controls
         s.removeFromTop(4);
@@ -580,6 +747,15 @@ void GrooveLockEditor::timerCallback()
         drumView.setLiveDrumState(&proc.liveDrumDisplay);
     else
         drumView.setLiveDrumState(nullptr);
+
+    // Poll for MIDI learn capture and update learn button appearance
+    if (drumMapPanel && drumMapPanel->isVisible())
+    {
+        if (proc.learnCaptureReady.compareAndSetBool(0, 1))
+            drumMapPanel->onLearnCapture(proc.learnCapturedCategory.get(),
+                                         proc.learnCapturedNote.get());
+        drumMapPanel->updateLearnButtons(proc.learnState.get());
+    }
 
     phraseBarIndicator->setCurrentBar(proc.currentPhraseBar.get());
 
