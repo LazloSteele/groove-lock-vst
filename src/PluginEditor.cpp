@@ -471,7 +471,8 @@ void GrooveLockEditor::resized()
     // Transport bar (28px bottom)
     auto transport = area.removeFromBottom(28);
     tempoLabel.setBounds(transport.removeFromRight(160));
-    phraseBarIndicator->setBounds(transport.removeFromLeft(130).reduced(2, 4));
+    if (phraseBarIndicator)
+        phraseBarIndicator->setBounds(transport.removeFromLeft(130).reduced(2, 4));
 
     // Main + sidebar
     auto sidebar_area = area.removeFromRight(sidebar).reduced(4);
@@ -488,9 +489,12 @@ void GrooveLockEditor::resized()
 
         s.removeFromTop(4);
 
-        // Density/Tension XY pad
+        // Density/Tension XY pad (guard: resized() fires from setSize() before xyPad is constructed)
         int xySize = juce::jmin(s.getWidth(), 160);
-        xyPad->setBounds(s.removeFromTop(xySize));
+        if (xyPad)
+            xyPad->setBounds(s.removeFromTop(xySize));
+        else
+            s.removeFromTop(xySize);
         xyCoordLabel.setBounds(s.removeFromTop(14));
         {
             auto regenRow = s.removeFromTop(22);
