@@ -19,20 +19,24 @@ void PatternAnalyzer::process(const juce::MidiBuffer& midi,
                                const juce::AudioPlayHead::CurrentPositionInfo& pos,
                                double sampleRate, int numSamples)
 {
-    juce::ignoreUnused(numSamples);
     if (!pos.isPlaying) return;
 
     const double beatsPerBar  = 4.0;
     const double stepsPerBeat = 4.0;
+    const double bpm          = pos.bpm > 0.0 ? pos.bpm : 120.0;
+
+    // Clear stale hits whenever a bar boundary falls within this block
+    double blockEndPPQ = pos.ppqPosition + (double)numSamples / sampleRate * bpm / 60.0;
+    if ((int)(pos.ppqPosition / beatsPerBar) < (int)(blockEndPPQ / beatsPerBar))
+        reset();
 
     for (const auto meta : midi)
     {
         auto msg = meta.getMessage();
         if (!msg.isNoteOn()) continue;
 
-        // Calculate beat position of this event
-        double sampleOffset   = meta.samplePosition;
-        double ppqAtEvent     = pos.ppqPosition + (sampleOffset / sampleRate) * (pos.bpm / 60.0);
+        double sampleOffset = meta.samplePosition;
+        double ppqAtEvent   = pos.ppqPosition + (sampleOffset / sampleRate) * (bpm / 60.0);
         double barPos         = std::fmod(ppqAtEvent, beatsPerBar);
         int    step           = (int)std::floor(barPos * stepsPerBeat) & 15;
         int    vel            = msg.getVelocity();

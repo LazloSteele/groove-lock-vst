@@ -175,9 +175,6 @@ private:
 GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     : AudioProcessorEditor(p), proc(p)
 {
-    setSize(900, 700);
-    setResizable(true, false);
-    setResizeLimits(800, 600, 1600, 1200);
 
     // Header
     addAndMakeVisible(titleLabel);
@@ -412,6 +409,12 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     rebuildTemplateList();
     refreshFromTemplate();
 
+    // setSize must come after all child components are constructed so that
+    // resized() fires with every component already existing.
+    setResizable(true, false);
+    setResizeLimits(800, 600, 1600, 1200);
+    setSize(900, 700);
+
     startTimerHz(15);
 }
 
@@ -489,12 +492,8 @@ void GrooveLockEditor::resized()
 
         s.removeFromTop(4);
 
-        // Density/Tension XY pad (guard: resized() fires from setSize() before xyPad is constructed)
         int xySize = juce::jmin(s.getWidth(), 80);
-        if (xyPad)
-            xyPad->setBounds(s.removeFromTop(xySize));
-        else
-            s.removeFromTop(xySize);
+        xyPad->setBounds(s.removeFromTop(xySize));
         xyCoordLabel.setBounds(s.removeFromTop(14));
         {
             auto regenRow = s.removeFromTop(22);
