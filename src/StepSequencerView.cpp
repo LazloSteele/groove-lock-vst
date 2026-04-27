@@ -89,24 +89,24 @@ juce::String StepSequencerView::getTimingLabel(int row, int step) const
 
 juce::Colour StepSequencerView::cellColor(int tier) const
 {
-    if (colorMode == 0) // amber
+    if (colorMode == 0) // amber — drum hits scale toward accent
     {
         switch (tier) {
             case 0: return juce::Colour(0x04ffffff);
-            case 1: return juce::Colour(0xff5a4a3a);
-            case 2: return juce::Colour(0xffb87830);
-            case 3: return juce::Colour(0xffe89540);
-            case 4: return juce::Colour(0xffff6622);
+            case 1: return juce::Colour(0xff252a2e); // ghost: barely above bg
+            case 2: return juce::Colour(0xff7a6018); // med: muted amber
+            case 3: return juce::Colour(0xffcc8010); // full: warm amber
+            case 4: return juce::Colour(0xffff9f1c); // accent
         }
     }
-    else // blue
+    else // blue — bass hits stay semantically distinct
     {
         switch (tier) {
             case 0: return juce::Colour(0x04ffffff);
-            case 1: return juce::Colour(0xff2a3a4a);
-            case 2: return juce::Colour(0xff2868a0);
-            case 3: return juce::Colour(0xff3a90d8);
-            case 4: return juce::Colour(0xff22bbff);
+            case 1: return juce::Colour(0xff1e2a36); // ghost: near-primary
+            case 2: return juce::Colour(0xff2a5882); // med: deep blue
+            case 3: return juce::Colour(0xff3a80c8); // full: clear blue
+            case 4: return juce::Colour(0xff22aaee); // accent-blue
         }
     }
     return juce::Colours::transparentBlack;
@@ -116,13 +116,13 @@ juce::Colour StepSequencerView::cellBorder(int tier) const
 {
     if (colorMode == 0)
     {
-        if (tier == 4) return juce::Colour(0xffff4400);
+        if (tier == 4) return juce::Colour(0xffff9f1c);
         if (tier == 0) return juce::Colour(0x0affffff);
         return cellColor(tier).brighter(0.15f);
     }
     else
     {
-        if (tier == 4) return juce::Colour(0xff00ccff);
+        if (tier == 4) return juce::Colour(0xff22aaee);
         if (tier == 0) return juce::Colour(0x0affffff);
         return cellColor(tier).brighter(0.15f);
     }
@@ -130,7 +130,7 @@ juce::Colour StepSequencerView::cellBorder(int tier) const
 
 juce::Colour StepSequencerView::accentColor() const
 {
-    return colorMode == 0 ? juce::Colour(0xffff6622) : juce::Colour(0xff22bbff);
+    return colorMode == 0 ? juce::Colour(0xffff9f1c) : juce::Colour(0xff22aaee);
 }
 
 juce::Rectangle<int> StepSequencerView::cellBounds(int row, int step) const
@@ -157,7 +157,7 @@ void StepSequencerView::hitTest(const juce::Point<int>& pos, int& row, int& step
 
 void StepSequencerView::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colour(0xff111111));
+    g.fillAll(juce::Colour(0xff121417));
 
     // Step numbers header
     g.setColour(juce::Colour(0xff555555));
@@ -179,7 +179,7 @@ void StepSequencerView::paint(juce::Graphics& g)
         else if (colorMode == 0 && drumRows)             label = (*drumRows)[row]->label;
         else if (colorMode == 1 && bassRows)             label = (*bassRows)[row]->label;
         g.setFont(10.f);
-        g.setColour(colorMode == 0 ? juce::Colour(0xff999999) : juce::Colour(0xff6699cc));
+        g.setColour(colorMode == 0 ? juce::Colour(0xff8899aa) : juce::Colour(0xff5588bb));
         g.drawText(label, 0, row * kRowH, kLabelW - 4, kRowH, juce::Justification::centredRight);
 
         for (int s = 0; s < 16; ++s)
@@ -189,7 +189,7 @@ void StepSequencerView::paint(juce::Graphics& g)
 
             // Beat boundary grid lines
             bool isBeat = (s % 4 == 0);
-            g.setColour(isBeat ? juce::Colour(0xff333333) : juce::Colour(0xff1e1e1e));
+            g.setColour(isBeat ? juce::Colour(0xff1e2226) : juce::Colour(0xff161a1d));
             g.fillRect(bounds.expanded(0));
 
             // Cell fill

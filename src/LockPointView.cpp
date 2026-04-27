@@ -9,7 +9,7 @@ juce::Colour LockPointView::lockColor(LockType t) const
 {
     switch (t)
     {
-        case LockType::UNISON:     return juce::Colour(0xffff6622);
+        case LockType::UNISON:     return juce::Colour(0xffff9f1c);
         case LockType::ALTERNATE:  return juce::Colour(0xff4a9eff);
         case LockType::ANTICIPATE: return juce::Colour(0xffaa77ff);
         case LockType::FILL:       return juce::Colour(0xff44cc88);
@@ -35,12 +35,12 @@ int LockPointView::stepAtX(int x) const
 
 void LockPointView::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colour(0xff0d0d0d));
+    g.fillAll(juce::Colour(0xff121417));
 
     // Divider lines aligned with columns
     int availW = getWidth() - kLabelW;
     float cellW = (float)availW / 16.f;
-    g.setColour(juce::Colour(0xff222222));
+    g.setColour(juce::Colour(0xff1e2226));
     for (int s = 0; s < 16; ++s)
     {
         int x = kLabelW + (int)(s * cellW);
@@ -48,7 +48,7 @@ void LockPointView::paint(juce::Graphics& g)
     }
 
     g.setFont(10.f);
-    g.setColour(juce::Colour(0xff555555));
+    g.setColour(juce::Colour(0xff8899aa));
     g.drawText("LOCK", 2, 0, kLabelW - 4, getHeight(), juce::Justification::centredRight);
 
     if (!locks) return;

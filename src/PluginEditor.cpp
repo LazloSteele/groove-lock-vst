@@ -28,36 +28,55 @@ public:
     void paint(juce::Graphics& g) override
     {
         auto b = getLocalBounds().toFloat();
-        g.fillAll(juce::Colour(0xff0d0d0d));
+        g.fillAll(juce::Colour(0xff121417));
 
-        // Genre-clamped region (slightly brighter)
+        // Experimental zone (density > 70% OR tension > 70%) — subtle warm tint
+        float expXPx = b.getX() + 0.70f * b.getWidth();
+        float expYPx = b.getY() + (1.f - 0.70f) * b.getHeight(); // top 30% = tension exp.
+        g.setColour(juce::Colour(0x0cff9f1c));
+        g.fillRect(expXPx, b.getY(), b.getRight() - expXPx, b.getHeight()); // density exp.
+        g.fillRect(b.getX(), b.getY(), b.getWidth(), expYPx - b.getY());     // tension exp.
+        // Dotted boundary lines
+        g.setColour(juce::Colour(0x28ff9f1c));
+        g.drawVerticalLine  ((int)expXPx, b.getY(),    b.getBottom());
+        g.drawHorizontalLine((int)expYPx, b.getX(), b.getRight());
+        // Labels
+        g.setFont(juce::Font(6.5f));
+        g.setColour(juce::Colour(0x50ff9f1c));
+        g.drawText("Experimental", (int)expXPx + 2, b.getBottom() - 11,
+                   (int)(b.getRight() - expXPx) - 4, 10, juce::Justification::centred);
+        g.drawText("Experimental", b.getX() + 2, b.getY() + 2,
+                   (int)b.getWidth() - 4, 10, juce::Justification::centred);
+
+        // Genre-accessible region (focus-tinted)
         float cx1 = b.getX() + cxMin * b.getWidth();
         float cy1 = b.getY() + (1.f - cyMax) * b.getHeight();
         float cx2 = b.getX() + cxMax * b.getWidth();
         float cy2 = b.getY() + (1.f - cyMin) * b.getHeight();
-        g.setColour(juce::Colour(0xff1a1a1a));
+        g.setColour(juce::Colour(0xff1a2030));
         g.fillRect(cx1, cy1, cx2 - cx1, cy2 - cy1);
 
         // Centre grid lines
-        g.setColour(juce::Colour(0xff242424));
+        g.setColour(juce::Colour(0xff1e2226));
         g.drawLine(b.getCentreX(), b.getY(), b.getCentreX(), b.getBottom(), 0.5f);
         g.drawLine(b.getX(), b.getCentreY(), b.getRight(), b.getCentreY(), 0.5f);
 
         // Border
-        g.setColour(juce::Colour(0xff333333));
+        g.setColour(juce::Colour(0xff3a4652));
         g.drawRect(b, 1.f);
 
         // Crosshair through cursor
         float dotX = b.getX() + xVal * b.getWidth();
         float dotY = b.getY() + (1.f - yVal) * b.getHeight();
-        g.setColour(juce::Colour(0xff444444));
+        g.setColour(juce::Colour(0xff2a3340));
         g.drawLine(dotX, b.getY(), dotX, b.getBottom(), 0.5f);
         g.drawLine(b.getX(), dotY, b.getRight(), dotY, 0.5f);
 
-        // Cursor dot
-        g.setColour(juce::Colour(0xffff6622));
+        // Cursor dot — brighter when in experimental zone
+        bool inExp = (xVal > 0.70f || yVal > 0.70f);
+        g.setColour(inExp ? juce::Colour(0xffff9f1c) : juce::Colour(0xffcc7a10));
         g.fillEllipse(dotX - 5.f, dotY - 5.f, 10.f, 10.f);
-        g.setColour(juce::Colours::white.withAlpha(0.6f));
+        g.setColour(juce::Colours::white.withAlpha(inExp ? 0.8f : 0.45f));
         g.drawEllipse(dotX - 5.f, dotY - 5.f, 10.f, 10.f, 1.f);
     }
 
@@ -93,7 +112,7 @@ public:
         {
             juce::Rectangle<int> cell(b.getX() + i * w, b.getY(), w - 1, b.getHeight());
             bool active = (i == currentBar);
-            g.setColour(active ? juce::Colour(0xffff6622) : juce::Colour(0xff2a2a2a));
+            g.setColour(active ? juce::Colour(0xffff9f1c) : juce::Colour(0xff3a4652));
             g.fillRoundedRectangle(cell.toFloat().reduced(1.f), 2.f);
             g.setFont(juce::Font(8.f));
             g.setColour(active ? juce::Colours::white : juce::Colour(0xff555555));
@@ -147,8 +166,8 @@ public:
 
             auto makeBtn = [this](juce::TextButton& b, const juce::String& text) {
                 b.setButtonText(text);
-                b.setColour(juce::TextButton::buttonColourId,  juce::Colour(0xff2a2a2a));
-                b.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffaaaaaa));
+                b.setColour(juce::TextButton::buttonColourId,  juce::Colour(0xff3a4652));
+                b.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffaabbcc));
                 addAndMakeVisible(b);
             };
             makeBtn(row.learnBtn, "Learn");
@@ -197,7 +216,7 @@ public:
         {
             bool active = (learnState == i + 1);
             rows[i].learnBtn.setColour(juce::TextButton::buttonColourId,
-                active ? juce::Colour(0xffcc4400) : juce::Colour(0xff2a2a2a));
+                active ? juce::Colour(0xffff9f1c) : juce::Colour(0xff3a4652));
             rows[i].learnBtn.setButtonText(active ? "..." : "Learn");
         }
     }
@@ -221,9 +240,9 @@ public:
 
     void paint(juce::Graphics& g) override
     {
-        g.setColour(juce::Colour(0xff161616));
+        g.setColour(juce::Colour(0xff121417));
         g.fillRoundedRectangle(getLocalBounds().toFloat(), 3.f);
-        g.setColour(juce::Colour(0xff2a2a2a));
+        g.setColour(juce::Colour(0xff3a4652));
         g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(0.5f), 3.f, 1.f);
     }
 
@@ -333,7 +352,7 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     addAndMakeVisible(titleLabel);
     titleLabel.setText("GROOVE LOCK", juce::dontSendNotification);
     titleLabel.setFont(juce::Font(16.f, juce::Font::bold));
-    titleLabel.setColour(juce::Label::textColourId, juce::Colour(0xffff6622));
+    titleLabel.setColour(juce::Label::textColourId, juce::Colour(0xffff9f1c));
 
     addAndMakeVisible(presetNameLabel);
     presetNameLabel.setFont(juce::Font(13.f));
@@ -401,7 +420,7 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
         proc.density.set(d);
         proc.tension.set(t);
         proc.phraseParamsDirty.set(1);
-        xyCoordLabel.setText("D " + juce::String(d, 2) + "  T " + juce::String(t, 2),
+        xyCoordLabel.setText("Dense " + juce::String(d, 2) + "  Tense " + juce::String(t, 2),
                              juce::dontSendNotification);
     };
 
@@ -423,7 +442,7 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
 
     addAndMakeVisible(regenButton);
     regenButton.setVisible(proc.regenMode.get() == 2);
-    regenButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff224488));
+    regenButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff3a4652));
     regenButton.onClick = [this] { proc.regeneratePhrase(); };
 
     // Phrase bar indicator
@@ -431,12 +450,12 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     addAndMakeVisible(*phraseBarIndicator);
 
     // Knobs
-    setupKnob(swingKnob,      swingLabel,      "Swing",    0,   100, 55,  "%");
-    setupKnob(humanizeKnob,   humanizeLabel,   "Humanize", 0,   100, 20,  "%");
-    setupKnob(velOffKnob,     velOffLabel,     "Vel Off",  -64, 64,  0,   "");
-    setupKnob(timingOffKnob,  timingOffLabel,  "Timing",   -20, 20,  0,   "ms");
-    setupKnob(gateScaleKnob,  gateScaleLabel,  "Gate",     50,  150, 100, "%");
-    setupKnob(glideKnob,      glideLabel,      "Glide",    10,  300, 100, "ms");
+    setupKnob(swingKnob,      swingLabel,      "Swing",      0,   100, 55,  "%");
+    setupKnob(humanizeKnob,   humanizeLabel,   "Feel",       0,   100, 20,  "%");
+    setupKnob(velOffKnob,     velOffLabel,     "Volume",    -64, 64,  0,   "");
+    setupKnob(timingOffKnob,  timingOffLabel,  "Push / Lay", -20, 20,  0,   "ms");
+    setupKnob(gateScaleKnob,  gateScaleLabel,  "Length",    50,  150, 100, "%");
+    setupKnob(glideKnob,      glideLabel,      "Glide",     10,  300, 100, "ms");
 
     swingKnob.onValueChange     = [this] { proc.swingPercent.set((float)swingKnob.getValue()); };
     humanizeKnob.onValueChange  = [this] { proc.humanizePercent.set((float)humanizeKnob.getValue()); };
@@ -448,7 +467,7 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     // I/O config
     addAndMakeVisible(inputModeToggle);
     inputModeToggle.setToggleState(proc.inputMode.get() == 0, juce::dontSendNotification);
-    inputModeToggle.setColour(juce::ToggleButton::tickColourId,         juce::Colour(0xffff6622));
+    inputModeToggle.setColour(juce::ToggleButton::tickColourId,         juce::Colour(0xffff9f1c));
     inputModeToggle.setColour(juce::ToggleButton::tickDisabledColourId, juce::Colour(0xff555555));
     inputModeToggle.onStateChange = [this] {
         bool live = inputModeToggle.getToggleState();
@@ -486,7 +505,7 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     // Pitch panel
     addAndMakeVisible(pitchEnabledToggle);
     pitchEnabledToggle.setToggleState(false, juce::dontSendNotification);
-    pitchEnabledToggle.setColour(juce::ToggleButton::tickColourId,         juce::Colour(0xffff6622));
+    pitchEnabledToggle.setColour(juce::ToggleButton::tickColourId,         juce::Colour(0xffff9f1c));
     pitchEnabledToggle.setColour(juce::ToggleButton::tickDisabledColourId, juce::Colour(0xff555555));
     pitchEnabledToggle.onStateChange = [this] {
         proc.pitchEnabled.set(pitchEnabledToggle.getToggleState() ? 1 : 0);
@@ -525,13 +544,13 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     pitchDensitySlider.onValueChange = [this] {
         proc.pitchDensity.set((int)pitchDensitySlider.getValue());
     };
-    pitchDensityLabel.setText("Density", juce::dontSendNotification);
+    pitchDensityLabel.setText("Note Count", juce::dontSendNotification);
     pitchDensityLabel.setFont(juce::Font(9.f));
     pitchDensityLabel.setColour(juce::Label::textColourId, juce::Colour(0xff666666));
 
     addAndMakeVisible(pitchChromaticToggle);
     pitchChromaticToggle.setToggleState(true, juce::dontSendNotification);
-    pitchChromaticToggle.setColour(juce::ToggleButton::tickColourId,         juce::Colour(0xffff6622));
+    pitchChromaticToggle.setColour(juce::ToggleButton::tickColourId,         juce::Colour(0xffff9f1c));
     pitchChromaticToggle.setColour(juce::ToggleButton::tickDisabledColourId, juce::Colour(0xff555555));
     pitchChromaticToggle.onStateChange = [this] {
         proc.pitchChromatic.set(pitchChromaticToggle.getToggleState() ? 1 : 0);
@@ -597,24 +616,24 @@ void GrooveLockEditor::setupKnob(juce::Slider& k, juce::Label& l,
     k.setRange(lo, hi);
     k.setValue(def, juce::dontSendNotification);
     if (suffix.isNotEmpty()) k.setTextValueSuffix(suffix);
-    k.setColour(juce::Slider::rotarySliderFillColourId, juce::Colour(0xffff6622));
-    k.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff333333));
+    k.setColour(juce::Slider::rotarySliderFillColourId,    juce::Colour(0xffff9f1c));
+    k.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff3a4652));
     l.setText(name, juce::dontSendNotification);
     l.setFont(juce::Font(9.f));
-    l.setColour(juce::Label::textColourId, juce::Colour(0xff666666));
+    l.setColour(juce::Label::textColourId, juce::Colour(0xff8899aa));
     l.setJustificationType(juce::Justification::centred);
 }
 
 void GrooveLockEditor::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colour(0xff0a0a0a));
+    g.fillAll(juce::Colour(0xff121417));
 
     // Divider lines
     int sidebarX = (int)(getWidth() * 0.70f);
-    g.setColour(juce::Colour(0xff222222));
+    g.setColour(juce::Colour(0xff1e2226));
     g.drawVerticalLine(sidebarX, 30.0f, (float)(getHeight() - 28));
 
-    g.setColour(juce::Colour(0xff1a1a1a));
+    g.setColour(juce::Colour(0xff1a1d21));
     g.drawHorizontalLine(30, 0, (float)getWidth());
     g.drawHorizontalLine(getHeight() - 28, 0, (float)getWidth());
 }
@@ -648,12 +667,12 @@ void GrooveLockEditor::resized()
         // Browser header
         searchBox.setBounds(s.removeFromTop(24));
         genreFilter.setBounds(s.removeFromTop(24));
-        int listH = (int)(s.getHeight() * 0.20f);
+        int listH = juce::jmax(80, (int)(s.getHeight() * 0.13f));
         templateList.setBounds(s.removeFromTop(listH));
 
         s.removeFromTop(4);
 
-        int xySize = juce::jmin(s.getWidth(), 80);
+        int xySize = juce::jmin(s.getWidth(), 120);
         xyPad->setBounds(s.removeFromTop(xySize));
         xyCoordLabel.setBounds(s.removeFromTop(14));
         {
