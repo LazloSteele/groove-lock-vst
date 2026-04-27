@@ -2,9 +2,9 @@
 
 ## Window
 
-- Default size: 780 x 560 px
-- Resizable: yes, with aspect ratio lock
-- Minimum size: 640 x 480 px
+- Default size: 900 x 700 px
+- Resizable: yes (no aspect ratio lock)
+- Minimum size: 800 x 600 px
 - Background: dark (#0a0a0a)
 - All text: monospace font family (system monospace or bundled)
 
@@ -12,8 +12,8 @@
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│  HEADER BAR                                                         │
-│  Logo / name / preset name / prev-next arrows / save                │
+│  HEADER BAR                                                          │
+│  Logo / preset name / prev-next arrows                               │
 ├────────────────────────────────────────┬─────────────────────────────┤
 │                                        │                             │
 │  MAIN PANEL (left, ~70% width)         │  SIDEBAR (right, ~30%)      │
@@ -22,32 +22,42 @@
 │  │  DRUM GRID (step sequencer)     │  │  │  TEMPLATE BROWSER     │  │
 │  │  3-5 rows, 16 columns           │  │  │  Search box            │  │
 │  │  Amber color scheme              │  │  │  Genre filter          │  │
-│  └──────────────────────────────────┘  │  │  Region filter         │  │
-│                                        │  │  Scrollable list       │  │
-│  ┌──────────────────────────────────┐  │  │  with mood tags        │  │
-│  │  LOCK POINTS (dot row)          │  │  └───────────────────────┘  │
-│  │  16 positions, colored dots      │  │                             │
-│  └──────────────────────────────────┘  │  ┌───────────────────────┐  │
-│                                        │  │  GLOBAL CONTROLS      │  │
-│  ┌──────────────────────────────────┐  │  │  Swing knob            │  │
-│  │  BASS GRID (step sequencer)     │  │  │  Humanize knob         │  │
-│  │  1-2 rows, 16 columns           │  │  │  Vel offset knob       │  │
-│  │  Blue color scheme               │  │  │  Timing offset knob    │  │
-│  └──────────────────────────────────┘  │  │  Gate scale knob       │  │
-│                                        │  │  Glide time knob       │  │
-│  ┌──────────────────────────────────┐  │  └───────────────────────┘  │
-│  │  INFO BAR                        │  │                             │
-│  │  Groove description, lock detail │  │  ┌───────────────────────┐  │
-│  │  when hovered/selected           │  │  │  I/O CONFIG           │  │
-│  └──────────────────────────────────┘  │  │  Input mode toggle     │  │
-│                                        │  │  Output channel         │  │
-│                                        │  │  Root note              │  │
-│                                        │  │  Drum mapping button   │  │
-│                                        │  │  Panic button           │  │
+│  └──────────────────────────────────┘  │  │  Scrollable list       │  │
+│                                        │  └───────────────────────┘  │
+│  ┌──────────────────────────────────┐  │                             │
+│  │  LOCK POINTS (dot row)          │  │  ┌───────────────────────┐  │
+│  │  16 positions, colored dots      │  │  │  DENSITY / TENSION    │  │
+│  └──────────────────────────────────┘  │  │  XY pad (80×80)       │  │
+│                                        │  │  D 0.50  T 0.50       │  │
+│  ┌──────────────────────────────────┐  │  │  [Per-Loop ▼] [Regen] │  │
+│  │  BASS GRID (step sequencer)     │  │  └───────────────────────┘  │
+│  │  1-2 rows, 16 columns           │  │                             │
+│  │  Blue color scheme               │  │  ┌───────────────────────┐  │
+│  └──────────────────────────────────┘  │  │  GLOBAL CONTROLS      │  │
+│                                        │  │  Swing / Humanize     │  │
+│  ┌──────────────────────────────────┐  │  │  Vel Off / Timing     │  │
+│  │  INFO BAR                        │  │  │  Gate / Glide         │  │
+│  │  Groove description, lock detail │  │  └───────────────────────┘  │
+│  └──────────────────────────────────┘  │                             │
+│                                        │  ┌───────────────────────┐  │
+│                                        │  │  I/O CONFIG           │  │
+│                                        │  │  Input mode toggle     │  │
+│                                        │  │  Output channel        │  │
+│                                        │  │  Panic button          │  │
+│                                        │  └───────────────────────┘  │
+│                                        │                             │
+│                                        │  ┌───────────────────────┐  │
+│                                        │  │  PITCH                │  │
+│                                        │  │  [Pitch hints toggle]  │  │
+│                                        │  │  Root  [C ▼]          │  │
+│                                        │  │  Scale [Min Pent ▼]   │  │
+│                                        │  │  Density [●●●○○]      │  │
+│                                        │  │  [Chromatic toggle]   │  │
+│                                        │  │  [Oct-] C2 [Oct+]     │  │
 │                                        │  └───────────────────────┘  │
 ├────────────────────────────────────────┴─────────────────────────────┤
 │  TRANSPORT BAR                                                       │
-│  Play/stop (internal) / step position indicator / tempo display      │
+│  [1][2][3][4][5][6][7][8]  ←phrase bar indicator       142.5 BPM    │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -161,13 +171,34 @@ Six rotary knobs in a 2x3 grid:
 - When a step is hovered, shows the velocity and timing detail for that step
 - Text: 11px, line-height 1.5, muted color with accent-colored label prefixes
 
+## Density/Tension XY pad
+
+- 80×80 px area below the template list
+- X axis = Density (left = sparse, right = active)
+- Y axis = Tension (bottom = safe, top = adventurous)
+- Cursor: 10px orange dot with white ring
+- Crosshairs through cursor (subtle, 0.5px dark lines)
+- Centre grid lines at 0.5, 0.5 (slightly brighter)
+- Genre clamp region: slightly brighter fill rectangle showing accessible range
+- Coordinate readout (12px, muted) below the pad: `D 0.50  T 0.50`
+- Interaction: click or drag to set position; double-click to reset to (0.5, 0.5)
+- Regen mode combo box immediately below the readout (Per-Loop / Fixed / Manual)
+- "Regen" button visible to the right of the mode box only when mode = Manual
+
+## 8-bar phrase position indicator
+
+- Located in the transport bar, left side (130×20 px)
+- 8 rounded rectangles, each labeled 1–8
+- Active bar: filled orange (#ff6622), white number
+- Inactive bars: dark fill (#2a2a2a), muted number (#555555)
+- Only meaningful while the DAW transport is running
+- Updates at the message-thread timer rate (15 Hz)
+
 ## Transport bar
 
-- Bottom of window
-- Internal play/stop button (for auditing the pattern without DAW transport)
-- Step position indicator: 16 small dots, current step highlighted
-- Tempo display: shows DAW tempo when synced, or internal tempo when standalone
-- Pattern active toggle (on/off — mutes MIDI output when off)
+- Bottom of window (28px)
+- Left: phrase bar indicator (8 segments, see above)
+- Right: tempo display — shows DAW BPM when synced
 
 ## Interaction patterns
 

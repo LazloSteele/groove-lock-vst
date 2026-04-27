@@ -9,13 +9,15 @@ Groove Lock is a MIDI effect plugin. It receives drum MIDI, analyzes it against 
 JUCE plugins have two threads that matter:
 
 - **Audio thread** (`processBlock`): receives and sends MIDI. Must be lock-free, no allocations, no blocking. All MIDI processing happens here.
-- **Message thread** (GUI): handles UI rendering and user interaction. Can allocate, block, etc.
+- **Message thread** (GUI/timer): handles UI rendering, user interaction, and phrase regeneration. Can allocate, block, etc.
 
 Communication between threads uses lock-free structures only:
-- Audio → UI: `juce::AbstractFifo` ring buffer for step position / activity indicators
-- UI → Audio: `juce::Atomic<int>` for template selection index, `juce::Atomic<float>` for continuous parameters (swing, humanization), `juce::Atomic<bool>` for triggers (reset pattern, etc.)
+- Audio → UI: `juce::Atomic<int>` for step position, current phrase bar
+- UI → Audio: `juce::Atomic<int/float>` for all parameters (swing, density, tension, etc.)
 
-For template changes (larger data), use a double-buffer pattern: UI writes the new template to a staging buffer, sets an atomic flag, audio thread swaps pointers on the next block boundary.
+**Template pointer:** the browser owns all templates (read-only, lifetime = plugin lifetime). The processor stores an `std::atomic<const GrooveTemplate*>` which the message thread writes and the audio thread reads. No copy needed.
+
+**Expanded phrase:** double-buffered. The processor owns `ExpandedPhrase phraseBuffers[2]`. The message thread always writes to the inactive buffer (`phraseBuffers[inactiveBuffer]`), then does a release store of the buffer index. The audio thread does an acquire load of the index each processBlock and passes the resulting pointer to LockEngine via `syncParams()`. This guarantees the audio thread never reads a half-written phrase.
 
 ## Core classes
 
@@ -43,7 +45,15 @@ Data structure:
 
 Serialization: JSON via `juce::JSON`. One file per template. See TEMPLATE_SCHEMA.md.
 
-The template does NOT contain pitch information. The bass pattern defines WHEN to play (which steps), HOW HARD (velocity tier), HOW LONG (gate percentage), and WITH WHAT ARTICULATION (slide, bend, staccato, legato). The user's bass synth and their own MIDI input/scale selection handle pitch.
+The template defines WHEN to play (which steps), HOW HARD (velocity tier), HOW LONG (gate percentage), and WITH WHAT ARTICULATION (slide, bend, staccato, legato).
+
+The optional `pitch` block in a template adds:
+- `densityHint` (int 1–5): how many unique pitches per bar
+- `allowChromaticApproach` (bool): whether approach tones can be half-steps outside the scale
+- `preferredIntervals` (string[]): ordered list of scale degrees this template favors
+- `stepHints` (array): per-step pitch role overrides that take priority over lock-type defaults
+
+If the pitch block is absent, the genre profile's defaults are used.
 
 ### PatternAnalyzer
 
@@ -143,9 +153,46 @@ The lock engine uses lock point metadata to adjust behavior:
 - FILL lock: reduce velocity by 10-15% and force staccato gate
 
 **MIDI output format:**
-Bass notes are output on a user-configured MIDI channel (default: channel 2). The note NUMBER is not determined by this plugin — the user sets a fixed root note or routes through a scale quantizer. The plugin outputs all bass hits on a single configurable note (default: C2 / note 36). If the user wants melodic content, they process downstream or edit the MIDI after recording.
+Bass notes are output on a user-configured MIDI channel (default: channel 2). When pitch hints are disabled, all notes output on a single configurable root note (default: C2 / note 36). When enabled, the PitchEngine assigns note numbers per step — see the Pitch system section below.
 
-Alternatively, the plugin can operate in "pitch hint" mode where lock points with pitch suggestions output on different note numbers, but this is a stretch goal, not MVP.
+**Bar tracking:**
+At each `step == 0` transition the engine computes `absoluteBar = floor(absPPQ / 4)` and `phraseBar = absoluteBar % 8`. If an `ExpandedPhrase` is loaded and pitch is enabled, it calls `PitchEngine::computeBarFromState(phrase.bars[phraseBar], ...)` instead of the single-bar `computeBar()`. `currentPhraseBar` is exposed to the processor for the UI position indicator.
+
+### PhraseExpander
+
+Runs on the message thread only. Takes a seed `GrooveTemplate`, `GenreProfile`, and the user's `density` / `tension` values and produces an `ExpandedPhrase` containing 8 `BarPitchState` objects.
+
+**`BarPitchState`** (per bar):
+```
+PitchRole stepRoles[16]       — pitch role per step (NONE for inactive steps)
+int       stepOctaveOffset[16] — 0=base, 1=+1 octave, -1=-1 octave
+float     deviationLevel       — 0.0–1.0 how far this bar strays from seed
+```
+
+**Phrase arc** (default deviation per bar):
+`{ 0.0, 0.1, 0.2, 0.4, 0.3, 0.5, 0.7, 0.2 }`
+
+Effective deviation = `arc[bar] × profile.maxDeviation × density`.
+
+**Per-bar transformations applied in order:**
+1. `computeBarRoles` — walks the available intervals list based on `deviation × tension`; unison (ROOT) and APPROACH steps are immutable
+2. `enforceRootGravity` — converts excess non-root steps to ROOT if the bar falls below its minimum root fraction (60% → 70% on bar 8)
+3. `applyTurnaround` — sets last active step of bars 4 and 8 (0-indexed: 3 and 7) to b7 (or ROOT at very low tension)
+4. `computeOctaveOffsets` — probabilistic +1 octave displacement on non-unison accent/fill steps; probability follows the bar's energy contour (bars 5–7 heaviest, bar 8 = 0)
+
+Genre clamping is applied to density and tension before any computation. Each genre defines `densityClampMin/Max`, `tensionClampMin/Max`, and `maxOctaveDisplPerBar`.
+
+### PitchEngine
+
+Runs on the audio thread, called once per bar boundary from LockEngine.
+
+Two entry points:
+- `computeBar(tmpl, profile, params)` — derives pitch roles from the template at runtime (used when phrase expansion is off or when pitch is disabled)
+- `computeBarFromState(state, profile, params)` — uses pre-computed roles from `BarPitchState`; applies `state.stepOctaveOffset[step] * 12` to the final MIDI note
+
+Both methods run a two-pass algorithm:
+1. **Pass 1** — resolve all non-APPROACH steps: map role → semitone, snap to scale, apply density limiting, accumulate unique pitch count
+2. **Pass 2** — resolve APPROACH steps: find the next active step's resolved note and subtract 1 semitone (chromatic) or the nearest scale tone below (diatonic)
 
 ### MidiOutputManager
 
@@ -160,22 +207,48 @@ Handles the actual MIDI buffer writing in processBlock.
 
 ## Parameter list
 
-| Parameter | Range | Default | Automatable | Thread-safe type |
-|-----------|-------|---------|-------------|-----------------|
-| Template index | 0 - N | 0 | Yes | Atomic<int> |
-| Swing % | 0 - 100 | 55 | Yes | Atomic<float> |
-| Humanization % | 0 - 100 | 20 | Yes | Atomic<float> |
-| Global velocity offset | -64 to +64 | 0 | Yes | Atomic<float> |
-| Global timing offset ms | -20 to +20 | 0 | Yes | Atomic<float> |
-| Gate length scale | 50 - 150% | 100 | Yes | Atomic<float> |
-| Output MIDI channel | 1 - 16 | 2 | No | Atomic<int> |
-| Output root note | 0 - 127 | 36 (C2) | Yes | Atomic<int> |
-| Pitch bend range (semitones) | 1 - 12 | 2 | No | Atomic<int> |
-| Glide time ms | 10 - 300 | 100 | Yes | Atomic<float> |
-| Input mode (live/internal) | 0 or 1 | 1 | No | Atomic<int> |
-| Pattern active (on/off) | bool | true | Yes | Atomic<int> |
+### Groove parameters
 
-All automatable parameters should be registered as `juce::AudioProcessorParameter` subtypes so the DAW can automate them.
+| Parameter | Range | Default | Atomic type |
+|-----------|-------|---------|-------------|
+| Template index | 0–N | 0 | `Atomic<int>` |
+| Swing % | 0–100 | 55 | `Atomic<float>` |
+| Humanization % | 0–100 | 20 | `Atomic<float>` |
+| Global velocity offset | −64–+64 | 0 | `Atomic<float>` |
+| Global timing offset ms | −20–+20 | 0 | `Atomic<float>` |
+| Gate length scale | 50–150% | 100 | `Atomic<float>` |
+| Glide time ms | 10–300 | 100 | `Atomic<float>` |
+| Output MIDI channel | 1–16 | 2 | `Atomic<int>` |
+| Output root note | 0–127 | 36 (C2) | `Atomic<int>` |
+| Pitch bend range (semitones) | 1–12 | 2 | `Atomic<int>` |
+| Input mode (live/internal) | 0 or 1 | 1 | `Atomic<int>` |
+
+### Pitch parameters
+
+| Parameter | Range | Default | Atomic type |
+|-----------|-------|---------|-------------|
+| Pitch hints enabled | 0/1 | 0 | `Atomic<int>` |
+| Scale type | 0–5 (ScaleType enum) | 0 (minor pent.) | `Atomic<int>` |
+| Pitch density override | 0–5 (0=auto) | 0 | `Atomic<int>` |
+| Chromatic approach | 0/1 | 1 | `Atomic<int>` |
+
+### Phrase expansion parameters
+
+| Parameter | Range | Default | Atomic type |
+|-----------|-------|---------|-------------|
+| Density | 0.0–1.0 | 0.5 | `Atomic<float>` |
+| Tension | 0.0–1.0 | 0.5 | `Atomic<float>` |
+| Regen mode | 0=fixed / 1=per-loop / 2=manual | 1 | `Atomic<int>` |
+| Clamp override | 0/1 | 0 | `Atomic<int>` |
+
+### Read-only (audio → UI)
+
+| Value | Atomic type |
+|-------|-------------|
+| Current step (0–15) | `Atomic<int>` |
+| Current phrase bar (0–7) | `Atomic<int>` |
+| Needs regen flag (per-loop) | `Atomic<int>` |
+| Phrase params dirty flag | `Atomic<int>` |
 
 ## State persistence
 
