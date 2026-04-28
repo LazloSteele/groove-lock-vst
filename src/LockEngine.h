@@ -3,6 +3,7 @@
 #include "GrooveTemplate.h"
 #include "GenreProfile.h"
 #include "MidiOutputManager.h"
+#include "PatternAnalyzer.h"
 #include "PitchEngine.h"
 
 struct LockEngineParams
@@ -16,6 +17,10 @@ struct LockEngineParams
     int   outputChannel      = 2;
     int   outputRootNote     = 36;
     int   pitchBendRange     = 2;
+
+    // When non-null, gates bass steps against live drum input (approach B).
+    // Null = template-driven output (no live gating).
+    const DrumState* liveDrums = nullptr;
 
     PitchEngineParams pitch;
 };

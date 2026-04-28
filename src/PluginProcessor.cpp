@@ -68,6 +68,12 @@ void GrooveLockProcessor::regeneratePhrase()
 
 void GrooveLockProcessor::sendPanic() { panicFlag.set(1); }
 
+void GrooveLockProcessor::applyMapping(const DrumMapping& m)
+{
+    currentMapping = m;
+    analyzer.setMapping(m);
+}
+
 void GrooveLockProcessor::syncParams()
 {
     LockEngineParams p;
@@ -91,6 +97,9 @@ void GrooveLockProcessor::syncParams()
     const ExpandedPhrase* activePhrase =
         &phraseBuffers[activePhraseIdx.load(std::memory_order_acquire)];
     lockEngine.setExpandedPhrase(activePhrase->isValid ? activePhrase : nullptr);
+
+    // Live drum gating: pass analyzer state when in live input mode
+    p.liveDrums = (inputMode.get() == 0) ? &analyzer.getState() : nullptr;
 
     lockEngine.setParams(p);
 }
@@ -130,7 +139,28 @@ void GrooveLockProcessor::processBlock(juce::AudioBuffer<float>& audio,
 
     // Feed drum MIDI to analyzer (live mode)
     if (inputMode.get() == 0)
+    {
+        // MIDI Learn: capture the first incoming note-on and exit learn mode
+        int ls = learnState.get();
+        if (ls > 0)
+        {
+            for (const auto& meta : midi)
+            {
+                auto msg = meta.getMessage();
+                if (msg.isNoteOn())
+                {
+                    learnCapturedNote.set(msg.getNoteNumber());
+                    learnCapturedCategory.set(ls);
+                    learnState.set(0);
+                    learnCaptureReady.set(1);
+                    break;
+                }
+            }
+        }
+
         analyzer.process(midi, pos, currentSampleRate, audio.getNumSamples());
+        liveDrumDisplay = analyzer.getState();
+    }
 
     // Update step + phrase-bar position for UI
     if (pos.isPlaying)
@@ -178,6 +208,15 @@ void GrooveLockProcessor::getStateInformation(juce::MemoryBlock& dest)
     state.setProperty("tension",         tension.get(),         nullptr);
     state.setProperty("regenMode",       regenMode.get(),       nullptr);
 
+    auto notesToProp = [](const juce::Array<int>& notes) -> juce::String {
+        juce::StringArray parts;
+        for (int n : notes) parts.add(juce::String(n));
+        return parts.joinIntoString(",");
+    };
+    state.setProperty("drumKickNotes",  notesToProp(currentMapping.kickNotes),  nullptr);
+    state.setProperty("drumSnareNotes", notesToProp(currentMapping.snareNotes), nullptr);
+    state.setProperty("drumHatNotes",   notesToProp(currentMapping.hatNotes),   nullptr);
+
     juce::MemoryOutputStream mos(dest, true);
     state.writeToStream(mos);
 }
@@ -212,6 +251,24 @@ void GrooveLockProcessor::setStateInformation(const void* data, int size)
     tension.set         (getF("tension",         0.5f));
     regenMode.set       (getI("regenMode",          1));
     loadTemplate        (getI("templateIndex",     0));
+
+    auto parseNotes = [&](const char* key, const juce::Array<int>& def) -> juce::Array<int> {
+        if (!state.hasProperty(key)) return def;
+        auto parts = juce::StringArray::fromTokens(state[key].toString(), ",", "");
+        juce::Array<int> result;
+        for (auto& part : parts)
+        {
+            int n = part.trim().getIntValue();
+            if (n >= 0 && n < 128) result.add(n);
+        }
+        return result.isEmpty() ? def : result;
+    };
+
+    DrumMapping m;
+    m.kickNotes  = parseNotes("drumKickNotes",  currentMapping.kickNotes);
+    m.snareNotes = parseNotes("drumSnareNotes", currentMapping.snareNotes);
+    m.hatNotes   = parseNotes("drumHatNotes",   currentMapping.hatNotes);
+    applyMapping(m);
 }
 
 juce::AudioProcessorEditor* GrooveLockProcessor::createEditor()

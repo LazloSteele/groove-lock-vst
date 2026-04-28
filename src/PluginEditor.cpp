@@ -28,36 +28,55 @@ public:
     void paint(juce::Graphics& g) override
     {
         auto b = getLocalBounds().toFloat();
-        g.fillAll(juce::Colour(0xff0d0d0d));
+        g.fillAll(juce::Colour(0xff121417));
 
-        // Genre-clamped region (slightly brighter)
+        // Experimental zone (density > 70% OR tension > 70%) — subtle warm tint
+        float expXPx = b.getX() + 0.70f * b.getWidth();
+        float expYPx = b.getY() + (1.f - 0.70f) * b.getHeight(); // top 30% = tension exp.
+        g.setColour(juce::Colour(0x0cff9f1c));
+        g.fillRect(expXPx, b.getY(), b.getRight() - expXPx, b.getHeight()); // density exp.
+        g.fillRect(b.getX(), b.getY(), b.getWidth(), expYPx - b.getY());     // tension exp.
+        // Dotted boundary lines
+        g.setColour(juce::Colour(0x28ff9f1c));
+        g.drawVerticalLine  ((int)expXPx, b.getY(),    b.getBottom());
+        g.drawHorizontalLine((int)expYPx, b.getX(), b.getRight());
+        // Labels
+        g.setFont(juce::Font(6.5f));
+        g.setColour(juce::Colour(0x50ff9f1c));
+        g.drawText("Experimental", (int)expXPx + 2, b.getBottom() - 11,
+                   (int)(b.getRight() - expXPx) - 4, 10, juce::Justification::centred);
+        g.drawText("Experimental", b.getX() + 2, b.getY() + 2,
+                   (int)b.getWidth() - 4, 10, juce::Justification::centred);
+
+        // Genre-accessible region (focus-tinted)
         float cx1 = b.getX() + cxMin * b.getWidth();
         float cy1 = b.getY() + (1.f - cyMax) * b.getHeight();
         float cx2 = b.getX() + cxMax * b.getWidth();
         float cy2 = b.getY() + (1.f - cyMin) * b.getHeight();
-        g.setColour(juce::Colour(0xff1a1a1a));
+        g.setColour(juce::Colour(0xff1a2030));
         g.fillRect(cx1, cy1, cx2 - cx1, cy2 - cy1);
 
         // Centre grid lines
-        g.setColour(juce::Colour(0xff242424));
+        g.setColour(juce::Colour(0xff1e2226));
         g.drawLine(b.getCentreX(), b.getY(), b.getCentreX(), b.getBottom(), 0.5f);
         g.drawLine(b.getX(), b.getCentreY(), b.getRight(), b.getCentreY(), 0.5f);
 
         // Border
-        g.setColour(juce::Colour(0xff333333));
+        g.setColour(juce::Colour(0xff3a4652));
         g.drawRect(b, 1.f);
 
         // Crosshair through cursor
         float dotX = b.getX() + xVal * b.getWidth();
         float dotY = b.getY() + (1.f - yVal) * b.getHeight();
-        g.setColour(juce::Colour(0xff444444));
+        g.setColour(juce::Colour(0xff2a3340));
         g.drawLine(dotX, b.getY(), dotX, b.getBottom(), 0.5f);
         g.drawLine(b.getX(), dotY, b.getRight(), dotY, 0.5f);
 
-        // Cursor dot
-        g.setColour(juce::Colour(0xffff6622));
+        // Cursor dot — brighter when in experimental zone
+        bool inExp = (xVal > 0.70f || yVal > 0.70f);
+        g.setColour(inExp ? juce::Colour(0xffff9f1c) : juce::Colour(0xffcc7a10));
         g.fillEllipse(dotX - 5.f, dotY - 5.f, 10.f, 10.f);
-        g.setColour(juce::Colours::white.withAlpha(0.6f));
+        g.setColour(juce::Colours::white.withAlpha(inExp ? 0.8f : 0.45f));
         g.drawEllipse(dotX - 5.f, dotY - 5.f, 10.f, 10.f, 1.f);
     }
 
@@ -93,7 +112,7 @@ public:
         {
             juce::Rectangle<int> cell(b.getX() + i * w, b.getY(), w - 1, b.getHeight());
             bool active = (i == currentBar);
-            g.setColour(active ? juce::Colour(0xffff6622) : juce::Colour(0xff2a2a2a));
+            g.setColour(active ? juce::Colour(0xffff9f1c) : juce::Colour(0xff3a4652));
             g.fillRoundedRectangle(cell.toFloat().reduced(1.f), 2.f);
             g.setFont(juce::Font(8.f));
             g.setColour(active ? juce::Colours::white : juce::Colour(0xff555555));
@@ -103,6 +122,159 @@ public:
 
 private:
     int currentBar = 0;
+};
+
+// ─── DrumMapPanel ─────────────────────────────────────────────────────────────
+
+class GrooveLockEditor::DrumMapPanel : public juce::Component
+{
+public:
+    explicit DrumMapPanel(GrooveLockProcessor& p) : proc(p)
+    {
+        addAndMakeVisible(presetBox);
+        presetBox.addItem("Custom", 1);
+        int id = 2;
+        for (auto& preset : DrumMappingPresets::getAll())
+            presetBox.addItem(preset.name, id++);
+        presetBox.setSelectedId(1, juce::dontSendNotification);
+        presetBox.setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff1a1a1a));
+
+        presetBox.onChange = [this] {
+            int sel = presetBox.getSelectedId();
+            if (sel <= 1) return; // Custom selected — no action
+            const auto& presets = DrumMappingPresets::getAll();
+            size_t idx = (size_t)(sel - 2);
+            if (idx < presets.size())
+            {
+                proc.applyMapping(presets[idx].mapping);
+                refreshNoteLabels(proc.currentMapping);
+            }
+        };
+
+        static const char* kCatNames[3] = { "Kick", "Snare", "Hat" };
+        for (int i = 0; i < 3; ++i)
+        {
+            auto& row = rows[i];
+            row.catLabel.setText(kCatNames[i], juce::dontSendNotification);
+            row.catLabel.setFont(juce::Font(10.f));
+            row.catLabel.setColour(juce::Label::textColourId, juce::Colour(0xff888888));
+            addAndMakeVisible(row.catLabel);
+
+            row.notesLabel.setFont(juce::Font(9.f));
+            row.notesLabel.setColour(juce::Label::textColourId, juce::Colour(0xffcccccc));
+            addAndMakeVisible(row.notesLabel);
+
+            auto makeBtn = [this](juce::TextButton& b, const juce::String& text) {
+                b.setButtonText(text);
+                b.setColour(juce::TextButton::buttonColourId,  juce::Colour(0xff3a4652));
+                b.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffaabbcc));
+                addAndMakeVisible(b);
+            };
+            makeBtn(row.learnBtn, "Learn");
+            makeBtn(row.clearBtn, "x");
+
+            int category = i + 1; // 1=kick 2=snare 3=hat
+            row.learnBtn.onClick = [this, category] {
+                // Toggle: clicking again cancels
+                proc.learnState.set(proc.learnState.get() == category ? 0 : category);
+            };
+
+            row.clearBtn.onClick = [this, i] {
+                auto m = proc.currentMapping;
+                if      (i == 0) m.kickNotes.clear();
+                else if (i == 1) m.snareNotes.clear();
+                else             m.hatNotes.clear();
+                proc.applyMapping(m);
+                refreshNoteLabels(proc.currentMapping);
+                presetBox.setSelectedId(1, juce::dontSendNotification); // Custom
+            };
+        }
+
+        refreshNoteLabels(proc.currentMapping);
+    }
+
+    // Called from timerCallback when audio thread captured a learn note
+    void onLearnCapture(int category, int note)
+    {
+        auto m = proc.currentMapping;
+        switch (category)
+        {
+            case 1: if (!m.kickNotes.contains(note))  m.kickNotes.add(note);  break;
+            case 2: if (!m.snareNotes.contains(note)) m.snareNotes.add(note); break;
+            case 3: if (!m.hatNotes.contains(note))   m.hatNotes.add(note);   break;
+            default: return;
+        }
+        proc.applyMapping(m);
+        refreshNoteLabels(proc.currentMapping);
+        presetBox.setSelectedId(1, juce::dontSendNotification); // Custom
+    }
+
+    // Called from timerCallback to keep Learn button state in sync
+    void updateLearnButtons(int learnState)
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            bool active = (learnState == i + 1);
+            rows[i].learnBtn.setColour(juce::TextButton::buttonColourId,
+                active ? juce::Colour(0xffff9f1c) : juce::Colour(0xff3a4652));
+            rows[i].learnBtn.setButtonText(active ? "..." : "Learn");
+        }
+    }
+
+    void resized() override
+    {
+        auto b = getLocalBounds().reduced(3, 2);
+        presetBox.setBounds(b.removeFromTop(20));
+        b.removeFromTop(2);
+        for (auto& row : rows)
+        {
+            auto r = b.removeFromTop(20);
+            row.catLabel.setBounds(r.removeFromLeft(36));
+            row.clearBtn.setBounds(r.removeFromRight(16));
+            r.removeFromRight(2);
+            row.learnBtn.setBounds(r.removeFromRight(38));
+            r.removeFromRight(2);
+            row.notesLabel.setBounds(r);
+        }
+    }
+
+    void paint(juce::Graphics& g) override
+    {
+        g.setColour(juce::Colour(0xff121417));
+        g.fillRoundedRectangle(getLocalBounds().toFloat(), 3.f);
+        g.setColour(juce::Colour(0xff3a4652));
+        g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(0.5f), 3.f, 1.f);
+    }
+
+private:
+    GrooveLockProcessor& proc;
+
+    juce::ComboBox presetBox;
+
+    struct Row
+    {
+        juce::Label      catLabel;
+        juce::Label      notesLabel;
+        juce::TextButton learnBtn;
+        juce::TextButton clearBtn;
+    };
+    Row rows[3];
+
+    void refreshNoteLabels(const DrumMapping& m)
+    {
+        rows[0].notesLabel.setText(notesToString(m.kickNotes),  juce::dontSendNotification);
+        rows[1].notesLabel.setText(notesToString(m.snareNotes), juce::dontSendNotification);
+        rows[2].notesLabel.setText(notesToString(m.hatNotes),   juce::dontSendNotification);
+    }
+
+    static juce::String notesToString(const juce::Array<int>& notes)
+    {
+        if (notes.isEmpty()) return "(none)";
+        juce::StringArray names;
+        for (int n : notes)
+            names.add(juce::MidiMessage::getMidiNoteName(n, true, true, 4));
+        return names.joinIntoString(", ");
+    }
 };
 
 // ─── ListBox model ────────────────────────────────────────────────────────────
@@ -175,15 +347,12 @@ private:
 GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     : AudioProcessorEditor(p), proc(p)
 {
-    setSize(900, 700);
-    setResizable(true, false);
-    setResizeLimits(800, 600, 1600, 1200);
 
     // Header
     addAndMakeVisible(titleLabel);
     titleLabel.setText("GROOVE LOCK", juce::dontSendNotification);
     titleLabel.setFont(juce::Font(16.f, juce::Font::bold));
-    titleLabel.setColour(juce::Label::textColourId, juce::Colour(0xffff6622));
+    titleLabel.setColour(juce::Label::textColourId, juce::Colour(0xffff9f1c));
 
     addAndMakeVisible(presetNameLabel);
     presetNameLabel.setFont(juce::Font(13.f));
@@ -251,7 +420,7 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
         proc.density.set(d);
         proc.tension.set(t);
         proc.phraseParamsDirty.set(1);
-        xyCoordLabel.setText("D " + juce::String(d, 2) + "  T " + juce::String(t, 2),
+        xyCoordLabel.setText("Dense " + juce::String(d, 2) + "  Tense " + juce::String(t, 2),
                              juce::dontSendNotification);
     };
 
@@ -273,7 +442,7 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
 
     addAndMakeVisible(regenButton);
     regenButton.setVisible(proc.regenMode.get() == 2);
-    regenButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff224488));
+    regenButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff3a4652));
     regenButton.onClick = [this] { proc.regeneratePhrase(); };
 
     // Phrase bar indicator
@@ -281,12 +450,12 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     addAndMakeVisible(*phraseBarIndicator);
 
     // Knobs
-    setupKnob(swingKnob,      swingLabel,      "Swing",    0,   100, 55,  "%");
-    setupKnob(humanizeKnob,   humanizeLabel,   "Humanize", 0,   100, 20,  "%");
-    setupKnob(velOffKnob,     velOffLabel,     "Vel Off",  -64, 64,  0,   "");
-    setupKnob(timingOffKnob,  timingOffLabel,  "Timing",   -20, 20,  0,   "ms");
-    setupKnob(gateScaleKnob,  gateScaleLabel,  "Gate",     50,  150, 100, "%");
-    setupKnob(glideKnob,      glideLabel,      "Glide",    10,  300, 100, "ms");
+    setupKnob(swingKnob,      swingLabel,      "Swing",      0,   100, 55,  "%");
+    setupKnob(humanizeKnob,   humanizeLabel,   "Feel",       0,   100, 20,  "%");
+    setupKnob(velOffKnob,     velOffLabel,     "Volume",    -64, 64,  0,   "");
+    setupKnob(timingOffKnob,  timingOffLabel,  "Push / Lay", -20, 20,  0,   "ms");
+    setupKnob(gateScaleKnob,  gateScaleLabel,  "Length",    50,  150, 100, "%");
+    setupKnob(glideKnob,      glideLabel,      "Glide",     10,  300, 100, "ms");
 
     swingKnob.onValueChange     = [this] { proc.swingPercent.set((float)swingKnob.getValue()); };
     humanizeKnob.onValueChange  = [this] { proc.humanizePercent.set((float)humanizeKnob.getValue()); };
@@ -298,11 +467,19 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     // I/O config
     addAndMakeVisible(inputModeToggle);
     inputModeToggle.setToggleState(proc.inputMode.get() == 0, juce::dontSendNotification);
-    inputModeToggle.setColour(juce::ToggleButton::tickColourId,         juce::Colour(0xffff6622));
+    inputModeToggle.setColour(juce::ToggleButton::tickColourId,         juce::Colour(0xffff9f1c));
     inputModeToggle.setColour(juce::ToggleButton::tickDisabledColourId, juce::Colour(0xff555555));
     inputModeToggle.onStateChange = [this] {
-        proc.inputMode.set(inputModeToggle.getToggleState() ? 0 : 1);
+        bool live = inputModeToggle.getToggleState();
+        proc.inputMode.set(live ? 0 : 1);
+        if (!live) proc.learnState.set(0); // cancel any active learn on mode exit
+        drumMapPanel->setVisible(live);
+        resized();
     };
+
+    drumMapPanel = std::make_unique<DrumMapPanel>(proc);
+    addAndMakeVisible(*drumMapPanel);
+    drumMapPanel->setVisible(proc.inputMode.get() == 0);
 
     addAndMakeVisible(outputChannelBox);
     for (int i = 1; i <= 16; ++i)
@@ -328,7 +505,7 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     // Pitch panel
     addAndMakeVisible(pitchEnabledToggle);
     pitchEnabledToggle.setToggleState(false, juce::dontSendNotification);
-    pitchEnabledToggle.setColour(juce::ToggleButton::tickColourId,         juce::Colour(0xffff6622));
+    pitchEnabledToggle.setColour(juce::ToggleButton::tickColourId,         juce::Colour(0xffff9f1c));
     pitchEnabledToggle.setColour(juce::ToggleButton::tickDisabledColourId, juce::Colour(0xff555555));
     pitchEnabledToggle.onStateChange = [this] {
         proc.pitchEnabled.set(pitchEnabledToggle.getToggleState() ? 1 : 0);
@@ -367,13 +544,13 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     pitchDensitySlider.onValueChange = [this] {
         proc.pitchDensity.set((int)pitchDensitySlider.getValue());
     };
-    pitchDensityLabel.setText("Density", juce::dontSendNotification);
+    pitchDensityLabel.setText("Note Count", juce::dontSendNotification);
     pitchDensityLabel.setFont(juce::Font(9.f));
     pitchDensityLabel.setColour(juce::Label::textColourId, juce::Colour(0xff666666));
 
     addAndMakeVisible(pitchChromaticToggle);
     pitchChromaticToggle.setToggleState(true, juce::dontSendNotification);
-    pitchChromaticToggle.setColour(juce::ToggleButton::tickColourId,         juce::Colour(0xffff6622));
+    pitchChromaticToggle.setColour(juce::ToggleButton::tickColourId,         juce::Colour(0xffff9f1c));
     pitchChromaticToggle.setColour(juce::ToggleButton::tickDisabledColourId, juce::Colour(0xff555555));
     pitchChromaticToggle.onStateChange = [this] {
         proc.pitchChromatic.set(pitchChromaticToggle.getToggleState() ? 1 : 0);
@@ -412,6 +589,12 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     rebuildTemplateList();
     refreshFromTemplate();
 
+    // setSize must come after all child components are constructed so that
+    // resized() fires with every component already existing.
+    setResizable(true, false);
+    setResizeLimits(800, 600, 1600, 1200);
+    setSize(900, 700);
+
     startTimerHz(15);
 }
 
@@ -433,24 +616,24 @@ void GrooveLockEditor::setupKnob(juce::Slider& k, juce::Label& l,
     k.setRange(lo, hi);
     k.setValue(def, juce::dontSendNotification);
     if (suffix.isNotEmpty()) k.setTextValueSuffix(suffix);
-    k.setColour(juce::Slider::rotarySliderFillColourId, juce::Colour(0xffff6622));
-    k.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff333333));
+    k.setColour(juce::Slider::rotarySliderFillColourId,    juce::Colour(0xffff9f1c));
+    k.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff3a4652));
     l.setText(name, juce::dontSendNotification);
     l.setFont(juce::Font(9.f));
-    l.setColour(juce::Label::textColourId, juce::Colour(0xff666666));
+    l.setColour(juce::Label::textColourId, juce::Colour(0xff8899aa));
     l.setJustificationType(juce::Justification::centred);
 }
 
 void GrooveLockEditor::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colour(0xff0a0a0a));
+    g.fillAll(juce::Colour(0xff121417));
 
     // Divider lines
     int sidebarX = (int)(getWidth() * 0.70f);
-    g.setColour(juce::Colour(0xff222222));
+    g.setColour(juce::Colour(0xff1e2226));
     g.drawVerticalLine(sidebarX, 30.0f, (float)(getHeight() - 28));
 
-    g.setColour(juce::Colour(0xff1a1a1a));
+    g.setColour(juce::Colour(0xff1a1d21));
     g.drawHorizontalLine(30, 0, (float)getWidth());
     g.drawHorizontalLine(getHeight() - 28, 0, (float)getWidth());
 }
@@ -484,17 +667,13 @@ void GrooveLockEditor::resized()
         // Browser header
         searchBox.setBounds(s.removeFromTop(24));
         genreFilter.setBounds(s.removeFromTop(24));
-        int listH = (int)(s.getHeight() * 0.20f);
+        int listH = juce::jmax(80, (int)(s.getHeight() * 0.13f));
         templateList.setBounds(s.removeFromTop(listH));
 
         s.removeFromTop(4);
 
-        // Density/Tension XY pad (guard: resized() fires from setSize() before xyPad is constructed)
-        int xySize = juce::jmin(s.getWidth(), 80);
-        if (xyPad)
-            xyPad->setBounds(s.removeFromTop(xySize));
-        else
-            s.removeFromTop(xySize);
+        int xySize = juce::jmin(s.getWidth(), 120);
+        xyPad->setBounds(s.removeFromTop(xySize));
         xyCoordLabel.setBounds(s.removeFromTop(14));
         {
             auto regenRow = s.removeFromTop(22);
@@ -526,6 +705,12 @@ void GrooveLockEditor::resized()
 
         s.removeFromTop(6);
         inputModeToggle.setBounds(s.removeFromTop(22));
+        if (drumMapPanel && drumMapPanel->isVisible())
+        {
+            s.removeFromTop(2);
+            drumMapPanel->setBounds(s.removeFromTop(86)); // 20px preset + 3*20px rows + 6px padding
+            s.removeFromTop(2);
+        }
         outputChannelBox.setBounds(s.removeFromTop(22));
         // rootNoteBox omitted — root note is set via the pitch panel's Root + Oct controls
         s.removeFromTop(4);
@@ -575,6 +760,21 @@ void GrooveLockEditor::timerCallback()
     drumView.setCurrentStep(step);
     bassView.setCurrentStep(step);
     lockView.setCurrentStep(step);
+
+    // Switch drum grid between live input and template display
+    if (proc.inputMode.get() == 0)
+        drumView.setLiveDrumState(&proc.liveDrumDisplay);
+    else
+        drumView.setLiveDrumState(nullptr);
+
+    // Poll for MIDI learn capture and update learn button appearance
+    if (drumMapPanel && drumMapPanel->isVisible())
+    {
+        if (proc.learnCaptureReady.compareAndSetBool(0, 1))
+            drumMapPanel->onLearnCapture(proc.learnCapturedCategory.get(),
+                                         proc.learnCapturedNote.get());
+        drumMapPanel->updateLearnButtons(proc.learnState.get());
+    }
 
     phraseBarIndicator->setCurrentBar(proc.currentPhraseBar.get());
 

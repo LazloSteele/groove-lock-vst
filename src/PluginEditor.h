@@ -49,12 +49,12 @@ private:
     juce::TextButton    regenButton { "Regen" };
 
     //=== Sidebar — Pitch panel ===
-    juce::ToggleButton  pitchEnabledToggle  { "Pitch hints" };
+    juce::ToggleButton  pitchEnabledToggle  { "Melody" };
     juce::ComboBox      pitchRootBox;
     juce::ComboBox      pitchScaleBox;
     juce::Slider        pitchDensitySlider;
     juce::Label         pitchDensityLabel;
-    juce::ToggleButton  pitchChromaticToggle { "Chromatic" };
+    juce::ToggleButton  pitchChromaticToggle { "Approach Notes" };
     juce::TextButton    octaveDownButton    { "Oct -" };
     juce::TextButton    octaveUpButton      { "Oct +" };
     juce::Label         octaveDisplayLabel;
@@ -65,7 +65,9 @@ private:
     std::unique_ptr<PhraseBarIndicator> phraseBarIndicator;
 
     //=== Sidebar — I/O config ===
-    juce::ToggleButton inputModeToggle { "Live MIDI in" };
+    juce::ToggleButton inputModeToggle { "Live Drums" };
+    class DrumMapPanel;
+    std::unique_ptr<DrumMapPanel> drumMapPanel;
     juce::ComboBox     outputChannelBox;
     juce::ComboBox     rootNoteBox;
     juce::TextButton   panicButton { "PANIC" };

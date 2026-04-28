@@ -76,6 +76,19 @@ public:
     juce::Atomic<int> currentStep      { 0 };
     juce::Atomic<int> currentPhraseBar { 0 };
 
+    // Live drum state snapshot for display (written by audio thread, read by UI timer)
+    DrumState liveDrumDisplay;
+
+    // Drum mapping — message thread owns currentMapping; audio thread reads via analyzer
+    DrumMapping currentMapping;
+    void applyMapping(const DrumMapping& m); // message thread only
+
+    // MIDI Learn state (set from message thread, captured on audio thread)
+    juce::Atomic<int> learnState          { 0 };  // 0=idle 1=kick 2=snare 3=hat
+    juce::Atomic<int> learnCapturedNote     { -1 };
+    juce::Atomic<int> learnCapturedCategory { 0  };
+    juce::Atomic<int> learnCaptureReady     { 0  };
+
     // Regenerate the 8-bar phrase. Call from message thread only.
     void regeneratePhrase();
 
