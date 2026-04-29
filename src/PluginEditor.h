@@ -68,6 +68,7 @@ private:
     juce::ToggleButton inputModeToggle { "Live Drums" };
     class DrumMapPanel;
     std::unique_ptr<DrumMapPanel> drumMapPanel;
+    juce::TextButton   recordButton { "Record Pattern" };
     juce::ComboBox     outputChannelBox;
     juce::ComboBox     rootNoteBox;
     juce::TextButton   panicButton { "PANIC" };

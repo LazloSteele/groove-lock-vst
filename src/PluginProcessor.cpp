@@ -27,10 +27,19 @@ void GrooveLockProcessor::prepareToPlay(double sampleRate, int)
 {
     currentSampleRate  = sampleRate;
     totalSamplesPlayed = 0;
-    firstAdaptBar      = true;
     midiOut.reset();
     lockEngine.reset();
     lockEngine.setAdaptedPattern(nullptr);
+
+    recordState       = RecordState::IDLE;
+    recordedBarsCount = 0;
+    lockedBarIdx      = 0;
+    recordingBarsSeen = 0;
+    lastAbsoluteBar   = -1;
+    recordStateForUI.set(0);
+    recordArmed.set(0);
+    recordStopRequested.set(0);
+    recordedBarCountUI.set(0);
 }
 
 void GrooveLockProcessor::releaseResources() {}
@@ -103,8 +112,8 @@ void GrooveLockProcessor::syncParams()
     // Live drum gating: pass analyzer state when in live input mode
     p.liveDrums = (inputMode.get() == 0) ? &analyzer.getState() : nullptr;
 
-    // Clear adapted pattern when not in live mode
-    if (inputMode.get() != 0)
+    // Clear adapted pattern when not in live mode, or while actively recording
+    if (inputMode.get() != 0 || recordState == RecordState::RECORDING)
         lockEngine.setAdaptedPattern(nullptr);
 
     lockEngine.setParams(p);
@@ -129,8 +138,12 @@ void GrooveLockProcessor::processBlock(juce::AudioBuffer<float>& audio,
     {
         lastAppliedTmpl = t;
         lockEngine.setTemplate(t);
-        firstAdaptBar = true;
         lockEngine.setAdaptedPattern(nullptr);
+        recordState       = RecordState::IDLE;
+        recordedBarsCount = 0;
+        lockedBarIdx      = 0;
+        recordStateForUI.set(0);
+        recordedBarCountUI.set(0);
     }
 
     syncParams();
@@ -148,23 +161,92 @@ void GrooveLockProcessor::processBlock(juce::AudioBuffer<float>& audio,
     // Feed drum MIDI to analyzer (live mode)
     if (inputMode.get() == 0)
     {
-        // Detect bar boundary BEFORE analyzer.process() so we can capture the
-        // completed bar's drum state before the analyzer resets it.
         const double bpm         = pos.bpm > 0.0 ? pos.bpm : 120.0;
         const double blockEndPPQ = pos.ppqPosition + (double)audio.getNumSamples() / currentSampleRate * bpm / 60.0;
         const bool   barCrossed  = (int)(pos.ppqPosition / 4.0) < (int)(blockEndPPQ / 4.0);
 
+        // Detect transport restart: if the absolute bar number jumped backwards
+        // (DAW restarted playback from bar 0), reset the recording counters so
+        // the entry-bar skip works correctly on the new playthrough.
+        const int currentAbsBar = (int)(pos.ppqPosition / 4.0);
+        if (recordState == RecordState::RECORDING && pos.isPlaying
+            && lastAbsoluteBar >= 0 && currentAbsBar < lastAbsoluteBar)
+        {
+            recordingBarsSeen = 0;
+            recordedBarsCount = 0;
+            recordedBarCountUI.set(0);
+        }
+        if (pos.isPlaying) lastAbsoluteBar = currentAbsBar;
+
         if (barCrossed)
         {
-            // Snapshot the completed bar's drum data before the analyzer resets
+            // Snapshot completed bar before analyzer resets
             completedBarState = analyzer.getState();
 
-            if (!firstAdaptBar && lastAppliedTmpl)
+            if (recordState == RecordState::IDLE)
             {
-                adaptedPattern = LockEngine::computeAdaptation(completedBarState, lastAppliedTmpl);
-                lockEngine.setAdaptedPattern(adaptedPattern.valid ? &adaptedPattern : nullptr);
+                if (recordArmed.compareAndSetBool(0, 1))
+                {
+                    recordState       = RecordState::RECORDING;
+                    recordedBarsCount = 0;
+                    recordingBarsSeen = 0;
+                    lockEngine.setAdaptedPattern(nullptr);
+                    recordStateForUI.set(1);
+                }
+                else if (lastAppliedTmpl)
+                {
+                    adaptedPattern = LockEngine::computeAdaptation(completedBarState, lastAppliedTmpl);
+                    lockEngine.setAdaptedPattern(adaptedPattern.valid ? &adaptedPattern : nullptr);
+                }
             }
-            firstAdaptBar = false;
+
+            if (recordState == RecordState::RECORDING)
+            {
+                // Skip the first bar (entry bar — may be a partial bar on record start)
+                if (recordingBarsSeen > 0 && recordedBarsCount < 16)
+                {
+                    recordedBars[recordedBarsCount++] = completedBarState;
+                    recordedBarCountUI.set(recordedBarsCount);
+                }
+                recordingBarsSeen++;
+
+                if (recordStopRequested.compareAndSetBool(0, 1))
+                {
+                    recordState  = RecordState::LOCKED;
+                    lockedBarIdx = 0;
+                    recordStateForUI.set(2);
+                    if (recordedBarsCount > 0 && lastAppliedTmpl)
+                    {
+                        adaptedPattern = LockEngine::computeAdaptation(recordedBars[0], lastAppliedTmpl);
+                        lockEngine.setAdaptedPattern(adaptedPattern.valid ? &adaptedPattern : nullptr);
+                        lockedBarIdx = (recordedBarsCount > 1) ? 1 : 0;
+                    }
+                    else
+                    {
+                        // Nothing was captured — silently revert to idle
+                        recordState = RecordState::IDLE;
+                        recordStateForUI.set(0);
+                    }
+                }
+            }
+            else if (recordState == RecordState::LOCKED)
+            {
+                if (recordArmed.compareAndSetBool(0, 1))
+                {
+                    recordState       = RecordState::RECORDING;
+                    recordedBarsCount = 0;
+                    recordingBarsSeen = 0;
+                    lockEngine.setAdaptedPattern(nullptr);
+                    recordStateForUI.set(1);
+                    recordedBarCountUI.set(0);
+                }
+                else if (recordedBarsCount > 0 && lastAppliedTmpl)
+                {
+                    adaptedPattern = LockEngine::computeAdaptation(recordedBars[lockedBarIdx], lastAppliedTmpl);
+                    lockEngine.setAdaptedPattern(adaptedPattern.valid ? &adaptedPattern : nullptr);
+                    lockedBarIdx = (lockedBarIdx + 1) % recordedBarsCount;
+                }
+            }
         }
 
         // MIDI Learn: capture the first incoming note-on and exit learn mode
@@ -198,8 +280,11 @@ void GrooveLockProcessor::processBlock(juce::AudioBuffer<float>& audio,
     }
 
     juce::MidiBuffer outBuf;
-    lockEngine.process(midiOut, pos, currentSampleRate, totalSamplesPlayed, audio.getNumSamples());
-    midiOut.flush(outBuf, totalSamplesPlayed, audio.getNumSamples());
+    if (recordState != RecordState::RECORDING)
+    {
+        lockEngine.process(midiOut, pos, currentSampleRate, totalSamplesPlayed, audio.getNumSamples());
+        midiOut.flush(outBuf, totalSamplesPlayed, audio.getNumSamples());
+    }
 
     // Expose phrase-bar for UI and detect per-loop boundary
     int pBar = lockEngine.getCurrentPhraseBar();

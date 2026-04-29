@@ -97,6 +97,12 @@ public:
     juce::Atomic<int> phraseParamsDirty { 1 }; // start dirty for initial generation
     juce::Atomic<int> needsRegen        { 0 }; // set by audio thread (per-loop)
 
+    // Record Pattern session — message thread writes, audio thread reads
+    juce::Atomic<int> recordArmed         { 0 }; // set by button to arm/re-record
+    juce::Atomic<int> recordStopRequested { 0 }; // set by button to finalize recording
+    juce::Atomic<int> recordStateForUI    { 0 }; // 0=idle, 1=recording, 2=locked (UI read-only)
+    juce::Atomic<int> recordedBarCountUI  { 0 }; // bar count for UI display
+
 private:
     TemplateBrowser  browser;
     PatternAnalyzer  analyzer;
@@ -112,9 +118,17 @@ private:
     int64  totalSamplesPlayed = 0;
 
     // Adaptive movement — audio thread only
-    DrumState      completedBarState;   // drums captured at last bar boundary (before analyzer reset)
-    AdaptedPattern adaptedPattern;      // computed from completedBarState each bar
-    bool           firstAdaptBar = true; // true until the first bar boundary is crossed
+    DrumState      completedBarState;
+    AdaptedPattern adaptedPattern;
+
+    // Record Pattern session — audio thread only
+    enum class RecordState { IDLE, RECORDING, LOCKED };
+    RecordState   recordState       = RecordState::IDLE;
+    DrumState     recordedBars[16];
+    int           recordedBarsCount = 0;
+    int           lockedBarIdx      = 0;
+    int           recordingBarsSeen = 0;
+    int           lastAbsoluteBar   = -1;
 
     // Phrase expansion — double-buffered so message thread can write while audio thread reads
     PhraseExpander          phraseExpander;        // message thread only

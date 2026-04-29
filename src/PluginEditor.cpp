@@ -474,12 +474,26 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
         proc.inputMode.set(live ? 0 : 1);
         if (!live) proc.learnState.set(0); // cancel any active learn on mode exit
         drumMapPanel->setVisible(live);
+        recordButton.setVisible(live);
         resized();
     };
 
     drumMapPanel = std::make_unique<DrumMapPanel>(proc);
     addAndMakeVisible(*drumMapPanel);
     drumMapPanel->setVisible(proc.inputMode.get() == 0);
+
+    addAndMakeVisible(recordButton);
+    recordButton.setVisible(proc.inputMode.get() == 0);
+    recordButton.setColour(juce::TextButton::buttonColourId,  juce::Colour(0xff3a4652));
+    recordButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffaabbcc));
+    recordButton.onClick = [this] {
+        int state = proc.recordStateForUI.get();
+        if (state == 1) {
+            proc.recordStopRequested.set(1);
+        } else {
+            proc.recordArmed.set(1);
+        }
+    };
 
     addAndMakeVisible(outputChannelBox);
     for (int i = 1; i <= 16; ++i)
@@ -708,7 +722,9 @@ void GrooveLockEditor::resized()
         if (drumMapPanel && drumMapPanel->isVisible())
         {
             s.removeFromTop(2);
-            drumMapPanel->setBounds(s.removeFromTop(86)); // 20px preset + 3*20px rows + 6px padding
+            drumMapPanel->setBounds(s.removeFromTop(86));
+            s.removeFromTop(2);
+            recordButton.setBounds(s.removeFromTop(22));
             s.removeFromTop(2);
         }
         outputChannelBox.setBounds(s.removeFromTop(22));
@@ -777,6 +793,23 @@ void GrooveLockEditor::timerCallback()
     }
 
     phraseBarIndicator->setCurrentBar(proc.currentPhraseBar.get());
+
+    // Update Record Pattern button appearance
+    if (recordButton.isVisible())
+    {
+        int recState    = proc.recordStateForUI.get();
+        int recBarCount = proc.recordedBarCountUI.get();
+        if (recState == 0) {
+            recordButton.setButtonText("Record Pattern");
+            recordButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff3a4652));
+        } else if (recState == 1) {
+            recordButton.setButtonText("Stop  [" + juce::String(recBarCount) + " bars]");
+            recordButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xffaa2200));
+        } else {
+            recordButton.setButtonText("Re-Record  [" + juce::String(recBarCount) + " bars]");
+            recordButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff226644));
+        }
+    }
 
     // Regenerate phrase when parameters changed or per-loop boundary was crossed
     if (proc.phraseParamsDirty.compareAndSetBool(0, 1))
