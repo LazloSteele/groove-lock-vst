@@ -27,8 +27,10 @@ void GrooveLockProcessor::prepareToPlay(double sampleRate, int)
 {
     currentSampleRate  = sampleRate;
     totalSamplesPlayed = 0;
+    firstAdaptBar      = true;
     midiOut.reset();
     lockEngine.reset();
+    lockEngine.setAdaptedPattern(nullptr);
 }
 
 void GrooveLockProcessor::releaseResources() {}
@@ -101,6 +103,10 @@ void GrooveLockProcessor::syncParams()
     // Live drum gating: pass analyzer state when in live input mode
     p.liveDrums = (inputMode.get() == 0) ? &analyzer.getState() : nullptr;
 
+    // Clear adapted pattern when not in live mode
+    if (inputMode.get() != 0)
+        lockEngine.setAdaptedPattern(nullptr);
+
     lockEngine.setParams(p);
 }
 
@@ -123,6 +129,8 @@ void GrooveLockProcessor::processBlock(juce::AudioBuffer<float>& audio,
     {
         lastAppliedTmpl = t;
         lockEngine.setTemplate(t);
+        firstAdaptBar = true;
+        lockEngine.setAdaptedPattern(nullptr);
     }
 
     syncParams();
@@ -140,6 +148,25 @@ void GrooveLockProcessor::processBlock(juce::AudioBuffer<float>& audio,
     // Feed drum MIDI to analyzer (live mode)
     if (inputMode.get() == 0)
     {
+        // Detect bar boundary BEFORE analyzer.process() so we can capture the
+        // completed bar's drum state before the analyzer resets it.
+        const double bpm         = pos.bpm > 0.0 ? pos.bpm : 120.0;
+        const double blockEndPPQ = pos.ppqPosition + (double)audio.getNumSamples() / currentSampleRate * bpm / 60.0;
+        const bool   barCrossed  = (int)(pos.ppqPosition / 4.0) < (int)(blockEndPPQ / 4.0);
+
+        if (barCrossed)
+        {
+            // Snapshot the completed bar's drum data before the analyzer resets
+            completedBarState = analyzer.getState();
+
+            if (!firstAdaptBar && lastAppliedTmpl)
+            {
+                adaptedPattern = LockEngine::computeAdaptation(completedBarState, lastAppliedTmpl);
+                lockEngine.setAdaptedPattern(adaptedPattern.valid ? &adaptedPattern : nullptr);
+            }
+            firstAdaptBar = false;
+        }
+
         // MIDI Learn: capture the first incoming note-on and exit learn mode
         int ls = learnState.get();
         if (ls > 0)

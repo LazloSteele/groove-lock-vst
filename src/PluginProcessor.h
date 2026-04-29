@@ -3,6 +3,7 @@
 #include "GrooveTemplate.h"
 #include "PatternAnalyzer.h"
 #include "LockEngine.h"
+#include "AdaptedPattern.h"
 #include "MidiOutputManager.h"
 #include "TemplateBrowser.h"
 #include "PhraseExpander.h"
@@ -109,6 +110,11 @@ private:
 
     double currentSampleRate  = 44100.0;
     int64  totalSamplesPlayed = 0;
+
+    // Adaptive movement — audio thread only
+    DrumState      completedBarState;   // drums captured at last bar boundary (before analyzer reset)
+    AdaptedPattern adaptedPattern;      // computed from completedBarState each bar
+    bool           firstAdaptBar = true; // true until the first bar boundary is crossed
 
     // Phrase expansion — double-buffered so message thread can write while audio thread reads
     PhraseExpander          phraseExpander;        // message thread only

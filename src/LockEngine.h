@@ -5,6 +5,7 @@
 #include "MidiOutputManager.h"
 #include "PatternAnalyzer.h"
 #include "PitchEngine.h"
+#include "AdaptedPattern.h"
 
 struct LockEngineParams
 {
@@ -34,8 +35,16 @@ public:
     void setParams(const LockEngineParams& p);
 
     // Provide the 8-bar phrase for per-bar pitch selection.
-    // Pass nullptr to fall back to single-bar template-based pitch.
     void setExpandedPhrase(const ExpandedPhrase* p) { expandedPhrase = p; }
+
+    // Supply an adapted pattern computed from the previous bar's drums.
+    // Pass nullptr to revert to seed-based playback.
+    void setAdaptedPattern(const AdaptedPattern* p) { adaptedPattern = p; }
+
+    // Compute the adapted pattern for the next bar from a completed bar of drum data.
+    // Pure function — no side effects, no allocation. Audio-thread safe.
+    static AdaptedPattern computeAdaptation(const DrumState& drums,
+                                             const GrooveTemplate* tmpl);
 
     // Called each processBlock. Returns MIDI events via manager.
     void process(MidiOutputManager& midiOut,
@@ -50,16 +59,23 @@ public:
     int getCurrentPhraseBar() const { return currentPhraseBar; }
 
 private:
-    const GrooveTemplate* tmpl    = nullptr;
-    LockEngineParams       params;
-    GenreProfile           profile;
+    // Movement limits (per ADAPTIVE_MOVEMENT.md)
+    static constexpr int kUnisonMaxMove     = 2;
+    static constexpr int kAnticipateMaxMove = 2;
+    static constexpr int kAlternateMaxMove  = 1;
+    static constexpr int kMinNoteSpacing    = 2;
 
-    const ExpandedPhrase* expandedPhrase     = nullptr; // set from processor
+    const GrooveTemplate*  tmpl            = nullptr;
+    LockEngineParams        params;
+    GenreProfile            profile;
 
-    int    lastStep               = -1;
-    int    lastNoteOnSample       = -1;
-    int    currentPhraseBar       = 0;   // 0-7, audio thread only
-    double currentStepDurSamples  = 0.0;
+    const ExpandedPhrase*  expandedPhrase  = nullptr;
+    const AdaptedPattern*  adaptedPattern  = nullptr;
+
+    int    lastStep              = -1;
+    int    lastNoteOnSample      = -1;
+    int    currentPhraseBar      = 0;
+    double currentStepDurSamples = 0.0;
 
     PitchEngine pitchEngine;
 
