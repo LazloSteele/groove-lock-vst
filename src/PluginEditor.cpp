@@ -185,7 +185,7 @@ public:
         learnAllBtn.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffaabbcc));
         addAndMakeVisible(learnAllBtn);
         learnAllBtn.onClick = [this] {
-            proc.learnState.set(proc.learnState.get() > 0 ? 0 : 1); // toggle off, or start at kick
+            proc.learnState.set(proc.learnState.get() > 0 ? 0 : 1);
         };
 
         refreshNoteLabels(proc.currentMapping);
@@ -195,25 +195,35 @@ public:
     void onLearnCapture(int category, int note)
     {
         auto m = proc.currentMapping;
-        switch (category)
+        if (category == 0)
         {
-            case 1: if (!m.kickNotes.contains(note))  m.kickNotes.add(note);  break;
-            case 2: if (!m.snareNotes.contains(note)) m.snareNotes.add(note); break;
-            case 3: if (!m.hatNotes.contains(note))   m.hatNotes.add(note);   break;
-            default: return;
+            // Learn-all: add to every category simultaneously
+            if (!m.kickNotes.contains(note))  m.kickNotes.add(note);
+            if (!m.snareNotes.contains(note)) m.snareNotes.add(note);
+            if (!m.hatNotes.contains(note))   m.hatNotes.add(note);
+        }
+        else
+        {
+            switch (category)
+            {
+                case 1: if (!m.kickNotes.contains(note))  m.kickNotes.add(note);  break;
+                case 2: if (!m.snareNotes.contains(note)) m.snareNotes.add(note); break;
+                case 3: if (!m.hatNotes.contains(note))   m.hatNotes.add(note);   break;
+                default: return;
+            }
         }
         proc.applyMapping(m);
         refreshNoteLabels(proc.currentMapping);
-        presetBox.setSelectedId(1, juce::dontSendNotification); // Custom
+        presetBox.setSelectedId(1, juce::dontSendNotification);
     }
 
     // Called from timerCallback to keep learn button state in sync
     void updateLearnButtons(int learnState)
     {
-        static const char* prompts[] = { "Learn Drums", "Tap kick...", "Tap snare...", "Tap hat..." };
-        learnAllBtn.setButtonText(prompts[learnState >= 1 && learnState <= 3 ? learnState : 0]);
+        bool active = learnState > 0;
+        learnAllBtn.setButtonText(active ? "Stop" : "Learn Drums");
         learnAllBtn.setColour(juce::TextButton::buttonColourId,
-            learnState > 0 ? juce::Colour(0xffff9f1c) : juce::Colour(0xff3a4652));
+            active ? juce::Colour(0xffff9f1c) : juce::Colour(0xff3a4652));
     }
 
     void resized() override

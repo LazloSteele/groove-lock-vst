@@ -250,9 +250,10 @@ void GrooveLockProcessor::processBlock(juce::AudioBuffer<float>& audio,
             }
         }
 
-        // MIDI Learn: capture the first incoming note-on and exit learn mode
-        int ls = learnState.get();
-        if (ls > 0)
+        // MIDI Learn: while active, forward each note-on to the UI thread.
+        // category 0 tells onLearnCapture to add the note to all three categories.
+        // Gate on learnCaptureReady so we don't overwrite an unprocessed capture.
+        if (learnState.get() > 0 && learnCaptureReady.get() == 0)
         {
             for (const auto& meta : midi)
             {
@@ -260,8 +261,7 @@ void GrooveLockProcessor::processBlock(juce::AudioBuffer<float>& audio,
                 if (msg.isNoteOn())
                 {
                     learnCapturedNote.set(msg.getNoteNumber());
-                    learnCapturedCategory.set(ls);
-                    learnState.set(ls < 3 ? ls + 1 : 0); // advance to next category
+                    learnCapturedCategory.set(0); // 0 = add to kick, snare, and hat
                     learnCaptureReady.set(1);
                     break;
                 }
