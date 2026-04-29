@@ -268,10 +268,24 @@ void GrooveLockProcessor::processBlock(juce::AudioBuffer<float>& audio,
             }
         }
 
-        // Snapshot for display BEFORE analyzer.process(), which zeroes state at bar
-        // boundaries. At a boundary, show the just-completed bar so the display
-        // doesn't flash to empty for one timer frame.
-        liveDrumDisplay = barCrossed ? completedBarState : analyzer.getState();
+        // Update the display snapshot before analyzer.process() which zeroes state
+        // at bar boundaries. At a boundary, hold the completed bar. Between
+        // boundaries, only update when hits are actually present — this prevents
+        // the display from blanking out at the start of a new bar before the
+        // first hit arrives.
+        if (barCrossed)
+        {
+            liveDrumDisplay = completedBarState;
+        }
+        else
+        {
+            const DrumState& cur = analyzer.getState();
+            bool anyHits = false;
+            for (int i = 0; i < 16 && !anyHits; ++i)
+                anyHits = cur.kickHits[i] > 0 || cur.snareHits[i] > 0 || cur.hatHits[i] > 0;
+            if (anyHits)
+                liveDrumDisplay = cur;
+        }
         analyzer.process(midi, pos, currentSampleRate, audio.getNumSamples());
     }
 
