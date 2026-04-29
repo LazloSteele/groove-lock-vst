@@ -37,7 +37,8 @@ void GrooveLockProcessor::prepareToPlay(double sampleRate, int)
     recordingBarsSeen = 0;
     lastAbsoluteBar   = -1;
     recordStateForUI.set(0);
-    recordArmed.set(0);
+    // recordArmed is intentionally NOT cleared: the DAW calls prepareToPlay when
+    // the transport starts, which would eat the arm state the user just set.
     recordStopRequested.set(0);
     recordedBarCountUI.set(0);
 }
@@ -260,15 +261,18 @@ void GrooveLockProcessor::processBlock(juce::AudioBuffer<float>& audio,
                 {
                     learnCapturedNote.set(msg.getNoteNumber());
                     learnCapturedCategory.set(ls);
-                    learnState.set(0);
+                    learnState.set(ls < 3 ? ls + 1 : 0); // advance to next category
                     learnCaptureReady.set(1);
                     break;
                 }
             }
         }
 
+        // Snapshot for display BEFORE analyzer.process(), which zeroes state at bar
+        // boundaries. At a boundary, show the just-completed bar so the display
+        // doesn't flash to empty for one timer frame.
+        liveDrumDisplay = barCrossed ? completedBarState : analyzer.getState();
         analyzer.process(midi, pos, currentSampleRate, audio.getNumSamples());
-        liveDrumDisplay = analyzer.getState();
     }
 
     // Update step + phrase-bar position for UI

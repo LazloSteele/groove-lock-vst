@@ -164,20 +164,10 @@ public:
             row.notesLabel.setColour(juce::Label::textColourId, juce::Colour(0xffcccccc));
             addAndMakeVisible(row.notesLabel);
 
-            auto makeBtn = [this](juce::TextButton& b, const juce::String& text) {
-                b.setButtonText(text);
-                b.setColour(juce::TextButton::buttonColourId,  juce::Colour(0xff3a4652));
-                b.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffaabbcc));
-                addAndMakeVisible(b);
-            };
-            makeBtn(row.learnBtn, "Learn");
-            makeBtn(row.clearBtn, "x");
-
-            int category = i + 1; // 1=kick 2=snare 3=hat
-            row.learnBtn.onClick = [this, category] {
-                // Toggle: clicking again cancels
-                proc.learnState.set(proc.learnState.get() == category ? 0 : category);
-            };
+            row.clearBtn.setButtonText("x");
+            row.clearBtn.setColour(juce::TextButton::buttonColourId,  juce::Colour(0xff3a4652));
+            row.clearBtn.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffaabbcc));
+            addAndMakeVisible(row.clearBtn);
 
             row.clearBtn.onClick = [this, i] {
                 auto m = proc.currentMapping;
@@ -186,9 +176,17 @@ public:
                 else             m.hatNotes.clear();
                 proc.applyMapping(m);
                 refreshNoteLabels(proc.currentMapping);
-                presetBox.setSelectedId(1, juce::dontSendNotification); // Custom
+                presetBox.setSelectedId(1, juce::dontSendNotification);
             };
         }
+
+        // Single sequential learn button: tap kick → tap snare → tap hat → done
+        learnAllBtn.setColour(juce::TextButton::buttonColourId,  juce::Colour(0xff3a4652));
+        learnAllBtn.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffaabbcc));
+        addAndMakeVisible(learnAllBtn);
+        learnAllBtn.onClick = [this] {
+            proc.learnState.set(proc.learnState.get() > 0 ? 0 : 1); // toggle off, or start at kick
+        };
 
         refreshNoteLabels(proc.currentMapping);
     }
@@ -209,16 +207,13 @@ public:
         presetBox.setSelectedId(1, juce::dontSendNotification); // Custom
     }
 
-    // Called from timerCallback to keep Learn button state in sync
+    // Called from timerCallback to keep learn button state in sync
     void updateLearnButtons(int learnState)
     {
-        for (int i = 0; i < 3; ++i)
-        {
-            bool active = (learnState == i + 1);
-            rows[i].learnBtn.setColour(juce::TextButton::buttonColourId,
-                active ? juce::Colour(0xffff9f1c) : juce::Colour(0xff3a4652));
-            rows[i].learnBtn.setButtonText(active ? "..." : "Learn");
-        }
+        static const char* prompts[] = { "Learn Drums", "Tap kick...", "Tap snare...", "Tap hat..." };
+        learnAllBtn.setButtonText(prompts[learnState >= 1 && learnState <= 3 ? learnState : 0]);
+        learnAllBtn.setColour(juce::TextButton::buttonColourId,
+            learnState > 0 ? juce::Colour(0xffff9f1c) : juce::Colour(0xff3a4652));
     }
 
     void resized() override
@@ -232,10 +227,10 @@ public:
             row.catLabel.setBounds(r.removeFromLeft(36));
             row.clearBtn.setBounds(r.removeFromRight(16));
             r.removeFromRight(2);
-            row.learnBtn.setBounds(r.removeFromRight(38));
-            r.removeFromRight(2);
             row.notesLabel.setBounds(r);
         }
+        b.removeFromTop(2);
+        learnAllBtn.setBounds(b.removeFromTop(20));
     }
 
     void paint(juce::Graphics& g) override
@@ -255,10 +250,10 @@ private:
     {
         juce::Label      catLabel;
         juce::Label      notesLabel;
-        juce::TextButton learnBtn;
         juce::TextButton clearBtn;
     };
-    Row rows[3];
+    Row              rows[3];
+    juce::TextButton learnAllBtn { "Learn Drums" };
 
     void refreshNoteLabels(const DrumMapping& m)
     {
@@ -722,7 +717,7 @@ void GrooveLockEditor::resized()
         if (drumMapPanel && drumMapPanel->isVisible())
         {
             s.removeFromTop(2);
-            drumMapPanel->setBounds(s.removeFromTop(86));
+            drumMapPanel->setBounds(s.removeFromTop(108));
             s.removeFromTop(2);
             recordButton.setBounds(s.removeFromTop(22));
             s.removeFromTop(2);
