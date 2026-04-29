@@ -61,6 +61,13 @@ target_link_libraries(GrooveLock PRIVATE
     juce::juce_recommended_warning_flags
 )
 
+# juce_recommended_warning_flags enables /W4 on MSVC, which triggers C4244
+# (implicit narrowing: double→int, int64→int) and C4267 (size_t→int) across
+# JUCE's own headers. Suppress them without dropping the rest of /W4.
+if(MSVC)
+    target_compile_options(GrooveLock PRIVATE /wd4244 /wd4267)
+endif()
+
 
 # Copy presets into the VST3 bundle (bundle.vst3/presets/).
 # The DLL sits two dirs deep inside the bundle: bundle.vst3/Contents/x86_64-win/
