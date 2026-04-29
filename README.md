@@ -15,6 +15,7 @@ Target genres: G-Funk, Mobb, Hyphy, Wonky, Modern West Coast.
 - [Quick start](#quick-start)
 - [Template browser](#template-browser)
 - [Groove controls](#groove-controls)
+- [Adaptive drum recording](#adaptive-drum-recording)
 - [Pitch system](#pitch-system)
 - [8-bar phrase expansion](#8-bar-phrase-expansion)
 - [Parameter reference](#parameter-reference)
@@ -134,9 +135,40 @@ Six rotary knobs in the sidebar control the feel of the output:
 
 **I/O controls** (below the knobs):
 
-- **Live MIDI in** toggle — when on, the plugin reads incoming drum MIDI and attempts to match the template to your live drum pattern. When off, it uses the template's internal drum pattern.
+- **Live Drums** toggle — when on, the plugin reads incoming drum MIDI and adapts the bass rhythm to where the drums actually land. When off, it uses the template's internal drum pattern. See [Adaptive drum recording](#adaptive-drum-recording) for the full workflow.
 - **Output channel** — which MIDI channel the bass notes are sent on. Default: channel 2.
 - **PANIC** button — sends all-notes-off on the output channel. Use if notes get stuck.
+
+---
+
+## Adaptive drum recording
+
+When **Live Drums** is on, Groove Lock can reposition bass steps to match where the kick actually landed rather than where the template expects it. A unison step that the template places on step 1 will follow the kick to step 3 if that's where it hits; an anticipate step will land one step before the kick's resolved position; alternate steps find the nearest gap in the live pattern.
+
+The adaptation is driven by a **recorded drum reference** rather than a real-time lookahead buffer. This avoids the one-bar lag that a live-listen approach would introduce — and it means the bass immediately plays the correct adaptation even when your drum pattern alternates between two different bars.
+
+### Recording workflow
+
+1. Enable **Live Drums** in the sidebar. The **Record Pattern** button appears below the drum mapping panel.
+2. Route your drum MIDI into Groove Lock. This can be a live drummer, a drum machine, or a pre-recorded MIDI clip routed to the plugin's input — the plugin treats all three identically.
+3. Press **Record Pattern**. The bass output mutes and the plugin waits.
+4. Start your DAW transport (or it can already be running). Recording begins at the next bar boundary.
+5. Play through your full drum phrase — 2 bars, 4 bars, whatever it repeats over. The button shows **Stop [N bars]** in red as each bar is captured.
+6. Press **Stop** when you're done. The plugin finishes the current bar before locking — if you play a beat or two past the end of your phrase before pressing Stop, those extra hits are captured as the final bar (a natural grace period rather than a hard cutoff).
+7. The button turns green: **Re-Record [N bars]**. Bass un-mutes.
+
+From this point the plugin cycles through the recorded bars in order. Bar 1 of playback adapts to recorded bar 1, bar 2 to recorded bar 2, and so on — wrapping back to bar 1 after the last recorded bar. If your pattern alternates A/B, record both bars and the bass will alternate correctly with zero lag.
+
+### Re-recording
+
+Press **Re-Record** at any time to clear the stored pattern and start a new session. Bass mutes again during the new recording.
+
+### Notes
+
+- If you stop the DAW transport and restart it from bar 0 (the default in most DAWs), the recording counters reset automatically so the first bar is cleanly skipped as an entry bar.
+- Changing the loaded template clears the recording and resets to idle.
+- The recording is not saved with the DAW project — re-record after reopening a session.
+- Using a pre-recorded MIDI clip as input: in Ableton, set the drum MIDI track's output to route into the Groove Lock instrument track, then record your reference while that clip plays.
 
 ---
 
@@ -304,3 +336,13 @@ All groove parameters are saved with the DAW project. Template index and pitch s
 
 **Ableton shows "no device" or plugin won't load in a MIDI track**
 - This is expected if you try to load it as a MIDI effect. Load it on an Instrument track instead.
+
+**Record Pattern button doesn't appear**
+- The button is only visible when Live Drums is toggled on.
+
+**Bass stays muted after pressing Stop**
+- The recording finalizes at the next bar boundary, not immediately when you press Stop. Let the current bar finish — it should un-mute within one bar.
+- If you pressed Stop before any complete bars were captured (e.g. immediately after starting), the plugin silently returns to idle rather than entering locked mode. Press Record Pattern again and let at least one full bar complete before stopping.
+
+**Bass adapts to the wrong bar on an alternating pattern**
+- Record at least as many bars as your pattern takes to complete one full cycle. For a two-bar A/B pattern, record both bars. The plugin needs to see the full cycle before it can cycle through them correctly.
