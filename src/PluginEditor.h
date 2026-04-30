@@ -65,7 +65,8 @@ private:
     std::unique_ptr<PhraseBarIndicator> phraseBarIndicator;
 
     //=== Sidebar — I/O config ===
-    juce::ToggleButton inputModeToggle { "Live Drums" };
+    juce::ToggleButton inputModeToggle  { "Live Drums" };
+    juce::TextButton   drumConfigButton { u8"⚙" }; // gear icon — opens drum map
     class DrumMapPanel;
     std::unique_ptr<DrumMapPanel> drumMapPanel;
     juce::TextButton   recordButton { "Record Pattern" };

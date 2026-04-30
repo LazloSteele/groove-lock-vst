@@ -477,15 +477,31 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     inputModeToggle.onStateChange = [this] {
         bool live = inputModeToggle.getToggleState();
         proc.inputMode.set(live ? 0 : 1);
-        if (!live) proc.learnState.set(0); // cancel any active learn on mode exit
-        drumMapPanel->setVisible(live);
+        if (!live) {
+            proc.learnState.set(0);
+            drumMapPanel->setVisible(false);
+            drumConfigButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff3a4652));
+        }
+        drumConfigButton.setVisible(live);
         recordButton.setVisible(live);
+        resized();
+    };
+
+    addAndMakeVisible(drumConfigButton);
+    drumConfigButton.setVisible(proc.inputMode.get() == 0);
+    drumConfigButton.setColour(juce::TextButton::buttonColourId,  juce::Colour(0xff3a4652));
+    drumConfigButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffaabbcc));
+    drumConfigButton.onClick = [this] {
+        bool nowVisible = !drumMapPanel->isVisible();
+        drumMapPanel->setVisible(nowVisible);
+        drumConfigButton.setColour(juce::TextButton::buttonColourId,
+            nowVisible ? juce::Colour(0xffff9f1c) : juce::Colour(0xff3a4652));
         resized();
     };
 
     drumMapPanel = std::make_unique<DrumMapPanel>(proc);
     addAndMakeVisible(*drumMapPanel);
-    drumMapPanel->setVisible(proc.inputMode.get() == 0);
+    drumMapPanel->setVisible(false); // hidden behind config button by default
 
     addAndMakeVisible(recordButton);
     recordButton.setVisible(proc.inputMode.get() == 0);
@@ -723,15 +739,23 @@ void GrooveLockEditor::resized()
         place(glideKnob,     glideLabel,     knobRow2.removeFromLeft(knobW));
 
         s.removeFromTop(6);
-        inputModeToggle.setBounds(s.removeFromTop(22));
+        {
+            auto row = s.removeFromTop(22);
+            if (drumConfigButton.isVisible())
+                drumConfigButton.setBounds(row.removeFromRight(28));
+            inputModeToggle.setBounds(row);
+        }
+        if (recordButton.isVisible())
+        {
+            s.removeFromTop(2);
+            recordButton.setBounds(s.removeFromTop(22));
+        }
         if (drumMapPanel && drumMapPanel->isVisible())
         {
             s.removeFromTop(2);
             drumMapPanel->setBounds(s.removeFromTop(108));
-            s.removeFromTop(2);
-            recordButton.setBounds(s.removeFromTop(22));
-            s.removeFromTop(2);
         }
+        s.removeFromTop(2);
         outputChannelBox.setBounds(s.removeFromTop(22));
         // rootNoteBox omitted — root note is set via the pitch panel's Root + Oct controls
         s.removeFromTop(4);
