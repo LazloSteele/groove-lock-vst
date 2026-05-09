@@ -3,7 +3,6 @@
 #include "GrooveTemplate.h"
 #include "PatternAnalyzer.h"
 #include "LockEngine.h"
-#include "AdaptedPattern.h"
 #include "MidiOutputManager.h"
 #include "TemplateBrowser.h"
 #include "PhraseExpander.h"
@@ -97,11 +96,8 @@ public:
     juce::Atomic<int> phraseParamsDirty { 1 }; // start dirty for initial generation
     juce::Atomic<int> needsRegen        { 0 }; // set by audio thread (per-loop)
 
-    // Record Pattern session — message thread writes, audio thread reads
-    juce::Atomic<int> recordArmed         { 0 }; // set by button to arm/re-record
-    juce::Atomic<int> recordStopRequested { 0 }; // set by button to finalize recording
-    juce::Atomic<int> recordStateForUI    { 0 }; // 0=idle, 1=recording, 2=locked (UI read-only)
-    juce::Atomic<int> recordedBarCountUI  { 0 }; // bar count for UI display
+    // Hi-hat gates ALTERNATE steps when enabled (genre-dependent preference)
+    juce::Atomic<int> alternateMuteOnHat  { 0 };
 
 private:
     TemplateBrowser  browser;
@@ -117,18 +113,8 @@ private:
     double currentSampleRate  = 44100.0;
     int64  totalSamplesPlayed = 0;
 
-    // Adaptive movement — audio thread only
+    // Snapshot of the just-completed bar's drums (for liveDrumDisplay hold)
     DrumState      completedBarState;
-    AdaptedPattern adaptedPattern;
-
-    // Record Pattern session — audio thread only
-    enum class RecordState { IDLE, RECORDING, LOCKED };
-    RecordState   recordState       = RecordState::IDLE;
-    DrumState     recordedBars[16];
-    int           recordedBarsCount = 0;
-    int           lockedBarIdx      = 0;
-    int           recordingBarsSeen = 0;
-    int           lastAbsoluteBar   = -1;
 
     // Phrase expansion — double-buffered so message thread can write while audio thread reads
     PhraseExpander          phraseExpander;        // message thread only

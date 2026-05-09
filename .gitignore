@@ -78,3 +78,4 @@ docs/CLAUDE.md
 
 # ── User presets (runtime-generated, not source) ─────────────────────────────
 presets/user/
+docs/decisions/

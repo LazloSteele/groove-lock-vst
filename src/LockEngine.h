@@ -5,7 +5,6 @@
 #include "MidiOutputManager.h"
 #include "PatternAnalyzer.h"
 #include "PitchEngine.h"
-#include "AdaptedPattern.h"
 
 struct LockEngineParams
 {
@@ -19,9 +18,10 @@ struct LockEngineParams
     int   outputRootNote     = 36;
     int   pitchBendRange     = 2;
 
-    // When non-null, gates bass steps against live drum input (approach B).
+    // When non-null, gates bass steps against live drum input.
     // Null = template-driven output (no live gating).
-    const DrumState* liveDrums = nullptr;
+    const DrumState* liveDrums      = nullptr;
+    bool alternateMuteOnHat         = false; // include hat hits in ALTERNATE gate check
 
     PitchEngineParams pitch;
 };
@@ -37,15 +37,6 @@ public:
     // Provide the 8-bar phrase for per-bar pitch selection.
     void setExpandedPhrase(const ExpandedPhrase* p) { expandedPhrase = p; }
 
-    // Supply an adapted pattern computed from the previous bar's drums.
-    // Pass nullptr to revert to seed-based playback.
-    void setAdaptedPattern(const AdaptedPattern* p) { adaptedPattern = p; }
-
-    // Compute the adapted pattern for the next bar from a completed bar of drum data.
-    // Pure function — no side effects, no allocation. Audio-thread safe.
-    static AdaptedPattern computeAdaptation(const DrumState& drums,
-                                             const GrooveTemplate* tmpl);
-
     // Called each processBlock. Returns MIDI events via manager.
     void process(MidiOutputManager& midiOut,
                  const juce::AudioPlayHead::CurrentPositionInfo& pos,
@@ -59,18 +50,11 @@ public:
     int getCurrentPhraseBar() const { return currentPhraseBar; }
 
 private:
-    // Movement limits (per ADAPTIVE_MOVEMENT.md)
-    static constexpr int kUnisonMaxMove     = 2;
-    static constexpr int kAnticipateMaxMove = 2;
-    static constexpr int kAlternateMaxMove  = 1;
-    static constexpr int kMinNoteSpacing    = 2;
-
     const GrooveTemplate*  tmpl            = nullptr;
     LockEngineParams        params;
     GenreProfile            profile;
 
     const ExpandedPhrase*  expandedPhrase  = nullptr;
-    const AdaptedPattern*  adaptedPattern  = nullptr;
 
     int    lastStep              = -1;
     int    lastNoteOnSample      = -1;
