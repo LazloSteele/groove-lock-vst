@@ -4,8 +4,8 @@ MidiOutputManager::MidiOutputManager() { reset(); }
 
 void MidiOutputManager::reset()
 {
-    writePos = 0;
-    count    = 0;
+    readPos = 0;
+    count   = 0;
 }
 
 void MidiOutputManager::scheduleNote(int64 noteOnSample, int64 noteOffSample,
@@ -13,9 +13,11 @@ void MidiOutputManager::scheduleNote(int64 noteOnSample, int64 noteOffSample,
                                       int bendValue, int bendOffsetSamples)
 {
     auto addEvent = [&](ScheduledEvent e) {
-        events[writePos % kMaxEvents] = e;
-        ++writePos;
-        if (count < kMaxEvents) ++count;
+        if (count < kMaxEvents)
+        {
+            events[(readPos + count) % kMaxEvents] = e;
+            ++count;
+        }
     };
 
     if (bendValue != 8192)
@@ -45,28 +47,29 @@ void MidiOutputManager::scheduleNote(int64 noteOnSample, int64 noteOffSample,
 void MidiOutputManager::flush(juce::MidiBuffer& out, int64 blockStart, int numSamples)
 {
     int64 blockEnd = blockStart + numSamples;
-    int readHead   = (writePos - count + kMaxEvents) % kMaxEvents;
+    int   kept     = 0;
 
-    for (int i = 0; i < count; )
+    for (int i = 0; i < count; ++i)
     {
-        int idx = (readHead + i) % kMaxEvents;
-        auto& e = events[idx];
+        ScheduledEvent& e = events[(readPos + i) % kMaxEvents];
 
         if (e.samplePosition >= blockStart && e.samplePosition < blockEnd)
         {
-            int relPos = (int)(e.samplePosition - blockStart);
-            out.addEvent(e.msg, relPos);
-            // Remove by swapping with the last element
-            int lastIdx = (readHead + count - 1) % kMaxEvents;
-            if (idx != lastIdx) events[idx] = events[lastIdx];
-            --count;
-            // Don't advance i — recheck this slot
+            out.addEvent(e.msg, (int)(e.samplePosition - blockStart));
+            // consumed — not copied to the kept region
         }
         else
         {
-            ++i;
+            // Compact to the front of the active region.
+            // When kept == i the assignment is a harmless self-copy.
+            events[(readPos + kept) % kMaxEvents] = e;
+            ++kept;
         }
     }
+
+    count = kept;
+    // readPos is unchanged — kept events start from the same physical slot.
+    // writePos (logical) is now readPos + count, maintained implicitly.
 }
 
 void MidiOutputManager::panic(juce::MidiBuffer& out, int channel)

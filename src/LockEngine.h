@@ -57,7 +57,7 @@ private:
     const ExpandedPhrase*  expandedPhrase  = nullptr;
 
     int    lastStep              = -1;
-    int    lastNoteOnSample      = -1;
+    int64  lastNoteOnSample      = -1;
     int    currentPhraseBar      = 0;
     double currentStepDurSamples = 0.0;
 

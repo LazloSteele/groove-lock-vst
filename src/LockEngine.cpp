@@ -172,7 +172,7 @@ void LockEngine::processStep(int step, int64 stepSamplePos, double sampleRate,
     out.scheduleNote(noteOnSample, noteOff,
                      params.outputChannel, midiNote,
                      finalVel, bendVal, bendOffSamples);
-    lastNoteOnSample = (int)noteOnSample;
+    lastNoteOnSample = noteOnSample;
 }
 
 // ─── process ──────────────────────────────────────────────────────────────────
