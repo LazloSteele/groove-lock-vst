@@ -30,30 +30,37 @@
   "bass": [
     {
       "label": "Bass",
-      "steps": [0, 2, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0],
-      "timing": ["grid","bend","grid","grid","grid","grid","bend","grid","grid","bend","grid","grid","grid","grid","grid","grid"]
+      "steps": [0, 2, 0, 1, 0, 0, 2, 0, 0, 2, 0, 0, 1, 0, 0, 2],
+      "timing": ["grid","bend","grid","push","grid","grid","bend","grid","grid","bend","grid","grid","staccato","grid","grid","slide"]
     },
     {
       "label": "Gate",
       "steps": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      "timing": ["grid","legato","grid","grid","grid","grid","legato","grid","grid","legato","grid","grid","grid","grid","grid","grid"]
+      "timing": ["grid","legato","grid","staccato","grid","grid","legato","grid","grid","legato","grid","grid","staccato","grid","grid","staccato"]
     }
   ],
   "locks": [
-    { "step": 0,  "type": "alternate", "description": "Kick hits, bass silent. The space IS the pocket." },
-    { "step": 1,  "type": "fill",      "description": "Bass answers with pitch bend. Legato. The call-response engine." },
-    { "step": 5,  "type": "alternate", "description": "Kick hits pushed early. Bass waits." },
-    { "step": 6,  "type": "fill",      "description": "Bass answer. Pitch bend. Legato sustain." },
-    { "step": 10, "type": "fill",      "description": "Tom hit — bass drops out. Tom + bass freq separation crucial." }
+    { "step": 0,  "type": "alternate",  "description": "Kick hits, bass silent. The space IS the pocket." },
+    { "step": 1,  "type": "fill",       "description": "Bass answers with pitch bend. Legato. The call-response engine." },
+    { "step": 3,  "type": "fill",       "description": "Ghost tail after beat 1 kick. Push timing for energy." },
+    { "step": 5,  "type": "alternate",  "description": "Kick hits pushed early. Bass waits." },
+    { "step": 6,  "type": "fill",       "description": "Bass answer. Pitch bend. Legato sustain." },
+    { "step": 8,  "type": "alternate",  "description": "Beat 3 kick. Bass rests." },
+    { "step": 9,  "type": "fill",       "description": "Bass mid hit in open zone between kicks 8 and 11." },
+    { "step": 12, "type": "fill",       "description": "Ghost pickup before beat 4 end. Staccato." },
+    { "step": 15, "type": "anticipate", "description": "Bass slide turnaround — sets up next bar's beat 1 kick." }
   ],
   "pitch": {
-    "densityHint": 2,
-    "allowChromaticApproach": false,
-    "preferredIntervals": ["root", "5"],
+    "densityHint": 3,
+    "allowChromaticApproach": true,
+    "preferredIntervals": ["root", "5", "octave", "b7"],
     "stepHints": [
-      { "step": 1, "role": "5" },
-      { "step": 6, "role": "5" },
-      { "step": 9, "role": "5" }
+      { "step": 1,  "role": "5" },
+      { "step": 3,  "role": "root" },
+      { "step": 6,  "role": "5" },
+      { "step": 9,  "role": "b7" },
+      { "step": 12, "role": "root" },
+      { "step": 15, "role": "approach" }
     ]
   }
 }

@@ -30,31 +30,34 @@
   "bass": [
     {
       "label": "Bass",
-      "steps": [2, 0, 0, 0, 3, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0],
-      "timing": ["slide","grid","grid","grid","slide","grid","grid","grid","slide","grid","grid","grid","slide","grid","grid","grid"]
+      "steps": [0, 3, 0, 2, 0, 0, 1, 0, 0, 3, 0, 0, 2, 0, 1, 0],
+      "timing": ["grid","slide","grid","lay","grid","grid","staccato","grid","grid","slide","grid","grid","bend","grid","staccato","grid"]
     },
     {
       "label": "Gate",
       "steps": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      "timing": ["legato","grid","grid","grid","legato","grid","grid","grid","legato","grid","grid","grid","legato","grid","grid","grid"]
+      "timing": ["grid","legato","grid","legato","grid","grid","staccato","grid","grid","legato","grid","grid","legato","grid","staccato","grid"]
     }
   ],
   "locks": [
-    { "step": 0,  "type": "alternate", "description": "Bass on 1 while kick avoids it. Slide articulation." },
-    { "step": 2,  "type": "alternate", "description": "Kick enters after bass sustains. They never collide." },
-    { "step": 4,  "type": "alternate", "description": "Bass accent on the 'and' of 1. Kick silent. Displacement IS the groove." },
-    { "step": 7,  "type": "alternate", "description": "Kick full hit. Bass resting. Clean separation." },
-    { "step": 12, "type": "alternate", "description": "Bass accent, snare medium. EQ separation critical." }
+    { "step": 1,  "type": "alternate",  "description": "Bass enters on 'e' of 1 while kick is silent. Displacement is the hook." },
+    { "step": 3,  "type": "alternate",  "description": "Bass second 16th. Kick still absent. Off-kilter pair completes." },
+    { "step": 6,  "type": "anticipate", "description": "Ghost bass pre-shadows kick landing on step 7. Staccato." },
+    { "step": 7,  "type": "alternate",  "description": "Kick full hit. Bass just fired its ghost, now rests." },
+    { "step": 9,  "type": "alternate",  "description": "Bass accent in the drum-free zone between kick-7 and kick-11." },
+    { "step": 12, "type": "alternate",  "description": "The one conventional downbeat hit — earned by surrounding chaos. Bend subverts it." }
   ],
   "pitch": {
     "densityHint": 3,
     "allowChromaticApproach": true,
-    "preferredIntervals": ["root", "5", "b7"],
+    "preferredIntervals": ["root", "b7", "b3", "5"],
     "stepHints": [
-      { "step": 0,  "role": "root" },
-      { "step": 4,  "role": "b7" },
-      { "step": 8,  "role": "5" },
-      { "step": 12, "role": "b7" }
+      { "step": 1,  "role": "b7" },
+      { "step": 3,  "role": "b3" },
+      { "step": 6,  "role": "root" },
+      { "step": 9,  "role": "5" },
+      { "step": 12, "role": "root" },
+      { "step": 14, "role": "approach" }
     ]
   }
 }

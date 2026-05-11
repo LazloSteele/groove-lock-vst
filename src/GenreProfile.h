@@ -25,10 +25,10 @@ struct GenreProfile
     float layOffsetMs               = +12.f;
 
     // Velocity ranges
-    int ghostVelMin = 35, ghostVelMax = 55;
-    int medVelMin   = 70, medVelMax   = 90;
-    int fullVelMin  = 100, fullVelMax = 115;
-    int accentVelMin = 120, accentVelMax = 127;
+    int ghostVelMin = 20, ghostVelMax = 44;
+    int medVelMin   = 45, medVelMax   = 69;
+    int fullVelMin  = 70, fullVelMax  = 94;
+    int accentVelMin = 110, accentVelMax = 127;
     int bassVelocityOffsetFromKick  = 0;
     bool allowVelocityInversion     = false;
 
@@ -77,7 +77,9 @@ struct GenreProfile
             p.swingMin = 50.f; p.swingMax = 65.f;
             p.unisonTimingToleranceMs  = 2.f;
             p.pushOffsetMs = -8.f; p.layOffsetMs = 12.f;
-            p.ghostVelMin = 45; p.ghostVelMax = 55;
+            p.ghostVelMin = 30;  p.ghostVelMax = 45;
+            p.medVelMin   = 48;  p.medVelMax   = 66;
+            p.fullVelMin  = 72;  p.fullVelMax  = 92;
             p.accentVelMin = 110; p.accentVelMax = 120;
             p.bassVelocityOffsetFromKick = -5;
             p.defaultGatePercent  = 0.85f;
@@ -106,7 +108,9 @@ struct GenreProfile
             p.swingMin = 0.f; p.swingMax = 52.f;
             p.unisonTimingToleranceMs  = 0.5f;
             p.pushOffsetMs = -5.f; p.layOffsetMs = 8.f;
-            p.ghostVelMin = 35; p.ghostVelMax = 45;
+            p.ghostVelMin = 18;  p.ghostVelMax = 30;
+            p.medVelMin   = 45;  p.medVelMax   = 65;
+            p.fullVelMin  = 72;  p.fullVelMax  = 90;
             p.accentVelMin = 120; p.accentVelMax = 127;
             p.bassVelocityOffsetFromKick = 0;
             p.defaultGatePercent  = 0.90f;
@@ -137,7 +141,9 @@ struct GenreProfile
             p.swingMin = 58.f; p.swingMax = 68.f;
             p.unisonTimingToleranceMs  = 5.f;
             p.pushOffsetMs = -8.f; p.layOffsetMs = 10.f;
-            p.ghostVelMin = 50; p.ghostVelMax = 60;
+            p.ghostVelMin = 22;  p.ghostVelMax = 40;
+            p.medVelMin   = 46;  p.medVelMax   = 66;
+            p.fullVelMin  = 71;  p.fullVelMax  = 90;
             p.accentVelMin = 115; p.accentVelMax = 125;
             p.defaultGatePercent  = 0.55f;
             p.staccatoGatePercent = 0.35f;
@@ -165,7 +171,9 @@ struct GenreProfile
             p.swingMin = 65.f; p.swingMax = 80.f;
             p.unisonTimingToleranceMs  = 12.f;
             p.pushOffsetMs = -15.f; p.layOffsetMs = 18.f;
-            p.ghostVelMin = 35; p.ghostVelMax = 65;
+            p.ghostVelMin = 18;  p.ghostVelMax = 52;
+            p.medVelMin   = 46;  p.medVelMax   = 68;
+            p.fullVelMin  = 70;  p.fullVelMax  = 94;
             p.accentVelMin = 110; p.accentVelMax = 127;
             p.allowVelocityInversion  = true;
             p.defaultGatePercent  = 0.60f;
@@ -195,7 +203,9 @@ struct GenreProfile
             p.swingMin = 55.f; p.swingMax = 62.f;
             p.unisonTimingToleranceMs  = 3.f;
             p.pushOffsetMs = -12.f; p.layOffsetMs = 10.f;
-            p.ghostVelMin = 45; p.ghostVelMax = 55;
+            p.ghostVelMin = 28;  p.ghostVelMax = 44;
+            p.medVelMin   = 46;  p.medVelMax   = 66;
+            p.fullVelMin  = 72;  p.fullVelMax  = 90;
             p.accentVelMin = 115; p.accentVelMax = 122;
             p.bassVelocityOffsetFromKick = -7;
             p.defaultGatePercent  = 0.85f;
