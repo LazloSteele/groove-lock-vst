@@ -86,16 +86,20 @@ struct GrooveTemplate
     float        tempoMin = 80.f, tempoMax = 140.f;
     float        swingPercent = 50.f;
 
-    // pattern
+    // pattern — bar 1 (statement)
     juce::OwnedArray<DrumRow>  drums;
     juce::OwnedArray<BassRow>  bass;
     juce::Array<LockPoint>     locks;
     PitchBlock                 pitch;
 
+    // pattern — bar 2 (response); empty = repeat bar 1
+    juce::OwnedArray<BassRow>  bass2;
+    juce::Array<LockPoint>     locks2;
+
     bool loadFromJSON(const juce::File& file);
     bool loadFromJSON(const juce::String& jsonText);
     juce::String toJSON() const;
 
-    // Returns the lock type at a given step, or nullopt if none
-    std::optional<LockPoint> lockAt(int step) const;
+    // bar=0 → locks, bar=1 → locks2 (falls back to locks when locks2 is empty)
+    std::optional<LockPoint> lockAt(int step, int bar = 0) const;
 };

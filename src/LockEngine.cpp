@@ -63,19 +63,19 @@ void LockEngine::processStep(int step, int64 stepSamplePos, double sampleRate,
 {
     if (!tmpl || tmpl->bass.isEmpty()) return;
 
-    auto* bassRow = tmpl->bass[0];
+    int barVariant = (currentPhraseBar % 2 == 1 && !tmpl->bass2.isEmpty()) ? 1 : 0;
+    const auto& bassSource = (barVariant == 1) ? tmpl->bass2 : tmpl->bass;
+
+    auto* bassRow = bassSource[0];
     int velTier   = bassRow->steps[step];
     if (velTier == 0) return;
 
-    BassArt art = bassRow->timing[step];
-
-    // Gate row (index 1 if present) overrides art for gate calculation
+    BassArt art     = bassRow->timing[step];
     BassArt gateArt = art;
-    if (tmpl->bass.size() > 1)
-        gateArt = tmpl->bass[1]->timing[step];
+    if (bassSource.size() > 1)
+        gateArt = bassSource[1]->timing[step];
 
-    // Lock-point adjustments
-    auto lp = tmpl->lockAt(step);
+    auto lp = tmpl->lockAt(step, barVariant);
 
     // Live drum gating: when liveDrums is set, suppress or allow steps per lock type
     if (params.liveDrums != nullptr)

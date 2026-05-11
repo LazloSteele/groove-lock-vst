@@ -106,6 +106,40 @@ bool GrooveTemplate::loadFromJSON(const juce::String& jsonText)
         }
     }
 
+    bass2.clear();
+    if (auto* bass2ArrPtr = root["bass2"].getArray())
+    {
+        for (auto& rowVar : *bass2ArrPtr)
+        {
+            auto* rowObj = rowVar.getDynamicObject();
+            if (!rowObj) continue;
+            auto* row = bass2.add(new BassRow());
+            row->label = rowObj->getProperty("label").toString();
+            auto& steps  = *rowObj->getProperty("steps").getArray();
+            auto& timing = *rowObj->getProperty("timing").getArray();
+            for (int i = 0; i < 16; ++i)
+            {
+                row->steps[i]  = i < steps.size()  ? (int)steps[i]           : 0;
+                row->timing[i] = i < timing.size() ? parseBassArt(timing[i].toString()) : BassArt::GRID;
+            }
+        }
+    }
+
+    locks2.clear();
+    if (auto* lock2Arr = root["locks2"].getArray())
+    {
+        for (auto& lVar : *lock2Arr)
+        {
+            auto* lObj = lVar.getDynamicObject();
+            if (!lObj) continue;
+            LockPoint lp;
+            lp.step        = (int)lObj->getProperty("step");
+            lp.type        = parseLockType(lObj->getProperty("type").toString());
+            lp.description = lObj->getProperty("description").toString();
+            locks2.add(lp);
+        }
+    }
+
     pitch = PitchBlock();
     if (auto* pitchObj = root["pitch"].getDynamicObject())
     {
@@ -187,6 +221,36 @@ juce::String GrooveTemplate::toJSON() const
     }
     root->setProperty("locks", locksArr);
 
+    if (!bass2.isEmpty())
+    {
+        juce::Array<juce::var> bass2Arr;
+        for (auto* r : bass2)
+        {
+            juce::DynamicObject::Ptr rowObj = new juce::DynamicObject();
+            rowObj->setProperty("label", r->label);
+            juce::Array<juce::var> sv, tv;
+            for (int i = 0; i < 16; ++i) { sv.add(r->steps[i]); tv.add(bassArtStr(r->timing[i])); }
+            rowObj->setProperty("steps",  sv);
+            rowObj->setProperty("timing", tv);
+            bass2Arr.add(juce::var(rowObj.get()));
+        }
+        root->setProperty("bass2", bass2Arr);
+    }
+
+    if (!locks2.isEmpty())
+    {
+        juce::Array<juce::var> locks2Arr;
+        for (auto& lp : locks2)
+        {
+            juce::DynamicObject::Ptr lObj = new juce::DynamicObject();
+            lObj->setProperty("step",        lp.step);
+            lObj->setProperty("type",        lockTypeStr(lp.type));
+            lObj->setProperty("description", lp.description);
+            locks2Arr.add(juce::var(lObj.get()));
+        }
+        root->setProperty("locks2", locks2Arr);
+    }
+
     if (pitch.hasPitchData)
     {
         static auto roleStr = [](PitchRole r) -> juce::String {
@@ -227,9 +291,10 @@ juce::String GrooveTemplate::toJSON() const
     return juce::JSON::toString(juce::var(root.get()), true);
 }
 
-std::optional<LockPoint> GrooveTemplate::lockAt(int step) const
+std::optional<LockPoint> GrooveTemplate::lockAt(int step, int bar) const
 {
-    for (auto& lp : locks)
+    const auto& source = (bar == 1 && !locks2.isEmpty()) ? locks2 : locks;
+    for (auto& lp : source)
         if (lp.step == step)
             return lp;
     return std::nullopt;
