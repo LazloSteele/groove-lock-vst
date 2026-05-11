@@ -14,7 +14,8 @@ int PitchEngine::getNoteForStep(int step) const
 
 PitchRole PitchEngine::roleForStep(int step,
                                     const GrooveTemplate* tmpl,
-                                    const GenreProfile& profile) const
+                                    const GenreProfile& profile,
+                                    int bar) const
 {
     juce::ignoreUnused(profile);
     // 1. Explicit step hint in template takes priority
@@ -24,10 +25,10 @@ PitchRole PitchEngine::roleForStep(int step,
             if (h.step == step) return h.role;
     }
 
-    // 2. Lock point default
+    // 2. Lock point default (bar-aware)
     if (tmpl)
     {
-        auto lp = tmpl->lockAt(step);
+        auto lp = tmpl->lockAt(step, bar);
         if (lp)
         {
             switch (lp->type)
@@ -35,7 +36,6 @@ PitchRole PitchEngine::roleForStep(int step,
                 case LockType::UNISON:
                     return PitchRole::ROOT;
                 case LockType::ALTERNATE:
-                    // Strong beats (0,4,8,12) → 5th, weak → b7
                     return (step % 4 == 0) ? PitchRole::FIFTH : PitchRole::FLAT7;
                 case LockType::ANTICIPATE:
                     return PitchRole::APPROACH;
@@ -45,11 +45,12 @@ PitchRole PitchEngine::roleForStep(int step,
         }
 
         // 3. Inherit from nearest lock point within 2 steps
+        const auto& lockSource = (bar == 1 && !tmpl->locks2.isEmpty()) ? tmpl->locks2 : tmpl->locks;
         for (int dist = 1; dist <= 2; ++dist)
         {
             int prev = (step - dist + 16) % 16;
             int next = (step + dist) % 16;
-            for (auto& lk : tmpl->locks)
+            for (auto& lk : lockSource)
             {
                 if (lk.step == prev || lk.step == next)
                 {
@@ -154,15 +155,15 @@ void PitchEngine::computeBar(const GrooveTemplate* tmpl,
     int recentSemitone = -1;
     int preferredIdx   = 0;
 
+    const auto& activeBass = (params.barVariant == 1 && tmpl && !tmpl->bass2.isEmpty())
+                           ? tmpl->bass2 : tmpl->bass;
+
     for (int step = 0; step < 16; ++step)
     {
-        // Check if this step has an active bass hit
-        bool active = false;
-        if (tmpl && !tmpl->bass.isEmpty())
-            active = tmpl->bass[0]->steps[step] > 0;
+        bool active = tmpl && !activeBass.isEmpty() && activeBass[0]->steps[step] > 0;
         if (!active) { barNotes[step] = params.rootMidiNote; continue; }
 
-        PitchRole role = roleForStep(step, tmpl, profile);
+        PitchRole role = roleForStep(step, tmpl, profile, params.barVariant);
 
         if (role == PitchRole::APPROACH)
         {

@@ -63,7 +63,7 @@ void LockEngine::processStep(int step, int64 stepSamplePos, double sampleRate,
 {
     if (!tmpl || tmpl->bass.isEmpty()) return;
 
-    int barVariant = (currentPhraseBar % 2 == 1 && !tmpl->bass2.isEmpty()) ? 1 : 0;
+    const int barVariant = currentBarVariant;
     const auto& bassSource = (barVariant == 1) ? tmpl->bass2 : tmpl->bass;
 
     auto* bassRow = bassSource[0];
@@ -189,7 +189,7 @@ void LockEngine::processStep(int step, int64 stepSamplePos, double sampleRate,
                      params.outputChannel, midiNote,
                      finalVel, bendVal, bendOffSamples);
 
-    lastNoteOnSample = (int)noteOnSample;
+    lastNoteOnSample = noteOnSample;
 }
 
 void LockEngine::process(MidiOutputManager& midiOut,
@@ -215,29 +215,37 @@ void LockEngine::process(MidiOutputManager& midiOut,
 
     for (int s = 0; s < numSamples; ++s)
     {
-        double ppq      = pos.ppqPosition + ((double)(blockStartSample + s) / sampleRate * bpm / 60.0)
-                        - (pos.ppqPosition);
-        // Absolute ppq at this sample
-        double absPPQ   = pos.ppqPosition + (double)s / sampleRate * bpm / 60.0;
-        double barPPQ   = std::fmod(absPPQ, beatsPerBar);
-        int    step     = (int)std::floor(barPPQ * stepsPerBeat) & 15;
-
-        (void)ppq; // suppress warning
+        double absPPQ = pos.ppqPosition + (double)s / sampleRate * bpm / 60.0;
+        double barPPQ = std::fmod(absPPQ, beatsPerBar);
+        int    step   = (int)std::floor(barPPQ * stepsPerBeat) & 15;
 
         if (step != lastStep)
         {
             // Recompute pitch at the start of each bar
             if (step == 0)
             {
-                int absoluteBar  = (int)(absPPQ / beatsPerBar);
-                int phraseBar    = absoluteBar % 8;
-                currentPhraseBar = phraseBar;
+                int absoluteBar   = (int)(absPPQ / beatsPerBar);
+                int phraseBar     = absoluteBar % 8;
+                currentPhraseBar  = phraseBar;
+                currentBarVariant = (phraseBar % 2 == 1 && tmpl && !tmpl->bass2.isEmpty()) ? 1 : 0;
 
                 PitchEngineParams pp = params.pitch;
                 pp.rootMidiNote = params.outputRootNote;
+                pp.barVariant   = currentBarVariant;
 
-                if (expandedPhrase && expandedPhrase->isValid && pp.pitchEnabled)
-                    pitchEngine.computeBarFromState(expandedPhrase->bars[phraseBar], profile, pp);
+                if (pp.pitchEnabled)
+                {
+                    if (expandedPhrase && expandedPhrase->isValid)
+                    {
+                        const BarPitchState& activeState =
+                            (currentBarVariant == 1 && expandedPhrase->hasBar2)
+                                ? expandedPhrase->bars2[phraseBar]
+                                : expandedPhrase->bars[phraseBar];
+                        pitchEngine.computeBarFromState(activeState, profile, pp);
+                    }
+                    else
+                        pitchEngine.computeBar(tmpl, profile, pp);
+                }
                 else
                     pitchEngine.computeBar(tmpl, profile, pp);
             }

@@ -75,8 +75,10 @@ struct BarPitchState
 struct ExpandedPhrase
 {
     BarPitchState bars[8];
+    BarPitchState bars2[8];     // bar-2 (response) phrase; valid only when hasBar2=true
     float         phraseArc[8]; // deviation level per bar
     bool          isValid;
+    bool          hasBar2 = false;
 
     ExpandedPhrase() : isValid(false)
     {
