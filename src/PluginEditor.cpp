@@ -538,7 +538,7 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     addAndMakeVisible(pitchDensityLabel);
     pitchDensitySlider.setSliderStyle(juce::Slider::LinearHorizontal);
     pitchDensitySlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 24, 18);
-    pitchDensitySlider.setRange(0, 5, 1);
+    pitchDensitySlider.setRange(0, 10, 1);
     pitchDensitySlider.setValue(0, juce::dontSendNotification);
     pitchDensitySlider.setTextValueSuffix("");
     pitchDensitySlider.onValueChange = [this] {

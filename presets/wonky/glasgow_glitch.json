@@ -48,7 +48,7 @@
     { "step": 12, "type": "alternate",  "description": "The one conventional downbeat hit — earned by surrounding chaos. Bend subverts it." }
   ],
   "pitch": {
-    "densityHint": 3,
+    "densityHint": 6,
     "allowChromaticApproach": true,
     "preferredIntervals": ["root", "b7", "b3", "5"],
     "stepHints": [

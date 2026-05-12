@@ -151,7 +151,7 @@ void PitchEngine::computeBar(const GrooveTemplate* tmpl,
                            : profile.preferredIntervals;
 
     // ── Pass 1: resolve all non-APPROACH steps ──────────────────────────────
-    int uniqueSemitones[5]; int uniqueCount = 0;
+    int uniqueNotes[10]; int uniqueCount = 0;
     int recentSemitone = -1;
     int preferredIdx   = 0;
 
@@ -173,39 +173,33 @@ void PitchEngine::computeBar(const GrooveTemplate* tmpl,
 
         int semi;
         if (role == PitchRole::ANY)
-        {
             semi = pickFromPreferred(preferred, preferredIdx, recentSemitone);
-        }
         else
-        {
             semi = resolveRoleToSemitone(role, preferredIdx, preferred);
-        }
 
-        // Snap non-chromatic roles to scale (FLAT5 stays chromatic)
         if (role != PitchRole::FLAT5 && role != PitchRole::OCTAVE)
             semi = snapToScale(semi, params.scaleType);
 
-        // Density limiting: if we'd exceed density, fall back to root or 5th
+        // Compute MIDI note first so octave variants are distinct entries
+        int midiNote = clampToRange(params.rootMidiNote + semi,
+                                    params.rootMidiNote, profile.bassMidiMin, profile.bassMidiMax);
+
+        // Density limiting: track unique MIDI notes (not pitch classes)
         if (role != PitchRole::ROOT)
         {
             bool alreadyUsed = false;
             for (int i = 0; i < uniqueCount; ++i)
-                if (uniqueSemitones[i] == semi) { alreadyUsed = true; break; }
-
+                if (uniqueNotes[i] == midiNote) { alreadyUsed = true; break; }
             if (!alreadyUsed && uniqueCount >= density)
-                semi = 0; // fall back to root
+                midiNote = params.rootMidiNote; // fall back to root MIDI note
         }
 
-        // Track unique pitches (excluding octave which is same pitch class)
-        int pitchClass = semi % 12;
         bool tracked = false;
         for (int i = 0; i < uniqueCount; ++i)
-            if (uniqueSemitones[i] % 12 == pitchClass) { tracked = true; break; }
-        if (!tracked && uniqueCount < 5)
-            uniqueSemitones[uniqueCount++] = semi;
+            if (uniqueNotes[i] == midiNote) { tracked = true; break; }
+        if (!tracked && uniqueCount < 10)
+            uniqueNotes[uniqueCount++] = midiNote;
 
-        int midiNote = params.rootMidiNote + semi;
-        midiNote = clampToRange(midiNote, params.rootMidiNote, profile.bassMidiMin, profile.bassMidiMax);
         barNotes[step] = midiNote;
         recentSemitone = semi;
     }
@@ -275,7 +269,7 @@ void PitchEngine::computeBarFromState(const BarPitchState&     state,
 
     const auto& preferred = profile.preferredIntervals;
 
-    int uniqueSemitones[5]; int uniqueCount = 0;
+    int uniqueNotes[10]; int uniqueCount = 0;
     int recentSemitone = -1;
     int preferredIdx   = 0;
 
@@ -304,25 +298,26 @@ void PitchEngine::computeBarFromState(const BarPitchState&     state,
         if (role != PitchRole::FLAT5 && role != PitchRole::OCTAVE)
             semi = snapToScale(semi, params.scaleType);
 
+        // Compute MIDI note first (including phrase octave displacement) so
+        // octave variants are tracked as distinct entries
+        int midiNote = clampToRange(params.rootMidiNote + semi + state.stepOctaveOffset[step] * 12,
+                                    params.rootMidiNote, profile.bassMidiMin, profile.bassMidiMax);
+
         if (role != PitchRole::ROOT)
         {
             bool alreadyUsed = false;
             for (int i = 0; i < uniqueCount; ++i)
-                if (uniqueSemitones[i] == semi) { alreadyUsed = true; break; }
+                if (uniqueNotes[i] == midiNote) { alreadyUsed = true; break; }
             if (!alreadyUsed && uniqueCount >= density)
-                semi = 0; // fall back to root
+                midiNote = params.rootMidiNote;
         }
 
-        int pitchClass = semi % 12;
         bool tracked = false;
         for (int i = 0; i < uniqueCount; ++i)
-            if (uniqueSemitones[i] % 12 == pitchClass) { tracked = true; break; }
-        if (!tracked && uniqueCount < 5)
-            uniqueSemitones[uniqueCount++] = semi;
+            if (uniqueNotes[i] == midiNote) { tracked = true; break; }
+        if (!tracked && uniqueCount < 10)
+            uniqueNotes[uniqueCount++] = midiNote;
 
-        int midiNote = params.rootMidiNote + semi;
-        midiNote    += state.stepOctaveOffset[step] * 12; // phrase octave displacement
-        midiNote     = clampToRange(midiNote, params.rootMidiNote, profile.bassMidiMin, profile.bassMidiMax);
         barNotes[step] = midiNote;
         recentSemitone = semi;
     }

@@ -67,7 +67,7 @@ struct GenreProfile
         if (genre == "G-Funk")
         {
             p.defaultScale           = ScaleType::MINOR_PENTATONIC;
-            p.pitchDensityMin        = 2; p.pitchDensityMax = 4;
+            p.pitchDensityMin        = 2; p.pitchDensityMax = 7;
             p.allowChromaticApproach = true;
             p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FLAT7, PitchRole::FIFTH,
                                          PitchRole::FLAT3, PitchRole::FOURTH };
@@ -99,7 +99,7 @@ struct GenreProfile
         else if (genre == "Mobb")
         {
             p.defaultScale           = ScaleType::NATURAL_MINOR;
-            p.pitchDensityMin        = 1; p.pitchDensityMax = 2;
+            p.pitchDensityMin        = 1; p.pitchDensityMax = 3;
             p.allowChromaticApproach = false;
             p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FIFTH, PitchRole::OCTAVE };
             p.bassMidiMin = 24; p.bassMidiMax = 43; // C1-G2
@@ -131,7 +131,7 @@ struct GenreProfile
         else if (genre == "Hyphy")
         {
             p.defaultScale           = ScaleType::MINOR_PENTATONIC;
-            p.pitchDensityMin        = 3; p.pitchDensityMax = 5;
+            p.pitchDensityMin        = 3; p.pitchDensityMax = 9;
             p.allowChromaticApproach = true;
             p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FIFTH, PitchRole::OCTAVE,
                                          PitchRole::FLAT7, PitchRole::FLAT3, PitchRole::FOURTH };
@@ -161,7 +161,7 @@ struct GenreProfile
         else if (genre == "Wonky")
         {
             p.defaultScale           = ScaleType::DORIAN;
-            p.pitchDensityMin        = 3; p.pitchDensityMax = 5;
+            p.pitchDensityMin        = 3; p.pitchDensityMax = 10;
             p.allowChromaticApproach = true;
             p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FLAT7, PitchRole::FIFTH,
                                          PitchRole::FLAT3, PitchRole::FOURTH, PitchRole::FLAT5 };
@@ -193,7 +193,7 @@ struct GenreProfile
         else // Modern West Coast (default)
         {
             p.defaultScale           = ScaleType::MINOR_PENTATONIC;
-            p.pitchDensityMin        = 2; p.pitchDensityMax = 4;
+            p.pitchDensityMin        = 2; p.pitchDensityMax = 7;
             p.allowChromaticApproach = true;
             p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FLAT7, PitchRole::FIFTH,
                                          PitchRole::FOURTH, PitchRole::FLAT3 };

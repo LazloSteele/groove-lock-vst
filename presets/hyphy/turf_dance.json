@@ -51,7 +51,7 @@
     { "step": 15, "type": "anticipate", "description": "Bass slide turnaround — sets up next bar's beat 1 kick." }
   ],
   "pitch": {
-    "densityHint": 3,
+    "densityHint": 5,
     "allowChromaticApproach": true,
     "preferredIntervals": ["root", "5", "octave", "b7"],
     "stepHints": [
