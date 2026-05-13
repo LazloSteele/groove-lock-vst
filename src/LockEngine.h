@@ -10,7 +10,6 @@ struct LockEngineParams
 {
     float swingPercent       = 55.f;
     float humanizePercent    = 20.f;
-    float velOffset          = 0.f;
     float timingOffsetMs     = 0.f;
     float gateLengthScale    = 1.0f;
     float glideTimeMs        = 100.f;

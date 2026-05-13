@@ -146,7 +146,6 @@ void LockEngine::processStep(int step, int64 stepSamplePos, double sampleRate,
     }
     float velHumanize = (params.humanizePercent / 100.f) * profile.timingToVelocityRatio;
     vel += (random.nextFloat() * 2.f - 1.f) * profile.velocityJitterMax * velHumanize;
-    vel += params.velOffset;
     int finalVel = juce::jlimit(1, 127, (int)vel);
 
     // Timing

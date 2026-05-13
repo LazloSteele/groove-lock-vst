@@ -36,9 +36,9 @@ private:
     juce::StringArray   listItems;
 
     //=== Sidebar — global controls ===
-    juce::Slider  swingKnob, humanizeKnob, velOffKnob,
+    juce::Slider  swingKnob, humanizeKnob,
                   timingOffKnob, gateScaleKnob, glideKnob;
-    juce::Label   swingLabel, humanizeLabel, velOffLabel,
+    juce::Label   swingLabel, humanizeLabel,
                   timingOffLabel, gateScaleLabel, glideLabel;
 
     //=== Sidebar — Density/Tension XY pad ===

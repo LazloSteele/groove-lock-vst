@@ -45,7 +45,6 @@ public:
     // Parameters (accessed from editor; modified on message thread, read on audio thread via atomics)
     juce::Atomic<float> swingPercent    { 55.f };
     juce::Atomic<float> humanizePercent { 20.f };
-    juce::Atomic<float> velOffset       { 0.f  };
     juce::Atomic<float> timingOffsetMs  { 0.f  };
     juce::Atomic<float> gateLengthScale { 1.0f };
     juce::Atomic<float> glideTimeMs     { 100.f };

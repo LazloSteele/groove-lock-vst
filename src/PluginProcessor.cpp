@@ -79,7 +79,6 @@ void GrooveLockProcessor::syncParams()
     LockEngineParams p;
     p.swingPercent    = swingPercent.get();
     p.humanizePercent = humanizePercent.get();
-    p.velOffset       = velOffset.get();
     p.timingOffsetMs  = timingOffsetMs.get();
     p.gateLengthScale = gateLengthScale.get();
     p.glideTimeMs     = glideTimeMs.get();
@@ -192,7 +191,6 @@ void GrooveLockProcessor::getStateInformation(juce::MemoryBlock& dest)
     state.setProperty("templateIndex",   templateIndex.get(),   nullptr);
     state.setProperty("swingPercent",    swingPercent.get(),    nullptr);
     state.setProperty("humanizePercent", humanizePercent.get(), nullptr);
-    state.setProperty("velOffset",       velOffset.get(),       nullptr);
     state.setProperty("timingOffsetMs",  timingOffsetMs.get(),  nullptr);
     state.setProperty("gateLengthScale", gateLengthScale.get(), nullptr);
     state.setProperty("glideTimeMs",     glideTimeMs.get(),     nullptr);
@@ -235,7 +233,6 @@ void GrooveLockProcessor::setStateInformation(const void* data, int size)
 
     swingPercent.set    (getF("swingPercent",    55.f));
     humanizePercent.set (getF("humanizePercent", 20.f));
-    velOffset.set       (getF("velOffset",        0.f));
     timingOffsetMs.set  (getF("timingOffsetMs",   0.f));
     gateLengthScale.set (getF("gateLengthScale", 1.0f));
     glideTimeMs.set     (getF("glideTimeMs",    100.f));
