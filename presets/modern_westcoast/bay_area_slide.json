@@ -47,8 +47,28 @@
     { "step": 11, "type": "fill",   "description": "Bass fill with pitch bend. Legato into beat 4's kick." },
     { "step": 14, "type": "unison", "description": "Both laid back. Bass legato sustains to bar end." }
   ],
+  "bass2": [
+    {
+      "label": "Bass",
+      "steps": [4, 0, 0, 0, 0, 2, 0, 0, 4, 0, 0, 0, 0, 2, 2, 0],
+      "timing": ["lay","grid","grid","grid","grid","lay","grid","grid","lay","grid","grid","grid","grid","legato","lay","grid"]
+    },
+    {
+      "label": "Gate",
+      "steps": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "timing": ["legato","grid","grid","grid","grid","legato","grid","grid","legato","grid","grid","grid","grid","legato","legato","grid"]
+    }
+  ],
+  "locks2": [
+    { "step": 0,  "type": "unison", "description": "Both laid back. The Oakland slide anchor. Same as bar 1." },
+    { "step": 5,  "type": "unison", "description": "Kick + bass. Both laid back. Same as bar 1." },
+    { "step": 8,  "type": "unison", "description": "Beat 3 lock. Same as bar 1." },
+    { "step": 13, "type": "fill",   "description": "Bar 2 response: fill shifted from step 11. Legato sustain into step 14." },
+    { "step": 14, "type": "unison", "description": "Both laid back. Same as bar 1." }
+  ],
   "pitch": {
     "densityHint": 3,
+    "productionComplexity": 0.4,
     "allowChromaticApproach": true,
     "preferredIntervals": ["root", "5", "4"],
     "stepHints": [

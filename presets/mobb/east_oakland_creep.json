@@ -43,6 +43,23 @@
     { "step": 0, "type": "unison", "description": "Beat 1. Both accent. Bass sustains through the entire half. Sidechain the bass under kick." },
     { "step": 8, "type": "unison", "description": "Beat 3 with snare. Triple lock — kick, snare, bass all hit. Maximum impact." }
   ],
+  "bass2": [
+    {
+      "label": "Bass",
+      "steps": [4, 0, 0, 0, 0, 0, 1, 0, 3, 0, 0, 0, 0, 0, 0, 0],
+      "timing": ["grid","grid","grid","grid","grid","grid","staccato","grid","grid","grid","grid","grid","grid","grid","grid","grid"]
+    },
+    {
+      "label": "Gate",
+      "steps": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "timing": ["legato","grid","grid","grid","grid","grid","staccato","grid","legato","grid","grid","grid","grid","grid","grid","grid"]
+    }
+  ],
+  "locks2": [
+    { "step": 0, "type": "unison", "description": "Beat 1. Same as bar 1." },
+    { "step": 6, "type": "fill",   "description": "One ghost note breaks the silence. Staccato. Root — just a reminder the bass is still there." },
+    { "step": 8, "type": "unison", "description": "Beat 3 triple impact. Same as bar 1." }
+  ],
   "pitch": {
     "densityHint": 1,
     "allowChromaticApproach": false,

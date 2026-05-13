@@ -10,7 +10,6 @@ struct LockEngineParams
 {
     float swingPercent       = 55.f;
     float humanizePercent    = 20.f;
-    float velOffset          = 0.f;
     float timingOffsetMs     = 0.f;
     float gateLengthScale    = 1.0f;
     float glideTimeMs        = 100.f;
@@ -57,8 +56,9 @@ private:
     const ExpandedPhrase* expandedPhrase     = nullptr; // set from processor
 
     int    lastStep               = -1;
-    int    lastNoteOnSample       = -1;
+    int64  lastNoteOnSample       = -1;
     int    currentPhraseBar       = 0;   // 0-7, audio thread only
+    int    currentBarVariant      = 0;   // 0=bar1, 1=bar2 (derived from currentPhraseBar)
     double currentStepDurSamples  = 0.0;
 
     PitchEngine pitchEngine;

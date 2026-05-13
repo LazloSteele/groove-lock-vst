@@ -3,19 +3,21 @@
 
 enum class ScaleType { MINOR_PENTATONIC = 0, NATURAL_MINOR, DORIAN, BLUES, PHRYGIAN, CHROMATIC };
 
-enum class PitchRole { ROOT, FIFTH, FLAT7, FLAT3, FOURTH, FLAT5, OCTAVE, APPROACH, ANY, NONE };
+enum class PitchRole { ROOT, SECOND, FLAT3, FOURTH, FIFTH, FLAT5, SIXTH, FLAT7, OCTAVE, APPROACH, ANY, NONE };
 
 static inline PitchRole parsePitchRole(const juce::String& s)
 {
-    if (s == "root")    return PitchRole::ROOT;
-    if (s == "5")       return PitchRole::FIFTH;
-    if (s == "b7")      return PitchRole::FLAT7;
-    if (s == "b3")      return PitchRole::FLAT3;
-    if (s == "4")       return PitchRole::FOURTH;
-    if (s == "b5")      return PitchRole::FLAT5;
-    if (s == "octave")  return PitchRole::OCTAVE;
+    if (s == "root")     return PitchRole::ROOT;
+    if (s == "2")        return PitchRole::SECOND;
+    if (s == "b3")       return PitchRole::FLAT3;
+    if (s == "4")        return PitchRole::FOURTH;
+    if (s == "5")        return PitchRole::FIFTH;
+    if (s == "b5")       return PitchRole::FLAT5;
+    if (s == "6")        return PitchRole::SIXTH;
+    if (s == "b7")       return PitchRole::FLAT7;
+    if (s == "octave")   return PitchRole::OCTAVE;
     if (s == "approach") return PitchRole::APPROACH;
-    if (s == "any")     return PitchRole::ANY;
+    if (s == "any")      return PitchRole::ANY;
     return PitchRole::NONE;
 }
 
@@ -25,11 +27,13 @@ static inline int semitoneForRole(PitchRole role)
     switch (role)
     {
         case PitchRole::ROOT:   return 0;
+        case PitchRole::SECOND: return 2;
         case PitchRole::FLAT3:  return 3;
         case PitchRole::FOURTH: return 5;
         case PitchRole::FIFTH:  return 7;
-        case PitchRole::FLAT7:  return 10;
         case PitchRole::FLAT5:  return 6;
+        case PitchRole::SIXTH:  return 9;
+        case PitchRole::FLAT7:  return 10;
         case PitchRole::OCTAVE: return 12;
         default:                return 0;
     }
@@ -57,14 +61,34 @@ static inline const int* scaleIntervals(ScaleType t, int& count)
     count = 5; return minPent;
 }
 
+static inline ScaleType parseScaleType(const juce::String& s)
+{
+    if (s == "minor_pentatonic") return ScaleType::MINOR_PENTATONIC;
+    if (s == "natural_minor")    return ScaleType::NATURAL_MINOR;
+    if (s == "dorian")           return ScaleType::DORIAN;
+    if (s == "blues")            return ScaleType::BLUES;
+    if (s == "phrygian")         return ScaleType::PHRYGIAN;
+    if (s == "chromatic")        return ScaleType::CHROMATIC;
+    return ScaleType::DORIAN;
+}
+
+// Describes a harmonic region within the 8-bar phrase
+struct ChordRegion
+{
+    int barStart  = 0;
+    int barEnd    = 7;
+    int semitones = 0; // root offset from global root (e.g. +3 = relative major)
+};
+
 // Pre-computed pitch roles for one bar (output from PhraseExpander)
 struct BarPitchState
 {
     PitchRole stepRoles[16];        // PitchRole per step (NONE = no bass hit)
     int       stepOctaveOffset[16]; // 0 = base octave, 1 = +1, -1 = -1
     float     deviationLevel;       // 0.0–1.0 how far this bar deviates from seed
+    int       chordSemitoneOffset;  // root shift from active ChordRegion (0 = tonic)
 
-    BarPitchState() : deviationLevel(0.f)
+    BarPitchState() : deviationLevel(0.f), chordSemitoneOffset(0)
     {
         std::fill(stepRoles, stepRoles + 16, PitchRole::ROOT);
         std::fill(stepOctaveOffset, stepOctaveOffset + 16, 0);
@@ -75,8 +99,10 @@ struct BarPitchState
 struct ExpandedPhrase
 {
     BarPitchState bars[8];
+    BarPitchState bars2[8];     // bar-2 (response) phrase; valid only when hasBar2=true
     float         phraseArc[8]; // deviation level per bar
     bool          isValid;
+    bool          hasBar2 = false;
 
     ExpandedPhrase() : isValid(false)
     {

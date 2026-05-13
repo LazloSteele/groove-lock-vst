@@ -48,7 +48,7 @@
     { "step": 13, "type": "unison",     "description": "Both pushed. Bass staccato under 32nd hat roll." }
   ],
   "pitch": {
-    "densityHint": 4,
+    "densityHint": 7,
     "allowChromaticApproach": true,
     "preferredIntervals": ["root", "5", "octave", "b7"],
     "stepHints": [

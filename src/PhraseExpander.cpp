@@ -26,10 +26,47 @@ void PhraseExpander::compute(const GrooveTemplate* tmpl,
                                           phrase.phraseArc[b] * profile.maxDeviation * density);
         phrase.bars[b].deviationLevel = effectiveDev;
 
-        computeBarRoles   (b, effectiveDev, tension, tmpl, availRoles, seedRoles, phrase.bars[b]);
-        enforceRootGravity(b, tmpl, phrase.bars[b]);
-        applyTurnaround   (b, tension, tmpl, phrase.bars[b]);
-        computeOctaveOffsets(b, effectiveDev, density, tmpl, profile, phrase.bars[b]);
+        // Chord region: compute root offset for this bar
+        int chordOffset = 0;
+        if (tmpl && !tmpl->pitch.chordSequence.isEmpty())
+            for (auto& cr : tmpl->pitch.chordSequence)
+                if (b >= cr.barStart && b <= cr.barEnd) { chordOffset = cr.semitones; break; }
+        phrase.bars[b].chordSemitoneOffset = chordOffset;
+
+        computeBarRoles      (b, effectiveDev, tension, tmpl, profile, availRoles, seedRoles, phrase.bars[b], 0);
+        enforceRootGravity   (b, tmpl, phrase.bars[b], 0);
+        enforceFillResolution(phrase.bars[b], profile);
+        applyTurnaround      (b, tension, tmpl, phrase.bars[b], 0);
+        computeOctaveOffsets (b, effectiveDev, density, tmpl, profile, phrase.bars[b], 0);
+    }
+
+    // Compute bar-2 phrase if template has bass2
+    phrase.hasBar2 = false;
+    if (tmpl && !tmpl->bass2.isEmpty())
+    {
+        PitchRole seedRoles2[16];
+        for (int s = 0; s < 16; ++s)
+            seedRoles2[s] = seedRoleForStep(s, tmpl, profile, 1);
+
+        for (int b = 0; b < 8; ++b)
+        {
+            float effectiveDev = juce::jlimit(0.f, 1.f,
+                                              phrase.phraseArc[b] * profile.maxDeviation * density);
+            phrase.bars2[b].deviationLevel = effectiveDev;
+
+            int chordOffset2 = 0;
+            if (tmpl && !tmpl->pitch.chordSequence.isEmpty())
+                for (auto& cr : tmpl->pitch.chordSequence)
+                    if (b >= cr.barStart && b <= cr.barEnd) { chordOffset2 = cr.semitones; break; }
+            phrase.bars2[b].chordSemitoneOffset = chordOffset2;
+
+            computeBarRoles      (b, effectiveDev, tension, tmpl, profile, availRoles, seedRoles2, phrase.bars2[b], 1);
+            enforceRootGravity   (b, tmpl, phrase.bars2[b], 1);
+            enforceFillResolution(phrase.bars2[b], profile);
+            applyTurnaround      (b, tension, tmpl, phrase.bars2[b], 1);
+            computeOctaveOffsets (b, effectiveDev, density, tmpl, profile, phrase.bars2[b], 1);
+        }
+        phrase.hasBar2 = true;
     }
 
     phrase.isValid = true;
@@ -38,7 +75,7 @@ void PhraseExpander::compute(const GrooveTemplate* tmpl,
 // ─── Private helpers ──────────────────────────────────────────────────────────
 
 PitchRole PhraseExpander::seedRoleForStep(int step, const GrooveTemplate* tmpl,
-                                           const GenreProfile& profile) const
+                                           const GenreProfile& profile, int bar) const
 {
     juce::ignoreUnused(profile);
     if (!tmpl) return PitchRole::ROOT;
@@ -47,27 +84,28 @@ PitchRole PhraseExpander::seedRoleForStep(int step, const GrooveTemplate* tmpl,
         for (auto& h : tmpl->pitch.stepHints)
             if (h.step == step) return h.role;
 
-    auto lp = tmpl->lockAt(step);
+    auto lp = tmpl->lockAt(step, bar);
     if (lp)
     {
         switch (lp->type)
         {
-            case LockType::UNISON:     return PitchRole::ROOT;
+            case LockType::UNISON:     return profile.unisonForcesRoot ? PitchRole::ROOT : PitchRole::ANY;
             case LockType::ALTERNATE:  return (step % 4 == 0) ? PitchRole::FIFTH : PitchRole::FLAT7;
             case LockType::ANTICIPATE: return PitchRole::APPROACH;
             case LockType::FILL:       return PitchRole::ANY;
         }
     }
 
+    const auto& lockSource = (bar == 1 && !tmpl->locks2.isEmpty()) ? tmpl->locks2 : tmpl->locks;
     for (int dist = 1; dist <= 2; ++dist)
     {
-        for (auto& lk : tmpl->locks)
+        for (auto& lk : lockSource)
         {
             if (lk.step == (step - dist + 16) % 16 || lk.step == (step + dist) % 16)
             {
                 switch (lk.type)
                 {
-                    case LockType::UNISON:     return PitchRole::ROOT;
+                    case LockType::UNISON:     return profile.unisonForcesRoot ? PitchRole::ROOT : PitchRole::ANY;
                     case LockType::ALTERNATE:  return PitchRole::FIFTH;
                     case LockType::ANTICIPATE: return PitchRole::APPROACH;
                     case LockType::FILL:       return PitchRole::ANY;
@@ -79,16 +117,17 @@ PitchRole PhraseExpander::seedRoleForStep(int step, const GrooveTemplate* tmpl,
     return PitchRole::ROOT;
 }
 
-bool PhraseExpander::stepIsActive(int step, const GrooveTemplate* tmpl) const
-{
-    if (!tmpl || tmpl->bass.isEmpty()) return false;
-    return tmpl->bass[0]->steps[step] > 0;
-}
-
-bool PhraseExpander::isUnisonStep(int step, const GrooveTemplate* tmpl) const
+bool PhraseExpander::stepIsActive(int step, const GrooveTemplate* tmpl, int bar) const
 {
     if (!tmpl) return false;
-    auto lp = tmpl->lockAt(step);
+    const auto& src = (bar == 1 && !tmpl->bass2.isEmpty()) ? tmpl->bass2 : tmpl->bass;
+    return !src.isEmpty() && src[0]->steps[step] > 0;
+}
+
+bool PhraseExpander::isUnisonStep(int step, const GrooveTemplate* tmpl, int bar) const
+{
+    if (!tmpl) return false;
+    auto lp = tmpl->lockAt(step, bar);
     return lp.has_value() && lp->type == LockType::UNISON;
 }
 
@@ -119,17 +158,16 @@ void PhraseExpander::buildAvailableRoles(float tension, const GenreProfile& prof
 }
 
 void PhraseExpander::computeBarRoles(int barIdx, float effectiveDev, float tension,
-                                      const GrooveTemplate* tmpl,
+                                      const GrooveTemplate* tmpl, const GenreProfile& profile,
                                       const juce::Array<PitchRole>& availRoles,
                                       const PitchRole* seedRoles,
-                                      BarPitchState& out)
+                                      BarPitchState& out, int bar)
 {
-    // Bar 7 (0-indexed) is the resolve bar — heavily clamp deviation so it stays seed-like
     float actualDev = (barIdx == 7) ? juce::jmin(effectiveDev, 0.15f) : effectiveDev;
 
     for (int step = 0; step < 16; ++step)
     {
-        if (!stepIsActive(step, tmpl))
+        if (!stepIsActive(step, tmpl, bar))
         {
             out.stepRoles[step] = PitchRole::NONE;
             continue;
@@ -144,8 +182,10 @@ void PhraseExpander::computeBarRoles(int barIdx, float effectiveDev, float tensi
             continue;
         }
 
-        // Probability that this step's role rotates to something different
-        float rotChance = actualDev * tension;
+        // Probability that this step's role rotates to something different.
+        // Baseline ensures tension is always audible even in early bars.
+        float rotChance = juce::jlimit(0.f, 0.85f,
+                                       actualDev * tension + tension * 0.25f);
 
         if (rng.nextFloat() < rotChance && availRoles.size() > 2)
         {
@@ -175,10 +215,27 @@ void PhraseExpander::computeBarRoles(int barIdx, float effectiveDev, float tensi
             }
         }
     }
+
+    // Extend APPROACH roles backward to form chromatic runs (G-Funk: up to 3 steps)
+    if (profile.maxApproachRunLength > 1)
+    {
+        for (int step = 0; step < 16; ++step)
+        {
+            if (out.stepRoles[step] != PitchRole::APPROACH) continue;
+            int extended = 0;
+            for (int prev = step - 1; prev >= 0 && extended < profile.maxApproachRunLength - 1; --prev)
+            {
+                if (out.stepRoles[prev] == PitchRole::NONE) continue;
+                if (out.stepRoles[prev] == PitchRole::ROOT || out.stepRoles[prev] == PitchRole::APPROACH) break;
+                out.stepRoles[prev] = PitchRole::APPROACH;
+                ++extended;
+            }
+        }
+    }
 }
 
 void PhraseExpander::enforceRootGravity(int barIdx, const GrooveTemplate* tmpl,
-                                         BarPitchState& out)
+                                         BarPitchState& out, int bar)
 {
     // Minimum root fraction per bar (Part 3, Rule 1)
     static const float ROOT_FLOORS[8] = {0.60f, 0.60f, 0.40f, 0.40f, 0.30f, 0.30f, 0.25f, 0.70f};
@@ -204,11 +261,10 @@ void PhraseExpander::enforceRootGravity(int barIdx, const GrooveTemplate* tmpl,
         if (out.stepRoles[s] == PitchRole::NONE  ||
             out.stepRoles[s] == PitchRole::ROOT   ||
             out.stepRoles[s] == PitchRole::APPROACH) continue;
-        if (isUnisonStep(s, tmpl)) continue; // unison already is root
+        if (isUnisonStep(s, tmpl, bar)) continue;
         if (out.stepRoles[s] == PitchRole::ANY)
         { out.stepRoles[s] = PitchRole::ROOT; --needed; }
     }
-    // Second pass: convert anything else if still needed
     for (int s = 0; s < 16 && needed > 0; ++s)
     {
         if (out.stepRoles[s] == PitchRole::NONE  ||
@@ -220,9 +276,8 @@ void PhraseExpander::enforceRootGravity(int barIdx, const GrooveTemplate* tmpl,
 }
 
 void PhraseExpander::applyTurnaround(int barIdx, float tension, const GrooveTemplate* tmpl,
-                                      BarPitchState& out) const
+                                      BarPitchState& out, int bar) const
 {
-    // b7 leading-tone on last active step of bars 3 and 7 (= bars 4 and 8 in 1-indexed)
     if (barIdx != 3 && barIdx != 7) return;
 
     int lastActive = -1;
@@ -230,8 +285,7 @@ void PhraseExpander::applyTurnaround(int barIdx, float tension, const GrooveTemp
         if (out.stepRoles[s] != PitchRole::NONE) { lastActive = s; break; }
     if (lastActive < 0) return;
 
-    // Never override a unison lock point (it must stay root for low-end lock)
-    if (isUnisonStep(lastActive, tmpl)) return;
+    if (isUnisonStep(lastActive, tmpl, bar)) return;
 
     // tension > 0.2: use b7 as leading tone. At very low tension keep root (consonant loop).
     out.stepRoles[lastActive] = (tension > 0.2f) ? PitchRole::FLAT7 : PitchRole::ROOT;
@@ -240,15 +294,16 @@ void PhraseExpander::applyTurnaround(int barIdx, float tension, const GrooveTemp
 void PhraseExpander::computeOctaveOffsets(int barIdx, float effectiveDev, float density,
                                            const GrooveTemplate* tmpl,
                                            const GenreProfile& profile,
-                                           BarPitchState& out)
+                                           BarPitchState& out, int bar)
 {
     std::fill(out.stepOctaveOffset, out.stepOctaveOffset + 16, 0);
     if (profile.maxOctaveDisplPerBar == 0) return;
 
-    // Octave energy contour across the 8 bars (Part 3, Rule 7)
     static const float OCT_CONTOUR[8] = {0.0f, 0.0f, 0.10f, 0.20f, 0.35f, 0.50f, 0.75f, 0.0f};
     float baseProb = OCT_CONTOUR[barIdx] * density;
     if (baseProb < 0.05f) return;
+
+    const auto& activeBass = (bar == 1 && tmpl && !tmpl->bass2.isEmpty()) ? tmpl->bass2 : tmpl->bass;
 
     int displCount = 0;
     for (int s = 0; s < 16; ++s)
@@ -257,16 +312,39 @@ void PhraseExpander::computeOctaveOffsets(int barIdx, float effectiveDev, float 
         if (out.stepRoles[s] == PitchRole::NONE    ||
             out.stepRoles[s] == PitchRole::ROOT     ||
             out.stepRoles[s] == PitchRole::APPROACH) continue;
-        if (isUnisonStep(s, tmpl)) continue;
+        if (isUnisonStep(s, tmpl, bar)) continue;
 
-        // Skip ghost-velocity steps — octave jumps work on accented/fill notes
-        if (tmpl && !tmpl->bass.isEmpty() && tmpl->bass[0]->steps[s] <= 1) continue;
+        if (tmpl && !activeBass.isEmpty() && activeBass[0]->steps[s] <= 1) continue;
 
         float prob = juce::jmin(1.f, baseProb * (1.f + effectiveDev * 0.5f));
         if (rng.nextFloat() < prob)
         {
             out.stepOctaveOffset[s] = 1;
             ++displCount;
+        }
+    }
+}
+
+void PhraseExpander::enforceFillResolution(BarPitchState& out, const GenreProfile& profile) const
+{
+    if (profile.fillResolutionWindow == 0) return;
+
+    int nonRootCount = 0;
+    for (int s = 0; s < 16; ++s)
+    {
+        if (out.stepRoles[s] == PitchRole::NONE) continue;
+        if (out.stepRoles[s] == PitchRole::ROOT || out.stepRoles[s] == PitchRole::APPROACH)
+        {
+            nonRootCount = 0;
+        }
+        else
+        {
+            ++nonRootCount;
+            if (nonRootCount > profile.fillResolutionWindow)
+            {
+                out.stepRoles[s] = PitchRole::ROOT;
+                nonRootCount = 0;
+            }
         }
     }
 }

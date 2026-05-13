@@ -452,14 +452,12 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     // Knobs
     setupKnob(swingKnob,      swingLabel,      "Swing",      0,   100, 55,  "%");
     setupKnob(humanizeKnob,   humanizeLabel,   "Feel",       0,   100, 20,  "%");
-    setupKnob(velOffKnob,     velOffLabel,     "Volume",    -64, 64,  0,   "");
     setupKnob(timingOffKnob,  timingOffLabel,  "Push / Lay", -20, 20,  0,   "ms");
     setupKnob(gateScaleKnob,  gateScaleLabel,  "Length",    50,  150, 100, "%");
     setupKnob(glideKnob,      glideLabel,      "Glide",     10,  300, 100, "ms");
 
     swingKnob.onValueChange     = [this] { proc.swingPercent.set((float)swingKnob.getValue()); };
     humanizeKnob.onValueChange  = [this] { proc.humanizePercent.set((float)humanizeKnob.getValue()); };
-    velOffKnob.onValueChange    = [this] { proc.velOffset.set((float)velOffKnob.getValue()); };
     timingOffKnob.onValueChange = [this] { proc.timingOffsetMs.set((float)timingOffKnob.getValue()); };
     gateScaleKnob.onValueChange = [this] { proc.gateLengthScale.set((float)gateScaleKnob.getValue() / 100.f); };
     glideKnob.onValueChange     = [this] { proc.glideTimeMs.set((float)glideKnob.getValue()); };
@@ -538,7 +536,7 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     addAndMakeVisible(pitchDensityLabel);
     pitchDensitySlider.setSliderStyle(juce::Slider::LinearHorizontal);
     pitchDensitySlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 24, 18);
-    pitchDensitySlider.setRange(0, 5, 1);
+    pitchDensitySlider.setRange(0, 10, 1);
     pitchDensitySlider.setValue(0, juce::dontSendNotification);
     pitchDensitySlider.setTextValueSuffix("");
     pitchDensitySlider.onValueChange = [this] {
@@ -698,8 +696,7 @@ void GrooveLockEditor::resized()
         };
         place(swingKnob,     swingLabel,     knobRow1.removeFromLeft(knobW));
         place(humanizeKnob,  humanizeLabel,  knobRow1.removeFromLeft(knobW));
-        place(velOffKnob,    velOffLabel,    knobRow1.removeFromLeft(knobW));
-        place(timingOffKnob, timingOffLabel, knobRow2.removeFromLeft(knobW));
+        place(timingOffKnob, timingOffLabel, knobRow1.removeFromLeft(knobW));
         place(gateScaleKnob, gateScaleLabel, knobRow2.removeFromLeft(knobW));
         place(glideKnob,     glideLabel,     knobRow2.removeFromLeft(knobW));
 

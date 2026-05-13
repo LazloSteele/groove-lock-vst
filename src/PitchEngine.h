@@ -11,6 +11,7 @@ struct PitchEngineParams
     int       densityOverride   = 0;    // 0 = use template/genre hint
     bool      chromaticApproach = true;
     bool      pitchEnabled      = false;
+    int       barVariant        = 0;    // 0 = bar 1 (statement), 1 = bar 2 (response)
 };
 
 class PitchEngine
@@ -40,10 +41,11 @@ private:
 
     juce::Random random;
 
-    // Resolve which pitch role applies to a step
+    // Resolve which pitch role applies to a step (bar=0 → locks, bar=1 → locks2)
     PitchRole roleForStep(int step,
                           const GrooveTemplate* tmpl,
-                          const GenreProfile& profile) const;
+                          const GenreProfile& profile,
+                          int bar = 0) const;
 
     // Resolve a role to a semitone offset from root (not APPROACH/ANY)
     int resolveRoleToSemitone(PitchRole role,
