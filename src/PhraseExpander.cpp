@@ -74,7 +74,7 @@ PitchRole PhraseExpander::seedRoleForStep(int step, const GrooveTemplate* tmpl,
     {
         switch (lp->type)
         {
-            case LockType::UNISON:     return PitchRole::ROOT;
+            case LockType::UNISON:     return profile.unisonForcesRoot ? PitchRole::ROOT : PitchRole::ANY;
             case LockType::ALTERNATE:  return (step % 4 == 0) ? PitchRole::FIFTH : PitchRole::FLAT7;
             case LockType::ANTICIPATE: return PitchRole::APPROACH;
             case LockType::FILL:       return PitchRole::ANY;
@@ -90,7 +90,7 @@ PitchRole PhraseExpander::seedRoleForStep(int step, const GrooveTemplate* tmpl,
             {
                 switch (lk.type)
                 {
-                    case LockType::UNISON:     return PitchRole::ROOT;
+                    case LockType::UNISON:     return profile.unisonForcesRoot ? PitchRole::ROOT : PitchRole::ANY;
                     case LockType::ALTERNATE:  return PitchRole::FIFTH;
                     case LockType::ANTICIPATE: return PitchRole::APPROACH;
                     case LockType::FILL:       return PitchRole::ANY;

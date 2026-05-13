@@ -34,7 +34,7 @@ PitchRole PitchEngine::roleForStep(int step,
             switch (lp->type)
             {
                 case LockType::UNISON:
-                    return PitchRole::ROOT;
+                    return profile.unisonForcesRoot ? PitchRole::ROOT : PitchRole::ANY;
                 case LockType::ALTERNATE:
                     return (step % 4 == 0) ? PitchRole::FIFTH : PitchRole::FLAT7;
                 case LockType::ANTICIPATE:
@@ -56,7 +56,7 @@ PitchRole PitchEngine::roleForStep(int step,
                 {
                     switch (lk.type)
                     {
-                        case LockType::UNISON:     return PitchRole::ROOT;
+                        case LockType::UNISON:     return profile.unisonForcesRoot ? PitchRole::ROOT : PitchRole::ANY;
                         case LockType::ALTERNATE:  return PitchRole::FIFTH;
                         case LockType::ANTICIPATE: return PitchRole::APPROACH;
                         case LockType::FILL:       return PitchRole::ANY;
@@ -222,7 +222,11 @@ void PitchEngine::computeBar(const GrooveTemplate* tmpl,
         }
 
         int approachNote;
-        if (chromatic)
+        if (profile.approachFromAbove)
+        {
+            approachNote = targetNote + 1; // chromatic half-step above (Mobb "sneak")
+        }
+        else if (chromatic)
         {
             approachNote = targetNote - 1; // chromatic half-step below
         }
@@ -335,7 +339,11 @@ void PitchEngine::computeBarFromState(const BarPitchState&     state,
         }
 
         int approachNote;
-        if (chromatic)
+        if (profile.approachFromAbove)
+        {
+            approachNote = targetNote + 1; // chromatic half-step above (Mobb "sneak")
+        }
+        else if (chromatic)
         {
             approachNote = targetNote - 1;
         }

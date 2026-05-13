@@ -15,6 +15,8 @@ struct GenreProfile
     int                    bassMidiMin            = 24;  // C1
     int                    bassMidiMax            = 48;  // C3
     bool                   allowOctaveJumps       = true;
+    bool                   approachFromAbove      = false; // descending half-step into target (Mobb "sneak")
+    bool                   unisonForcesRoot       = true;  // when false, unison steps use ANY (Wonky)
 
     // Timing
     float defaultTimingOffsetMs     = 0.f;
@@ -66,7 +68,7 @@ struct GenreProfile
 
         if (genre == "G-Funk")
         {
-            p.defaultScale           = ScaleType::MINOR_PENTATONIC;
+            p.defaultScale           = ScaleType::NATURAL_MINOR;
             p.pitchDensityMin        = 2; p.pitchDensityMax = 5;
             p.allowChromaticApproach = true;
             p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FIFTH, PitchRole::FLAT7,
@@ -128,6 +130,7 @@ struct GenreProfile
             p.densityClampMin = 0.1f; p.densityClampMax = 0.6f;
             p.tensionClampMin = 0.0f; p.tensionClampMax = 0.4f;
             p.maxOctaveDisplPerBar = 0;
+            p.approachFromAbove = true;
         }
         else if (genre == "Hyphy")
         {
@@ -191,6 +194,7 @@ struct GenreProfile
             p.densityClampMin = 0.2f; p.densityClampMax = 1.0f;
             p.tensionClampMin = 0.2f; p.tensionClampMax = 1.0f;
             p.maxOctaveDisplPerBar = 3;
+            p.unisonForcesRoot = false;
         }
         else // Modern West Coast (default)
         {
