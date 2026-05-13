@@ -145,6 +145,7 @@ bool GrooveTemplate::loadFromJSON(const juce::String& jsonText)
     {
         pitch.hasPitchData            = true;
         pitch.densityHint             = (int)pitchObj->getProperty("densityHint");
+        pitch.productionComplexity    = (float)(double)pitchObj->getProperty("productionComplexity", 0.5);
         pitch.allowChromaticApproach  = (bool)pitchObj->getProperty("allowChromaticApproach");
 
         if (auto* intArr = pitchObj->getProperty("preferredIntervals").getArray())
@@ -272,6 +273,7 @@ juce::String GrooveTemplate::toJSON() const
 
         juce::DynamicObject::Ptr pObj = new juce::DynamicObject();
         pObj->setProperty("densityHint",            pitch.densityHint);
+        pObj->setProperty("productionComplexity",   pitch.productionComplexity);
         pObj->setProperty("allowChromaticApproach", pitch.allowChromaticApproach);
 
         juce::Array<juce::var> prefArr;

@@ -71,7 +71,8 @@ struct PitchStepHint
 
 struct PitchBlock
 {
-    int                        densityHint           = 2;
+    int                        densityHint            = 2;
+    float                      productionComplexity   = 0.5f; // 0.0=sparse→active bass, 1.0=dense→root-only
     bool                       allowChromaticApproach = true;
     juce::Array<PitchRole>     preferredIntervals;
     juce::Array<PitchStepHint> stepHints;

@@ -68,6 +68,7 @@
   ],
   "pitch": {
     "densityHint": 3,
+    "productionComplexity": 0.4,
     "allowChromaticApproach": true,
     "preferredIntervals": ["root", "5", "4"],
     "stepHints": [
