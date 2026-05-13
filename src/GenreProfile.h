@@ -67,10 +67,10 @@ struct GenreProfile
         if (genre == "G-Funk")
         {
             p.defaultScale           = ScaleType::MINOR_PENTATONIC;
-            p.pitchDensityMin        = 2; p.pitchDensityMax = 7;
+            p.pitchDensityMin        = 2; p.pitchDensityMax = 5;
             p.allowChromaticApproach = true;
-            p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FLAT7, PitchRole::FIFTH,
-                                         PitchRole::FLAT3, PitchRole::FOURTH };
+            p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FIFTH, PitchRole::FLAT7,
+                                         PitchRole::FOURTH, PitchRole::FLAT3 };
             p.bassMidiMin = 24; p.bassMidiMax = 48; // C1-C3
             p.allowOctaveJumps = true;
             p.defaultTimingOffsetMs    = 8.f;
@@ -99,9 +99,10 @@ struct GenreProfile
         else if (genre == "Mobb")
         {
             p.defaultScale           = ScaleType::NATURAL_MINOR;
-            p.pitchDensityMin        = 1; p.pitchDensityMax = 3;
+            p.pitchDensityMin        = 1; p.pitchDensityMax = 4;
             p.allowChromaticApproach = false;
-            p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FIFTH, PitchRole::OCTAVE };
+            p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FIFTH, PitchRole::FOURTH,
+                                         PitchRole::FLAT3, PitchRole::FLAT5 };
             p.bassMidiMin = 24; p.bassMidiMax = 43; // C1-G2
             p.allowOctaveJumps = false;
             p.defaultTimingOffsetMs    = 0.f;
@@ -133,8 +134,8 @@ struct GenreProfile
             p.defaultScale           = ScaleType::MINOR_PENTATONIC;
             p.pitchDensityMin        = 3; p.pitchDensityMax = 9;
             p.allowChromaticApproach = true;
-            p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FIFTH, PitchRole::OCTAVE,
-                                         PitchRole::FLAT7, PitchRole::FLAT3, PitchRole::FOURTH };
+            p.preferredIntervals     = { PitchRole::ROOT, PitchRole::OCTAVE, PitchRole::FLAT7,
+                                         PitchRole::FIFTH, PitchRole::FLAT3, PitchRole::FOURTH };
             p.bassMidiMin = 24; p.bassMidiMax = 48;
             p.allowOctaveJumps = true;
             p.defaultTimingOffsetMs    = -7.f;
@@ -161,10 +162,11 @@ struct GenreProfile
         else if (genre == "Wonky")
         {
             p.defaultScale           = ScaleType::DORIAN;
-            p.pitchDensityMin        = 3; p.pitchDensityMax = 10;
+            p.pitchDensityMin        = 3; p.pitchDensityMax = 7;
             p.allowChromaticApproach = true;
-            p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FLAT7, PitchRole::FIFTH,
-                                         PitchRole::FLAT3, PitchRole::FOURTH, PitchRole::FLAT5 };
+            p.preferredIntervals     = { PitchRole::ROOT, PitchRole::SIXTH, PitchRole::FLAT7,
+                                         PitchRole::FIFTH, PitchRole::SECOND, PitchRole::FLAT3,
+                                         PitchRole::FOURTH, PitchRole::FLAT5 };
             p.bassMidiMin = 24; p.bassMidiMax = 52; // C1-E3
             p.allowOctaveJumps = true;
             p.defaultTimingOffsetMs    = 0.f;
@@ -193,10 +195,10 @@ struct GenreProfile
         else // Modern West Coast (default)
         {
             p.defaultScale           = ScaleType::MINOR_PENTATONIC;
-            p.pitchDensityMin        = 2; p.pitchDensityMax = 7;
+            p.pitchDensityMin        = 2; p.pitchDensityMax = 6;
             p.allowChromaticApproach = true;
-            p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FLAT7, PitchRole::FIFTH,
-                                         PitchRole::FOURTH, PitchRole::FLAT3 };
+            p.preferredIntervals     = { PitchRole::ROOT, PitchRole::FOURTH, PitchRole::FLAT7,
+                                         PitchRole::FIFTH, PitchRole::FLAT3 };
             p.bassMidiMin = 24; p.bassMidiMax = 48;
             p.allowOctaveJumps = true;
             p.defaultTimingOffsetMs    = 0.f;

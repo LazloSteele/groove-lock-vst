@@ -256,11 +256,13 @@ juce::String GrooveTemplate::toJSON() const
         static auto roleStr = [](PitchRole r) -> juce::String {
             switch (r) {
                 case PitchRole::ROOT:    return "root";
-                case PitchRole::FIFTH:   return "5";
-                case PitchRole::FLAT7:   return "b7";
+                case PitchRole::SECOND:  return "2";
                 case PitchRole::FLAT3:   return "b3";
                 case PitchRole::FOURTH:  return "4";
+                case PitchRole::FIFTH:   return "5";
                 case PitchRole::FLAT5:   return "b5";
+                case PitchRole::SIXTH:   return "6";
+                case PitchRole::FLAT7:   return "b7";
                 case PitchRole::OCTAVE:  return "octave";
                 case PitchRole::APPROACH:return "approach";
                 case PitchRole::ANY:     return "any";

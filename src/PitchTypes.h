@@ -3,19 +3,21 @@
 
 enum class ScaleType { MINOR_PENTATONIC = 0, NATURAL_MINOR, DORIAN, BLUES, PHRYGIAN, CHROMATIC };
 
-enum class PitchRole { ROOT, FIFTH, FLAT7, FLAT3, FOURTH, FLAT5, OCTAVE, APPROACH, ANY, NONE };
+enum class PitchRole { ROOT, SECOND, FLAT3, FOURTH, FIFTH, FLAT5, SIXTH, FLAT7, OCTAVE, APPROACH, ANY, NONE };
 
 static inline PitchRole parsePitchRole(const juce::String& s)
 {
-    if (s == "root")    return PitchRole::ROOT;
-    if (s == "5")       return PitchRole::FIFTH;
-    if (s == "b7")      return PitchRole::FLAT7;
-    if (s == "b3")      return PitchRole::FLAT3;
-    if (s == "4")       return PitchRole::FOURTH;
-    if (s == "b5")      return PitchRole::FLAT5;
-    if (s == "octave")  return PitchRole::OCTAVE;
+    if (s == "root")     return PitchRole::ROOT;
+    if (s == "2")        return PitchRole::SECOND;
+    if (s == "b3")       return PitchRole::FLAT3;
+    if (s == "4")        return PitchRole::FOURTH;
+    if (s == "5")        return PitchRole::FIFTH;
+    if (s == "b5")       return PitchRole::FLAT5;
+    if (s == "6")        return PitchRole::SIXTH;
+    if (s == "b7")       return PitchRole::FLAT7;
+    if (s == "octave")   return PitchRole::OCTAVE;
     if (s == "approach") return PitchRole::APPROACH;
-    if (s == "any")     return PitchRole::ANY;
+    if (s == "any")      return PitchRole::ANY;
     return PitchRole::NONE;
 }
 
@@ -25,11 +27,13 @@ static inline int semitoneForRole(PitchRole role)
     switch (role)
     {
         case PitchRole::ROOT:   return 0;
+        case PitchRole::SECOND: return 2;
         case PitchRole::FLAT3:  return 3;
         case PitchRole::FOURTH: return 5;
         case PitchRole::FIFTH:  return 7;
-        case PitchRole::FLAT7:  return 10;
         case PitchRole::FLAT5:  return 6;
+        case PitchRole::SIXTH:  return 9;
+        case PitchRole::FLAT7:  return 10;
         case PitchRole::OCTAVE: return 12;
         default:                return 0;
     }
