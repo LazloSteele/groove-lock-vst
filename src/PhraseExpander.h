@@ -45,6 +45,9 @@ private:
     void enforceRootGravity(int barIdx, const GrooveTemplate* tmpl,
                              BarPitchState& out, int bar = 0);
 
+    // Enforce that non-root fills resolve back to root within N active steps (Hyphy)
+    void enforceFillResolution(BarPitchState& out, const GenreProfile& profile) const;
+
     // b7 leading-tone turnaround on last active step of bars 3 and 7 (Part 3, Rule 6)
     void applyTurnaround(int barIdx, float tension, const GrooveTemplate* tmpl,
                           BarPitchState& out, int bar = 0) const;

@@ -26,10 +26,11 @@ void PhraseExpander::compute(const GrooveTemplate* tmpl,
                                           phrase.phraseArc[b] * profile.maxDeviation * density);
         phrase.bars[b].deviationLevel = effectiveDev;
 
-        computeBarRoles   (b, effectiveDev, tension, tmpl, availRoles, seedRoles, phrase.bars[b], 0);
-        enforceRootGravity(b, tmpl, phrase.bars[b], 0);
-        applyTurnaround   (b, tension, tmpl, phrase.bars[b], 0);
-        computeOctaveOffsets(b, effectiveDev, density, tmpl, profile, phrase.bars[b], 0);
+        computeBarRoles      (b, effectiveDev, tension, tmpl, availRoles, seedRoles, phrase.bars[b], 0);
+        enforceRootGravity   (b, tmpl, phrase.bars[b], 0);
+        enforceFillResolution(phrase.bars[b], profile);
+        applyTurnaround      (b, tension, tmpl, phrase.bars[b], 0);
+        computeOctaveOffsets (b, effectiveDev, density, tmpl, profile, phrase.bars[b], 0);
     }
 
     // Compute bar-2 phrase if template has bass2
@@ -46,10 +47,11 @@ void PhraseExpander::compute(const GrooveTemplate* tmpl,
                                               phrase.phraseArc[b] * profile.maxDeviation * density);
             phrase.bars2[b].deviationLevel = effectiveDev;
 
-            computeBarRoles   (b, effectiveDev, tension, tmpl, availRoles, seedRoles2, phrase.bars2[b], 1);
-            enforceRootGravity(b, tmpl, phrase.bars2[b], 1);
-            applyTurnaround   (b, tension, tmpl, phrase.bars2[b], 1);
-            computeOctaveOffsets(b, effectiveDev, density, tmpl, profile, phrase.bars2[b], 1);
+            computeBarRoles      (b, effectiveDev, tension, tmpl, availRoles, seedRoles2, phrase.bars2[b], 1);
+            enforceRootGravity   (b, tmpl, phrase.bars2[b], 1);
+            enforceFillResolution(phrase.bars2[b], profile);
+            applyTurnaround      (b, tension, tmpl, phrase.bars2[b], 1);
+            computeOctaveOffsets (b, effectiveDev, density, tmpl, profile, phrase.bars2[b], 1);
         }
         phrase.hasBar2 = true;
     }
@@ -289,6 +291,30 @@ void PhraseExpander::computeOctaveOffsets(int barIdx, float effectiveDev, float 
         {
             out.stepOctaveOffset[s] = 1;
             ++displCount;
+        }
+    }
+}
+
+void PhraseExpander::enforceFillResolution(BarPitchState& out, const GenreProfile& profile) const
+{
+    if (profile.fillResolutionWindow == 0) return;
+
+    int nonRootCount = 0;
+    for (int s = 0; s < 16; ++s)
+    {
+        if (out.stepRoles[s] == PitchRole::NONE) continue;
+        if (out.stepRoles[s] == PitchRole::ROOT || out.stepRoles[s] == PitchRole::APPROACH)
+        {
+            nonRootCount = 0;
+        }
+        else
+        {
+            ++nonRootCount;
+            if (nonRootCount > profile.fillResolutionWindow)
+            {
+                out.stepRoles[s] = PitchRole::ROOT;
+                nonRootCount = 0;
+            }
         }
     }
 }

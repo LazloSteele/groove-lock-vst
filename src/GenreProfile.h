@@ -17,6 +17,8 @@ struct GenreProfile
     bool                   allowOctaveJumps       = true;
     bool                   approachFromAbove      = false; // descending half-step into target (Mobb "sneak")
     bool                   unisonForcesRoot       = true;  // when false, unison steps use ANY (Wonky)
+    int                    maxApproachRunLength   = 1;     // G-Funk: 3 (2–3 note chromatic run)
+    int                    fillResolutionWindow   = 0;     // Hyphy: 2 (max consecutive non-root active steps)
 
     // Timing
     float defaultTimingOffsetMs     = 0.f;
@@ -97,6 +99,7 @@ struct GenreProfile
             p.densityClampMin = 0.2f; p.densityClampMax = 0.8f;
             p.tensionClampMin = 0.1f; p.tensionClampMax = 0.7f;
             p.maxOctaveDisplPerBar = 1;
+            p.maxApproachRunLength = 3;
         }
         else if (genre == "Mobb")
         {
@@ -161,6 +164,7 @@ struct GenreProfile
             p.densityClampMin = 0.3f; p.densityClampMax = 1.0f;
             p.tensionClampMin = 0.2f; p.tensionClampMax = 0.8f;
             p.maxOctaveDisplPerBar = 2;
+            p.fillResolutionWindow = 2;
         }
         else if (genre == "Wonky")
         {
