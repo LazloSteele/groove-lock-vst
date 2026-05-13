@@ -36,7 +36,7 @@ private:
 
     // Assign pitch roles for one bar using deviation + tension
     void computeBarRoles(int barIdx, float effectiveDev, float tension,
-                         const GrooveTemplate* tmpl,
+                         const GrooveTemplate* tmpl, const GenreProfile& profile,
                          const juce::Array<PitchRole>& availRoles,
                          const PitchRole* seedRoles,
                          BarPitchState& out, int bar = 0);

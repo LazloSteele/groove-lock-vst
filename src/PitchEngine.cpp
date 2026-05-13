@@ -210,47 +210,33 @@ void PitchEngine::computeBar(const GrooveTemplate* tmpl,
         recentSemitone = semi;
     }
 
-    // ── Pass 2: resolve APPROACH steps (need next active step's note) ───────
+    // ── Pass 2: resolve APPROACH steps — supports multi-step chromatic runs ──
     for (int step = 0; step < 16; ++step)
     {
         if (barNotes[step] != -2) continue;
 
-        // Find next active step's resolved note
+        // Count consecutive approach sentinels starting here
+        int runLength = 0;
+        for (int k = step; k < 16 && barNotes[k] == -2; ++k) ++runLength;
+
+        // Find target note (first resolved note after the run)
         int targetNote = params.rootMidiNote;
         for (int d = 1; d <= 16; ++d)
         {
-            int next = (step + d) % 16;
-            if (barNotes[next] >= 0)
-            {
-                targetNote = barNotes[next];
-                break;
-            }
+            int next = (step + runLength - 1 + d) % 16;
+            if (barNotes[next] >= 0) { targetNote = barNotes[next]; break; }
         }
 
-        int approachNote;
-        if (profile.approachFromAbove)
+        // Assign chromatic run: each step approaches one semitone closer to target
+        for (int i = 0; i < runLength; ++i)
         {
-            approachNote = targetNote + 1; // chromatic half-step above (Mobb "sneak")
-        }
-        else if (chromatic)
-        {
-            approachNote = targetNote - 1; // chromatic half-step below
-        }
-        else
-        {
-            // Nearest scale tone below
-            int targetSemi = (targetNote - params.rootMidiNote) % 12;
-            int count = 0;
-            const int* ints = scaleIntervals(params.scaleType, count);
-            int belowSemi = 0;
-            for (int i = 0; i < count; ++i)
-                if (ints[i] < targetSemi) belowSemi = ints[i];
-            approachNote = params.rootMidiNote + belowSemi;
-        }
-
-        approachNote = clampToRange(approachNote, params.rootMidiNote,
+            int offset = profile.approachFromAbove ? (runLength - i) : -(runLength - i);
+            int note = clampToRange(targetNote + offset, params.rootMidiNote,
                                     profile.bassMidiMin, profile.bassMidiMax);
-        barNotes[step] = approachNote;
+            barNotes[step + i] = note;
+        }
+
+        step += runLength - 1; // skip the steps we just resolved
     }
 
     // Replace any remaining -1 sentinel (shouldn't happen, safety net)
@@ -338,41 +324,30 @@ void PitchEngine::computeBarFromState(const BarPitchState&     state,
         recentSemitone = semi;
     }
 
-    // ── Pass 2: resolve approach steps ──────────────────────────────────────
+    // ── Pass 2: resolve approach steps — supports multi-step chromatic runs ──
     for (int step = 0; step < 16; ++step)
     {
         if (barNotes[step] != -2) continue;
 
+        int runLength = 0;
+        for (int k = step; k < 16 && barNotes[k] == -2; ++k) ++runLength;
+
         int targetNote = params.rootMidiNote;
         for (int d = 1; d <= 16; ++d)
         {
-            int next = (step + d) % 16;
+            int next = (step + runLength - 1 + d) % 16;
             if (barNotes[next] >= 0) { targetNote = barNotes[next]; break; }
         }
 
-        int approachNote;
-        if (profile.approachFromAbove)
+        for (int i = 0; i < runLength; ++i)
         {
-            approachNote = targetNote + 1; // chromatic half-step above (Mobb "sneak")
-        }
-        else if (chromatic)
-        {
-            approachNote = targetNote - 1;
-        }
-        else
-        {
-            int targetSemi = (targetNote - params.rootMidiNote) % 12;
-            int count = 0;
-            const int* ints = scaleIntervals(params.scaleType, count);
-            int belowSemi = 0;
-            for (int i = 0; i < count; ++i)
-                if (ints[i] < targetSemi) belowSemi = ints[i];
-            approachNote = params.rootMidiNote + belowSemi;
+            int offset = profile.approachFromAbove ? (runLength - i) : -(runLength - i);
+            int note = clampToRange(targetNote + offset, params.rootMidiNote,
+                                    profile.bassMidiMin, profile.bassMidiMax);
+            barNotes[step + i] = note;
         }
 
-        approachNote = clampToRange(approachNote, params.rootMidiNote,
-                                    profile.bassMidiMin, profile.bassMidiMax);
-        barNotes[step] = approachNote;
+        step += runLength - 1;
     }
 
     for (int step = 0; step < 16; ++step)

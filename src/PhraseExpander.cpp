@@ -26,7 +26,7 @@ void PhraseExpander::compute(const GrooveTemplate* tmpl,
                                           phrase.phraseArc[b] * profile.maxDeviation * density);
         phrase.bars[b].deviationLevel = effectiveDev;
 
-        computeBarRoles      (b, effectiveDev, tension, tmpl, availRoles, seedRoles, phrase.bars[b], 0);
+        computeBarRoles      (b, effectiveDev, tension, tmpl, profile, availRoles, seedRoles, phrase.bars[b], 0);
         enforceRootGravity   (b, tmpl, phrase.bars[b], 0);
         enforceFillResolution(phrase.bars[b], profile);
         applyTurnaround      (b, tension, tmpl, phrase.bars[b], 0);
@@ -47,7 +47,7 @@ void PhraseExpander::compute(const GrooveTemplate* tmpl,
                                               phrase.phraseArc[b] * profile.maxDeviation * density);
             phrase.bars2[b].deviationLevel = effectiveDev;
 
-            computeBarRoles      (b, effectiveDev, tension, tmpl, availRoles, seedRoles2, phrase.bars2[b], 1);
+            computeBarRoles      (b, effectiveDev, tension, tmpl, profile, availRoles, seedRoles2, phrase.bars2[b], 1);
             enforceRootGravity   (b, tmpl, phrase.bars2[b], 1);
             enforceFillResolution(phrase.bars2[b], profile);
             applyTurnaround      (b, tension, tmpl, phrase.bars2[b], 1);
@@ -145,7 +145,7 @@ void PhraseExpander::buildAvailableRoles(float tension, const GenreProfile& prof
 }
 
 void PhraseExpander::computeBarRoles(int barIdx, float effectiveDev, float tension,
-                                      const GrooveTemplate* tmpl,
+                                      const GrooveTemplate* tmpl, const GenreProfile& profile,
                                       const juce::Array<PitchRole>& availRoles,
                                       const PitchRole* seedRoles,
                                       BarPitchState& out, int bar)
@@ -199,6 +199,23 @@ void PhraseExpander::computeBarRoles(int barIdx, float effectiveDev, float tensi
                     if (r != PitchRole::ROOT && r != PitchRole::APPROACH)
                     { fallback = r; break; }
                 out.stepRoles[step] = fallback;
+            }
+        }
+    }
+
+    // Extend APPROACH roles backward to form chromatic runs (G-Funk: up to 3 steps)
+    if (profile.maxApproachRunLength > 1)
+    {
+        for (int step = 0; step < 16; ++step)
+        {
+            if (out.stepRoles[step] != PitchRole::APPROACH) continue;
+            int extended = 0;
+            for (int prev = step - 1; prev >= 0 && extended < profile.maxApproachRunLength - 1; --prev)
+            {
+                if (out.stepRoles[prev] == PitchRole::NONE) continue;
+                if (out.stepRoles[prev] == PitchRole::ROOT || out.stepRoles[prev] == PitchRole::APPROACH) break;
+                out.stepRoles[prev] = PitchRole::APPROACH;
+                ++extended;
             }
         }
     }
