@@ -138,7 +138,7 @@ void PitchEngine::computeBar(const GrooveTemplate* tmpl,
     int density = params.densityOverride > 0 ? params.densityOverride
                 : (tmpl && tmpl->pitch.hasPitchData ? tmpl->pitch.densityHint
                                                     : profile.pitchDensityMin + 1);
-    density = juce::jlimit(1, 5, density);
+    density = juce::jlimit(1, 10, density);
 
     bool chromatic = params.chromaticApproach;
     if (tmpl && tmpl->pitch.hasPitchData)
@@ -263,7 +263,7 @@ void PitchEngine::computeBarFromState(const BarPitchState&     state,
 
     int density = params.densityOverride > 0 ? params.densityOverride
                 : profile.pitchDensityMin + 1;
-    density = juce::jlimit(1, 5, density);
+    density = juce::jlimit(1, 10, density);
 
     bool chromatic = params.chromaticApproach && profile.allowChromaticApproach;
 
