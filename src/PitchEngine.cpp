@@ -269,6 +269,8 @@ void PitchEngine::computeBarFromState(const BarPitchState&     state,
 
     bool chromatic = params.chromaticApproach && profile.allowChromaticApproach;
 
+    const int effectiveRoot = params.rootMidiNote + state.chordSemitoneOffset;
+
     const auto& preferred = profile.preferredIntervals;
 
     int uniqueNotes[10]; int uniqueCount = 0;
@@ -282,7 +284,7 @@ void PitchEngine::computeBarFromState(const BarPitchState&     state,
 
         if (role == PitchRole::NONE)
         {
-            barNotes[step] = params.rootMidiNote;
+            barNotes[step] = effectiveRoot;
             continue;
         }
         if (role == PitchRole::APPROACH)
@@ -302,8 +304,8 @@ void PitchEngine::computeBarFromState(const BarPitchState&     state,
 
         // Compute MIDI note first (including phrase octave displacement) so
         // octave variants are tracked as distinct entries
-        int midiNote = clampToRange(params.rootMidiNote + semi + state.stepOctaveOffset[step] * 12,
-                                    params.rootMidiNote, profile.bassMidiMin, profile.bassMidiMax);
+        int midiNote = clampToRange(effectiveRoot + semi + state.stepOctaveOffset[step] * 12,
+                                    effectiveRoot, profile.bassMidiMin, profile.bassMidiMax);
 
         if (role != PitchRole::ROOT)
         {
@@ -311,7 +313,7 @@ void PitchEngine::computeBarFromState(const BarPitchState&     state,
             for (int i = 0; i < uniqueCount; ++i)
                 if (uniqueNotes[i] == midiNote) { alreadyUsed = true; break; }
             if (!alreadyUsed && uniqueCount >= density)
-                midiNote = params.rootMidiNote;
+                midiNote = effectiveRoot;
         }
 
         bool tracked = false;
@@ -332,7 +334,7 @@ void PitchEngine::computeBarFromState(const BarPitchState&     state,
         int runLength = 0;
         for (int k = step; k < 16 && barNotes[k] == -2; ++k) ++runLength;
 
-        int targetNote = params.rootMidiNote;
+        int targetNote = effectiveRoot;
         for (int d = 1; d <= 16; ++d)
         {
             int next = (step + runLength - 1 + d) % 16;
@@ -342,7 +344,7 @@ void PitchEngine::computeBarFromState(const BarPitchState&     state,
         for (int i = 0; i < runLength; ++i)
         {
             int offset = profile.approachFromAbove ? (runLength - i) : -(runLength - i);
-            int note = clampToRange(targetNote + offset, params.rootMidiNote,
+            int note = clampToRange(targetNote + offset, effectiveRoot,
                                     profile.bassMidiMin, profile.bassMidiMax);
             barNotes[step + i] = note;
         }
@@ -351,5 +353,5 @@ void PitchEngine::computeBarFromState(const BarPitchState&     state,
     }
 
     for (int step = 0; step < 16; ++step)
-        if (barNotes[step] < 0) barNotes[step] = params.rootMidiNote;
+        if (barNotes[step] < 0) barNotes[step] = effectiveRoot;
 }

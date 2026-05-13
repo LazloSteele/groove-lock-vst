@@ -51,6 +51,12 @@
     "densityHint": 6,
     "allowChromaticApproach": true,
     "preferredIntervals": ["root", "b7", "b3", "5"],
+    "chordSequence": [
+      { "barStart": 0, "barEnd": 1, "semitones": 0 },
+      { "barStart": 2, "barEnd": 3, "semitones": 5 },
+      { "barStart": 4, "barEnd": 5, "semitones": 0 },
+      { "barStart": 6, "barEnd": 7, "semitones": 3 }
+    ],
     "stepHints": [
       { "step": 1,  "role": "b7" },
       { "step": 3,  "role": "b3" },

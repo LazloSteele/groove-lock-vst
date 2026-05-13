@@ -76,6 +76,7 @@ struct PitchBlock
     bool                       allowChromaticApproach = true;
     juce::Array<PitchRole>     preferredIntervals;
     juce::Array<PitchStepHint> stepHints;
+    juce::Array<ChordRegion>   chordSequence;           // empty = single tonal center
 
     bool hasPitchData = false; // false = block was absent, use genre defaults
 };

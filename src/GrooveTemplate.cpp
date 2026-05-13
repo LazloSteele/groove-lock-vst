@@ -164,6 +164,20 @@ bool GrooveTemplate::loadFromJSON(const juce::String& jsonText)
                 pitch.stepHints.add(h);
             }
         }
+
+        if (auto* chordArr = pitchObj->getProperty("chordSequence").getArray())
+        {
+            for (auto& cVar : *chordArr)
+            {
+                auto* cObj = cVar.getDynamicObject();
+                if (!cObj) continue;
+                ChordRegion cr;
+                cr.barStart  = (int)cObj->getProperty("barStart");
+                cr.barEnd    = (int)cObj->getProperty("barEnd");
+                cr.semitones = (int)cObj->getProperty("semitones");
+                pitch.chordSequence.add(cr);
+            }
+        }
     }
 
     return true;
@@ -289,6 +303,21 @@ juce::String GrooveTemplate::toJSON() const
             hintArr.add(juce::var(hObj.get()));
         }
         pObj->setProperty("stepHints", hintArr);
+
+        if (!pitch.chordSequence.isEmpty())
+        {
+            juce::Array<juce::var> chordArr;
+            for (auto& cr : pitch.chordSequence)
+            {
+                juce::DynamicObject::Ptr cObj = new juce::DynamicObject();
+                cObj->setProperty("barStart",  cr.barStart);
+                cObj->setProperty("barEnd",    cr.barEnd);
+                cObj->setProperty("semitones", cr.semitones);
+                chordArr.add(juce::var(cObj.get()));
+            }
+            pObj->setProperty("chordSequence", chordArr);
+        }
+
         root->setProperty("pitch", juce::var(pObj.get()));
     }
 

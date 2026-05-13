@@ -26,6 +26,13 @@ void PhraseExpander::compute(const GrooveTemplate* tmpl,
                                           phrase.phraseArc[b] * profile.maxDeviation * density);
         phrase.bars[b].deviationLevel = effectiveDev;
 
+        // Chord region: compute root offset for this bar
+        int chordOffset = 0;
+        if (tmpl && !tmpl->pitch.chordSequence.isEmpty())
+            for (auto& cr : tmpl->pitch.chordSequence)
+                if (b >= cr.barStart && b <= cr.barEnd) { chordOffset = cr.semitones; break; }
+        phrase.bars[b].chordSemitoneOffset = chordOffset;
+
         computeBarRoles      (b, effectiveDev, tension, tmpl, profile, availRoles, seedRoles, phrase.bars[b], 0);
         enforceRootGravity   (b, tmpl, phrase.bars[b], 0);
         enforceFillResolution(phrase.bars[b], profile);
@@ -46,6 +53,12 @@ void PhraseExpander::compute(const GrooveTemplate* tmpl,
             float effectiveDev = juce::jlimit(0.f, 1.f,
                                               phrase.phraseArc[b] * profile.maxDeviation * density);
             phrase.bars2[b].deviationLevel = effectiveDev;
+
+            int chordOffset2 = 0;
+            if (tmpl && !tmpl->pitch.chordSequence.isEmpty())
+                for (auto& cr : tmpl->pitch.chordSequence)
+                    if (b >= cr.barStart && b <= cr.barEnd) { chordOffset2 = cr.semitones; break; }
+            phrase.bars2[b].chordSemitoneOffset = chordOffset2;
 
             computeBarRoles      (b, effectiveDev, tension, tmpl, profile, availRoles, seedRoles2, phrase.bars2[b], 1);
             enforceRootGravity   (b, tmpl, phrase.bars2[b], 1);

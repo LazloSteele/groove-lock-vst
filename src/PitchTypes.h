@@ -61,14 +61,34 @@ static inline const int* scaleIntervals(ScaleType t, int& count)
     count = 5; return minPent;
 }
 
+static inline ScaleType parseScaleType(const juce::String& s)
+{
+    if (s == "minor_pentatonic") return ScaleType::MINOR_PENTATONIC;
+    if (s == "natural_minor")    return ScaleType::NATURAL_MINOR;
+    if (s == "dorian")           return ScaleType::DORIAN;
+    if (s == "blues")            return ScaleType::BLUES;
+    if (s == "phrygian")         return ScaleType::PHRYGIAN;
+    if (s == "chromatic")        return ScaleType::CHROMATIC;
+    return ScaleType::DORIAN;
+}
+
+// Describes a harmonic region within the 8-bar phrase
+struct ChordRegion
+{
+    int barStart  = 0;
+    int barEnd    = 7;
+    int semitones = 0; // root offset from global root (e.g. +3 = relative major)
+};
+
 // Pre-computed pitch roles for one bar (output from PhraseExpander)
 struct BarPitchState
 {
     PitchRole stepRoles[16];        // PitchRole per step (NONE = no bass hit)
     int       stepOctaveOffset[16]; // 0 = base octave, 1 = +1, -1 = -1
     float     deviationLevel;       // 0.0–1.0 how far this bar deviates from seed
+    int       chordSemitoneOffset;  // root shift from active ChordRegion (0 = tonic)
 
-    BarPitchState() : deviationLevel(0.f)
+    BarPitchState() : deviationLevel(0.f), chordSemitoneOffset(0)
     {
         std::fill(stepRoles, stepRoles + 16, PitchRole::ROOT);
         std::fill(stepOctaveOffset, stepOctaveOffset + 16, 0);
