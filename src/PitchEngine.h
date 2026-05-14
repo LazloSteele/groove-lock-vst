@@ -8,10 +8,11 @@ struct PitchEngineParams
 {
     int       rootMidiNote      = 36;   // base root (e.g. 36 = C2)
     ScaleType scaleType         = ScaleType::MINOR_PENTATONIC;
-    int       densityOverride   = 0;    // 0 = use template/genre hint
-    bool      chromaticApproach = true;
-    bool      pitchEnabled      = false;
-    int       barVariant        = 0;    // 0 = bar 1 (statement), 1 = bar 2 (response)
+    int       densityOverride        = 0;    // 0 = use template/genre hint
+    float     productionComplexity   = 0.5f; // from template pitch block; scales density inversely
+    bool      chromaticApproach      = true;
+    bool      pitchEnabled           = false;
+    int       barVariant             = 0;    // 0 = bar 1 (statement), 1 = bar 2 (response)
 };
 
 class PitchEngine

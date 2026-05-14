@@ -259,9 +259,9 @@ void PitchEngine::computeBarFromState(const BarPitchState&     state,
 
     int density = params.densityOverride > 0 ? params.densityOverride
                 : profile.pitchDensityMin + 1;
-    if (params.densityOverride == 0 && tmpl && tmpl->pitch.hasPitchData)
+    if (params.densityOverride == 0)
     {
-        float scale = 1.0f - tmpl->pitch.productionComplexity * 0.6f;
+        float scale = 1.0f - params.productionComplexity * 0.6f;
         density = juce::jlimit(profile.pitchDensityMin, profile.pitchDensityMax,
                                (int)std::round(density * scale));
     }

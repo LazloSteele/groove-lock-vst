@@ -91,6 +91,11 @@ void GrooveLockProcessor::syncParams()
     p.pitch.densityOverride   = pitchDensity.get();
     p.pitch.chromaticApproach = pitchChromatic.get() != 0;
     p.pitch.pitchEnabled      = pitchEnabled.get() != 0;
+    {
+        auto* t = getCurrentTemplate();
+        p.pitch.productionComplexity = (t && t->pitch.hasPitchData)
+                                       ? t->pitch.productionComplexity : 0.5f;
+    }
 
     // Pass active phrase buffer pointer — acquire ordering sees completed phrase write
     const ExpandedPhrase* activePhrase =
