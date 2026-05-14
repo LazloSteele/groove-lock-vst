@@ -587,6 +587,16 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     rebuildTemplateList();
     refreshFromTemplate();
 
+    // View toggle button
+    addAndMakeVisible(patternToggleBtn);
+    patternToggleBtn.setColour(juce::TextButton::buttonColourId,   juce::Colour(0xff1e2226));
+    patternToggleBtn.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xff3a4652));
+    patternToggleBtn.onClick = [this] {
+        showPatternView = !showPatternView;
+        applyViewMode();
+    };
+    applyViewMode(); // set initial visibility before first resize
+
     // setSize must come after all child components are constructed so that
     // resized() fires with every component already existing.
     setResizable(true, false);
@@ -622,14 +632,48 @@ void GrooveLockEditor::setupKnob(juce::Slider& k, juce::Label& l,
     l.setJustificationType(juce::Justification::centred);
 }
 
+void GrooveLockEditor::applyViewMode()
+{
+    const bool pat = showPatternView;
+    patternToggleBtn.setButtonText(pat ? "Pattern  \xe2\x8a\xa0" : "Pattern");
+
+    // Grids — only visible in pattern view
+    drumView.setVisible(pat);
+    lockView.setVisible(pat);
+    bassView.setVisible(pat);
+    infoBar.setVisible(pat);
+
+    // Secondary knobs
+    timingOffKnob.setVisible(pat);   timingOffLabel.setVisible(pat);
+    gateScaleKnob.setVisible(pat);   gateScaleLabel.setVisible(pat);
+    glideKnob.setVisible(pat);       glideLabel.setVisible(pat);
+
+    // I/O section
+    inputModeToggle.setVisible(pat);
+    if (drumMapPanel) drumMapPanel->setVisible(pat && proc.inputMode.get() == 0);
+    outputChannelBox.setVisible(pat);
+    panicButton.setVisible(pat);
+
+    // Regen mode (auto-regen still runs; dropdown is a setup control)
+    regenModeBox.setVisible(pat);
+    regenButton.setVisible(pat && regenModeBox.getSelectedId() == 3);
+
+    // Advanced pitch controls
+    pitchDensitySlider.setVisible(pat);
+    pitchDensityLabel.setVisible(pat);
+    pitchChromaticToggle.setVisible(pat);
+
+    resized();
+    repaint();
+}
+
 void GrooveLockEditor::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colour(0xff121417));
 
-    // Divider lines
-    int sidebarX = (int)(getWidth() * 0.70f);
+    int divX = showPatternView ? (int)(getWidth() * 0.70f) : (int)(getWidth() * 0.45f);
     g.setColour(juce::Colour(0xff1e2226));
-    g.drawVerticalLine(sidebarX, 30.0f, (float)(getHeight() - 28));
+    g.drawVerticalLine(divX, 30.0f, (float)(getHeight() - 28));
 
     g.setColour(juce::Colour(0xff1a1d21));
     g.drawHorizontalLine(30, 0, (float)getWidth());
@@ -638,9 +682,7 @@ void GrooveLockEditor::paint(juce::Graphics& g)
 
 void GrooveLockEditor::resized()
 {
-    auto area    = getLocalBounds();
-    int  W       = area.getWidth();
-    int  sidebar = (int)(W * 0.30f);
+    auto area = getLocalBounds();
 
     // Header (30px)
     auto header = area.removeFromTop(30);
@@ -652,102 +694,152 @@ void GrooveLockEditor::resized()
     // Transport bar (28px bottom)
     auto transport = area.removeFromBottom(28);
     tempoLabel.setBounds(transport.removeFromRight(160));
+    patternToggleBtn.setBounds(transport.removeFromLeft(90).reduced(2, 3));
     if (phraseBarIndicator)
         phraseBarIndicator->setBounds(transport.removeFromLeft(130).reduced(2, 4));
 
-    // Main + sidebar
-    auto sidebar_area = area.removeFromRight(sidebar).reduced(4);
-    auto mainArea     = area.reduced(4, 2);
-
-    // Sidebar layout
+    if (!showPatternView)
     {
-        auto s = sidebar_area;
-        // Browser header
-        searchBox.setBounds(s.removeFromTop(24));
-        genreFilter.setBounds(s.removeFromTop(24));
-        int listH = juce::jmax(80, (int)(s.getHeight() * 0.13f));
-        templateList.setBounds(s.removeFromTop(listH));
+        // ── Minimum main view ──────────────────────────────────────────────
+        int W = area.getWidth();
+        auto browserArea = area.removeFromLeft((int)(W * 0.45f)).reduced(4, 2);
+        auto ctrlArea    = area.reduced(4, 2);
 
-        s.removeFromTop(4);
+        // Template browser — full height
+        searchBox.setBounds(browserArea.removeFromTop(24));
+        genreFilter.setBounds(browserArea.removeFromTop(24));
+        templateList.setBounds(browserArea);
 
-        int xySize = juce::jmin(s.getWidth(), 120);
-        xyPad->setBounds(s.removeFromTop(xySize));
-        xyCoordLabel.setBounds(s.removeFromTop(14));
+        // Controls column: XY pad → pitch → swing+feel
+        auto ctrl = ctrlArea;
+        ctrl.removeFromTop(12); // top padding
+
+        // XY pad: square, centred horizontally
+        int xySize = juce::jmin(ctrl.getWidth() - 16, 150);
+        int xyX    = ctrl.getX() + (ctrl.getWidth() - xySize) / 2;
+        xyPad->setBounds(xyX, ctrl.getY(), xySize, xySize);
+        ctrl.removeFromTop(xySize);
+
+        xyCoordLabel.setBounds(ctrl.removeFromTop(14));
+        ctrl.removeFromTop(6);
+
+        // Pitch controls
+        pitchEnabledToggle.setBounds(ctrl.removeFromTop(22));
+        pitchRootBox.setBounds(ctrl.removeFromTop(22));
+        pitchScaleBox.setBounds(ctrl.removeFromTop(22));
         {
-            auto regenRow = s.removeFromTop(22);
-            regenModeBox.setBounds(regenButton.isVisible()
-                                    ? regenRow.removeFromLeft(regenRow.getWidth() - 54)
-                                    : regenRow);
-            if (regenButton.isVisible())
-                regenButton.setBounds(regenRow);
+            auto octRow = ctrl.removeFromTop(26);
+            octaveDownButton.setBounds(octRow.removeFromLeft(44));
+            octaveUpButton.setBounds(octRow.removeFromRight(44));
+            octaveDisplayLabel.setBounds(octRow);
         }
+        ctrl.removeFromTop(10);
 
-        s.removeFromTop(4);
-
-        // Global controls (2×3 grid of knobs)
-        int knobW = s.getWidth() / 3;
+        // Swing + Humanize knobs side by side
+        int knobW = ctrl.getWidth() / 2;
         int knobH = 60;
-        auto knobRow1 = s.removeFromTop(knobH);
-        auto knobRow2 = s.removeFromTop(knobH);
-
-        auto place = [&](juce::Slider& k, juce::Label& l, juce::Rectangle<int> cell) {
+        auto knobRow = ctrl.removeFromTop(knobH);
+        auto placeKnob = [&](juce::Slider& k, juce::Label& l, juce::Rectangle<int> cell) {
             l.setBounds(cell.removeFromBottom(14));
             k.setBounds(cell);
         };
-        place(swingKnob,     swingLabel,     knobRow1.removeFromLeft(knobW));
-        place(humanizeKnob,  humanizeLabel,  knobRow1.removeFromLeft(knobW));
-        place(timingOffKnob, timingOffLabel, knobRow1.removeFromLeft(knobW));
-        place(gateScaleKnob, gateScaleLabel, knobRow2.removeFromLeft(knobW));
-        place(glideKnob,     glideLabel,     knobRow2.removeFromLeft(knobW));
-
-        s.removeFromTop(6);
-        inputModeToggle.setBounds(s.removeFromTop(22));
-        if (drumMapPanel && drumMapPanel->isVisible())
-        {
-            s.removeFromTop(2);
-            drumMapPanel->setBounds(s.removeFromTop(86)); // 20px preset + 3*20px rows + 6px padding
-            s.removeFromTop(2);
-        }
-        outputChannelBox.setBounds(s.removeFromTop(22));
-        // rootNoteBox omitted — root note is set via the pitch panel's Root + Oct controls
-        s.removeFromTop(4);
-        panicButton.setBounds(s.removeFromTop(26));
-
-        s.removeFromTop(6);
-
-        // Pitch panel
-        pitchEnabledToggle.setBounds(s.removeFromTop(22));
-        pitchRootBox.setBounds(s.removeFromTop(22));
-        pitchScaleBox.setBounds(s.removeFromTop(22));
-        {
-            auto densRow = s.removeFromTop(22);
-            pitchDensityLabel.setBounds(densRow.removeFromLeft(50));
-            pitchDensitySlider.setBounds(densRow);
-        }
-        pitchChromaticToggle.setBounds(s.removeFromTop(22));
-        {
-            auto octRow = s.removeFromTop(26);
-            octaveDownButton.setBounds(octRow.removeFromLeft(40));
-            octaveUpButton.setBounds(octRow.removeFromRight(40));
-            octaveDisplayLabel.setBounds(octRow);
-        }
+        placeKnob(swingKnob,    swingLabel,    knobRow.removeFromLeft(knobW));
+        placeKnob(humanizeKnob, humanizeLabel, knobRow.removeFromLeft(knobW));
     }
-
-    // Main area: drum / lock / bass / info
+    else
     {
-        auto m = mainArea;
-        int drumH    = 22 * 3 + 14; // ~3 rows + step numbers
-        int lockH    = 20;
-        int infoH    = 36;
-        int bassH    = m.getHeight() - drumH - lockH - infoH - 8;
+        // ── Pattern view: original full layout ────────────────────────────
+        int W       = area.getWidth();
+        int sidebar = (int)(W * 0.30f);
+        auto sidebar_area = area.removeFromRight(sidebar).reduced(4);
+        auto mainArea     = area.reduced(4, 2);
 
-        drumView.setBounds(m.removeFromTop(drumH));
-        m.removeFromTop(2);
-        lockView.setBounds(m.removeFromTop(lockH));
-        m.removeFromTop(2);
-        bassView.setBounds(m.removeFromTop(bassH));
-        m.removeFromTop(2);
-        infoBar.setBounds(m.removeFromTop(infoH));
+        // Sidebar
+        {
+            auto s = sidebar_area;
+            searchBox.setBounds(s.removeFromTop(24));
+            genreFilter.setBounds(s.removeFromTop(24));
+            int listH = juce::jmax(80, (int)(s.getHeight() * 0.13f));
+            templateList.setBounds(s.removeFromTop(listH));
+
+            s.removeFromTop(4);
+
+            int xySize = juce::jmin(s.getWidth(), 120);
+            xyPad->setBounds(s.removeFromTop(xySize));
+            xyCoordLabel.setBounds(s.removeFromTop(14));
+            {
+                auto regenRow = s.removeFromTop(22);
+                regenModeBox.setBounds(regenButton.isVisible()
+                                        ? regenRow.removeFromLeft(regenRow.getWidth() - 54)
+                                        : regenRow);
+                if (regenButton.isVisible())
+                    regenButton.setBounds(regenRow);
+            }
+
+            s.removeFromTop(4);
+
+            int knobW = s.getWidth() / 3;
+            int knobH = 60;
+            auto knobRow1 = s.removeFromTop(knobH);
+            auto knobRow2 = s.removeFromTop(knobH);
+
+            auto place = [&](juce::Slider& k, juce::Label& l, juce::Rectangle<int> cell) {
+                l.setBounds(cell.removeFromBottom(14));
+                k.setBounds(cell);
+            };
+            place(swingKnob,     swingLabel,     knobRow1.removeFromLeft(knobW));
+            place(humanizeKnob,  humanizeLabel,  knobRow1.removeFromLeft(knobW));
+            place(timingOffKnob, timingOffLabel, knobRow1.removeFromLeft(knobW));
+            place(gateScaleKnob, gateScaleLabel, knobRow2.removeFromLeft(knobW));
+            place(glideKnob,     glideLabel,     knobRow2.removeFromLeft(knobW));
+
+            s.removeFromTop(6);
+            inputModeToggle.setBounds(s.removeFromTop(22));
+            if (drumMapPanel && drumMapPanel->isVisible())
+            {
+                s.removeFromTop(2);
+                drumMapPanel->setBounds(s.removeFromTop(86));
+                s.removeFromTop(2);
+            }
+            outputChannelBox.setBounds(s.removeFromTop(22));
+            s.removeFromTop(4);
+            panicButton.setBounds(s.removeFromTop(26));
+
+            s.removeFromTop(6);
+
+            pitchEnabledToggle.setBounds(s.removeFromTop(22));
+            pitchRootBox.setBounds(s.removeFromTop(22));
+            pitchScaleBox.setBounds(s.removeFromTop(22));
+            {
+                auto densRow = s.removeFromTop(22);
+                pitchDensityLabel.setBounds(densRow.removeFromLeft(50));
+                pitchDensitySlider.setBounds(densRow);
+            }
+            pitchChromaticToggle.setBounds(s.removeFromTop(22));
+            {
+                auto octRow = s.removeFromTop(26);
+                octaveDownButton.setBounds(octRow.removeFromLeft(40));
+                octaveUpButton.setBounds(octRow.removeFromRight(40));
+                octaveDisplayLabel.setBounds(octRow);
+            }
+        }
+
+        // Main area: drum / lock / bass / info
+        {
+            auto m = mainArea;
+            int drumH = 22 * 3 + 14;
+            int lockH = 20;
+            int infoH = 36;
+            int bassH = m.getHeight() - drumH - lockH - infoH - 8;
+
+            drumView.setBounds(m.removeFromTop(drumH));
+            m.removeFromTop(2);
+            lockView.setBounds(m.removeFromTop(lockH));
+            m.removeFromTop(2);
+            bassView.setBounds(m.removeFromTop(bassH));
+            m.removeFromTop(2);
+            infoBar.setBounds(m.removeFromTop(infoH));
+        }
     }
 }
 

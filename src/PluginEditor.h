@@ -77,12 +77,17 @@ private:
     juce::Label        tempoLabel;
     juce::Array<juce::DrawableRectangle*> stepDots;
 
+    //=== View toggle ===
+    juce::TextButton   patternToggleBtn { "Pattern" };
+    bool               showPatternView = false;
+
     //=== Internal ===
     juce::AudioPlayHead::CurrentPositionInfo lastPos;
 
     void timerCallback() override;
     void refreshFromTemplate();
     void rebuildTemplateList();
+    void applyViewMode();
     void setupKnob(juce::Slider& k, juce::Label& l, const juce::String& name,
                    double lo, double hi, double def, const juce::String& suffix = {});
 
