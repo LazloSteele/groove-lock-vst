@@ -84,6 +84,10 @@ private:
     juce::TextButton   patternToggleBtn { "Pattern" };
     bool               showPatternView = false;
 
+    //=== Hi-fi knob look and feel ===
+    class HifiKnobLookAndFeel;
+    std::unique_ptr<HifiKnobLookAndFeel> hifiLnF;
+
     //=== Internal ===
     juce::AudioPlayHead::CurrentPositionInfo lastPos;
 

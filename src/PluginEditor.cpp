@@ -342,10 +342,126 @@ private:
     }
 };
 
+// ─── HifiKnobLookAndFeel ─────────────────────────────────────────────────────
+
+class GrooveLockEditor::HifiKnobLookAndFeel : public juce::LookAndFeel_V4
+{
+public:
+    void drawRotarySlider(juce::Graphics& g,
+                          int x, int y, int width, int height,
+                          float sliderPos,
+                          float rotaryStartAngle, float rotaryEndAngle,
+                          juce::Slider&) override
+    {
+        const float cx     = x + width  * 0.5f;
+        const float cy     = y + height * 0.5f;
+        const float outerR = juce::jmin(width, height) * 0.5f - 1.f;
+        const float knobR  = outerR * 0.76f;
+        const float arcR   = outerR * 0.91f;
+        const float arcW   = outerR * 0.095f;
+        const float angle  = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
+
+        // Drop shadow
+        g.setColour(juce::Colour(0x60000000));
+        g.fillEllipse(cx - knobR + 1.5f, cy - knobR + 2.5f, knobR * 2.f, knobR * 2.f);
+
+        // Outer metallic rim
+        {
+            juce::ColourGradient rim(
+                juce::Colour(0xff4e5a66), cx - knobR * 0.4f, cy - knobR * 0.4f,
+                juce::Colour(0xff191d22), cx + knobR * 0.6f, cy + knobR * 0.7f,
+                true);
+            g.setGradientFill(rim);
+            g.fillEllipse(cx - knobR, cy - knobR, knobR * 2.f, knobR * 2.f);
+        }
+
+        // Knob body — sphere gradient lit from top-left
+        const float bR = knobR * 0.86f;
+        {
+            juce::ColourGradient body(
+                juce::Colour(0xff505c68), cx - bR * 0.28f, cy - bR * 0.26f,
+                juce::Colour(0xff0c0f13), cx + bR * 0.55f, cy + bR * 0.60f,
+                true);
+            body.addColour(0.40, juce::Colour(0xff1e252e));
+            body.addColour(0.72, juce::Colour(0xff111518));
+            g.setGradientFill(body);
+            g.fillEllipse(cx - bR, cy - bR, bR * 2.f, bR * 2.f);
+        }
+
+        // Rim light: warm orange-tinted glow at bottom edge
+        {
+            juce::ColourGradient rl(
+                juce::Colour(0x28ff9f4c), cx, cy + bR * 0.65f,
+                juce::Colour(0x00ff9f4c), cx, cy,
+                true);
+            g.setGradientFill(rl);
+            g.fillEllipse(cx - bR * 0.65f, cy + bR * 0.25f, bR * 1.3f, bR * 0.75f);
+        }
+
+        // Primary specular highlight (large, soft)
+        {
+            const float hr  = bR * 0.32f;
+            const float hcx = cx - bR * 0.27f;
+            const float hcy = cy - bR * 0.25f;
+            juce::ColourGradient hl(
+                juce::Colour(0x7affffff), hcx, hcy,
+                juce::Colour(0x00ffffff), hcx + hr * 1.5f, hcy + hr * 1.5f,
+                true);
+            g.setGradientFill(hl);
+            g.fillEllipse(hcx - hr, hcy - hr, hr * 2.f, hr * 2.f);
+        }
+
+        // Secondary specular (sharp micro-glint)
+        {
+            const float hr  = bR * 0.09f;
+            const float hcx = cx - bR * 0.46f;
+            const float hcy = cy - bR * 0.43f;
+            g.setColour(juce::Colour(0x60ffffff));
+            g.fillEllipse(hcx - hr, hcy - hr, hr * 2.f, hr * 2.f);
+        }
+
+        // Track arc (unfilled)
+        {
+            juce::Path bg;
+            bg.addCentredArc(cx, cy, arcR, arcR, 0.f,
+                             rotaryStartAngle, rotaryEndAngle, true);
+            g.setColour(juce::Colour(0xff1c222c));
+            g.strokePath(bg, juce::PathStrokeType(arcW, juce::PathStrokeType::curved,
+                                                  juce::PathStrokeType::rounded));
+        }
+
+        // Value arc (orange)
+        if (angle > rotaryStartAngle + 0.01f)
+        {
+            juce::Path val;
+            val.addCentredArc(cx, cy, arcR, arcR, 0.f,
+                              rotaryStartAngle, angle, true);
+            g.setColour(juce::Colour(0xffff9f1c));
+            g.strokePath(val, juce::PathStrokeType(arcW, juce::PathStrokeType::curved,
+                                                   juce::PathStrokeType::rounded));
+
+            // Arc end cap glow
+            const float capX = cx + std::sin(angle) * arcR;
+            const float capY = cy - std::cos(angle) * arcR;
+            g.setColour(juce::Colour(0x60ff9f1c));
+            g.fillEllipse(capX - arcW, capY - arcW, arcW * 2.f, arcW * 2.f);
+        }
+
+        // Indicator dot
+        const float dotDist = bR * 0.66f;
+        const float dotX = cx + std::sin(angle) * dotDist;
+        const float dotY = cy - std::cos(angle) * dotDist;
+        g.setColour(juce::Colour(0xccffffff));
+        g.fillEllipse(dotX - 3.f, dotY - 3.f, 6.f, 6.f);
+        g.setColour(juce::Colours::white);
+        g.fillEllipse(dotX - 1.5f, dotY - 1.5f, 3.f, 3.f);
+    }
+};
+
 // ─── Editor ───────────────────────────────────────────────────────────────────
 
 GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
-    : AudioProcessorEditor(p), proc(p)
+    : AudioProcessorEditor(p), proc(p), hifiLnF(std::make_unique<HifiKnobLookAndFeel>())
 {
 
     // Header
@@ -486,6 +602,9 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     timingOffKnob.onValueChange = [this] { proc.timingOffsetMs.set((float)timingOffKnob.getValue()); };
     gateScaleKnob.onValueChange = [this] { proc.gateLengthScale.set((float)gateScaleKnob.getValue() / 100.f); };
     glideKnob.onValueChange     = [this] { proc.glideTimeMs.set((float)glideKnob.getValue()); };
+
+    for (auto* k : { &swingKnob, &humanizeKnob, &timingOffKnob, &gateScaleKnob, &glideKnob })
+        k->setLookAndFeel(hifiLnF.get());
 
     // I/O config
     addAndMakeVisible(inputModeToggle);
@@ -633,6 +752,8 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
 
 GrooveLockEditor::~GrooveLockEditor()
 {
+    for (auto* k : { &swingKnob, &humanizeKnob, &timingOffKnob, &gateScaleKnob, &glideKnob })
+        k->setLookAndFeel(nullptr);
     stopTimer();
     templateList.setModel(nullptr);
 }
