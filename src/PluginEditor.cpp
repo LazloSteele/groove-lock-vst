@@ -625,8 +625,8 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     // setSize must come after all child components are constructed so that
     // resized() fires with every component already existing.
     setResizable(true, false);
-    setResizeLimits(800, 600, 1600, 1200);
-    setSize(900, 700);
+    setResizeLimits(480, 520, 1600, 1200);
+    setSize(560, 580);
 
     startTimerHz(15);
 }
@@ -732,23 +732,38 @@ void GrooveLockEditor::resized()
     if (!showPatternView)
     {
         // ── Main view: XY pad front and centre ────────────────────────────
-        auto main = area.reduced(12, 6);
+        auto main = area.reduced(12, 4);
 
-        // Groove selector — full width, prominent
-        grooveDropdown.setBounds(main.removeFromTop(32));
-        main.removeFromTop(10);
+        // Groove selector — full width
+        grooveDropdown.setBounds(main.removeFromTop(30));
+        main.removeFromTop(8);
 
-        // XY pad — large, centred horizontally, takes the dominant space
-        int xyMax  = juce::jmin(main.getWidth(), main.getHeight() - 140);
-        int xySize = juce::jlimit(160, 280, xyMax);
+        // XY pad — large, centred horizontally
+        int xyMax  = juce::jmin(main.getWidth(), main.getHeight() - 120);
+        int xySize = juce::jlimit(160, 260, xyMax);
         int xyX    = main.getX() + (main.getWidth() - xySize) / 2;
         xyPad->setBounds(xyX, main.getY(), xySize, xySize);
         main.removeFromTop(xySize);
 
         // Coord readout centred below pad
         xyCoordLabel.setFont(juce::Font(11.f));
-        xyCoordLabel.setBounds(main.removeFromTop(18));
-        main.removeFromTop(10);
+        xyCoordLabel.setBounds(main.removeFromTop(16));
+        main.removeFromTop(6);
+
+        // Swing + Humanize — below pad, above pitch controls
+        {
+            int knobH   = 76;
+            int knobW   = juce::jmin(main.getWidth() / 2, 110);
+            auto knobRow = main.removeFromTop(knobH)
+                               .withSizeKeepingCentre(knobW * 2, knobH);
+            auto placeKnob = [&](juce::Slider& k, juce::Label& l, juce::Rectangle<int> cell) {
+                l.setBounds(cell.removeFromBottom(16));
+                k.setBounds(cell);
+            };
+            placeKnob(swingKnob,    swingLabel,    knobRow.removeFromLeft(knobW));
+            placeKnob(humanizeKnob, humanizeLabel, knobRow.removeFromLeft(knobW));
+        }
+        main.removeFromTop(8);
 
         // Pitch row: Melody toggle | Root | Scale | Oct- | display | Oct+
         {
@@ -764,20 +779,6 @@ void GrooveLockEditor::resized()
             octaveDisplayLabel.setFont(juce::Font(13.f, juce::Font::bold));
             octaveDisplayLabel.setBounds(pitchRow);
         }
-        main.removeFromTop(12);
-
-        // Swing + Humanize — larger knobs, centred
-        int knobH = 80;
-        int knobW = juce::jmin(main.getWidth() / 2, 120);
-        int kTotalW = knobW * 2;
-        auto knobRow = main.removeFromTop(knobH)
-                           .withSizeKeepingCentre(kTotalW, knobH);
-        auto placeKnob = [&](juce::Slider& k, juce::Label& l, juce::Rectangle<int> cell) {
-            l.setBounds(cell.removeFromBottom(16));
-            k.setBounds(cell);
-        };
-        placeKnob(swingKnob,    swingLabel,    knobRow.removeFromLeft(knobW));
-        placeKnob(humanizeKnob, humanizeLabel, knobRow.removeFromLeft(knobW));
     }
     else
     {
