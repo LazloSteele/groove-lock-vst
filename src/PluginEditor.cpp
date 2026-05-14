@@ -411,6 +411,31 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     templateList.setRowHeight(40);
     templateList.setColour(juce::ListBox::backgroundColourId, juce::Colour(0xff141414));
 
+    // Groove selector dropdown — used in main view instead of full browser
+    addAndMakeVisible(grooveDropdown);
+    grooveDropdown.setTextWhenNothingSelected("Select a groove...");
+    grooveDropdown.setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff1a1d21));
+    grooveDropdown.setColour(juce::ComboBox::textColourId,       juce::Colours::white);
+    grooveDropdown.setColour(juce::ComboBox::outlineColourId,    juce::Colour(0xff3a4652));
+    grooveDropdown.setColour(juce::ComboBox::arrowColourId,      juce::Colour(0xffff9f1c));
+    {
+        auto& tb = proc.getTemplateBrowser();
+        for (int i = 0; i < tb.getNumTemplates(); ++i)
+        {
+            auto* t = tb.getTemplate(i);
+            juce::String label = t ? (t->name + "  \xe2\x80\x94  " + t->genre) : juce::String("Template " + juce::String(i));
+            grooveDropdown.addItem(label, i + 1);
+        }
+    }
+    grooveDropdown.onChange = [this] {
+        int idx = grooveDropdown.getSelectedId() - 1;
+        if (idx >= 0)
+        {
+            proc.loadTemplate(idx);
+            refreshFromTemplate();
+        }
+    };
+
     // XY pad — Density (X) / Tension (Y)
     xyPad = std::make_unique<DensityTensionPad>();
     addAndMakeVisible(*xyPad);
@@ -627,8 +652,8 @@ void GrooveLockEditor::setupKnob(juce::Slider& k, juce::Label& l,
     k.setColour(juce::Slider::rotarySliderFillColourId,    juce::Colour(0xffff9f1c));
     k.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff3a4652));
     l.setText(name, juce::dontSendNotification);
-    l.setFont(juce::Font(9.f));
-    l.setColour(juce::Label::textColourId, juce::Colour(0xff8899aa));
+    l.setFont(juce::Font(11.f));
+    l.setColour(juce::Label::textColourId, juce::Colour(0xffaabbcc));
     l.setJustificationType(juce::Justification::centred);
 }
 
@@ -636,6 +661,9 @@ void GrooveLockEditor::applyViewMode()
 {
     const bool pat = showPatternView;
     patternToggleBtn.setButtonText(pat ? "Pattern  \xe2\x8a\xa0" : "Pattern");
+
+    // Groove dropdown — only in main view; full browser used in pattern view
+    grooveDropdown.setVisible(!pat);
 
     // Grids — only visible in pattern view
     drumView.setVisible(pat);
@@ -671,9 +699,12 @@ void GrooveLockEditor::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colour(0xff121417));
 
-    int divX = showPatternView ? (int)(getWidth() * 0.70f) : (int)(getWidth() * 0.45f);
-    g.setColour(juce::Colour(0xff1e2226));
-    g.drawVerticalLine(divX, 30.0f, (float)(getHeight() - 28));
+    if (showPatternView)
+    {
+        int divX = (int)(getWidth() * 0.70f);
+        g.setColour(juce::Colour(0xff1e2226));
+        g.drawVerticalLine(divX, 30.0f, (float)(getHeight() - 28));
+    }
 
     g.setColour(juce::Colour(0xff1a1d21));
     g.drawHorizontalLine(30, 0, (float)getWidth());
@@ -700,47 +731,49 @@ void GrooveLockEditor::resized()
 
     if (!showPatternView)
     {
-        // ── Minimum main view ──────────────────────────────────────────────
-        int W = area.getWidth();
-        auto browserArea = area.removeFromLeft((int)(W * 0.45f)).reduced(4, 2);
-        auto ctrlArea    = area.reduced(4, 2);
+        // ── Main view: XY pad front and centre ────────────────────────────
+        auto main = area.reduced(12, 6);
 
-        // Template browser — full height
-        searchBox.setBounds(browserArea.removeFromTop(24));
-        genreFilter.setBounds(browserArea.removeFromTop(24));
-        templateList.setBounds(browserArea);
+        // Groove selector — full width, prominent
+        grooveDropdown.setBounds(main.removeFromTop(32));
+        main.removeFromTop(10);
 
-        // Controls column: XY pad → pitch → swing+feel
-        auto ctrl = ctrlArea;
-        ctrl.removeFromTop(12); // top padding
+        // XY pad — large, centred horizontally, takes the dominant space
+        int xyMax  = juce::jmin(main.getWidth(), main.getHeight() - 140);
+        int xySize = juce::jlimit(160, 280, xyMax);
+        int xyX    = main.getX() + (main.getWidth() - xySize) / 2;
+        xyPad->setBounds(xyX, main.getY(), xySize, xySize);
+        main.removeFromTop(xySize);
 
-        // XY pad: square, centred horizontally
-        int xySize = juce::jmin(ctrl.getWidth() - 16, 150);
-        int xyX    = ctrl.getX() + (ctrl.getWidth() - xySize) / 2;
-        xyPad->setBounds(xyX, ctrl.getY(), xySize, xySize);
-        ctrl.removeFromTop(xySize);
+        // Coord readout centred below pad
+        xyCoordLabel.setFont(juce::Font(11.f));
+        xyCoordLabel.setBounds(main.removeFromTop(18));
+        main.removeFromTop(10);
 
-        xyCoordLabel.setBounds(ctrl.removeFromTop(14));
-        ctrl.removeFromTop(6);
-
-        // Pitch controls
-        pitchEnabledToggle.setBounds(ctrl.removeFromTop(22));
-        pitchRootBox.setBounds(ctrl.removeFromTop(22));
-        pitchScaleBox.setBounds(ctrl.removeFromTop(22));
+        // Pitch row: Melody toggle | Root | Scale | Oct- | display | Oct+
         {
-            auto octRow = ctrl.removeFromTop(26);
-            octaveDownButton.setBounds(octRow.removeFromLeft(44));
-            octaveUpButton.setBounds(octRow.removeFromRight(44));
-            octaveDisplayLabel.setBounds(octRow);
+            auto pitchRow = main.removeFromTop(28);
+            pitchEnabledToggle.setBounds(pitchRow.removeFromLeft(80));
+            pitchRow.removeFromLeft(4);
+            pitchRootBox.setBounds(pitchRow.removeFromLeft(68));
+            pitchRow.removeFromLeft(4);
+            pitchScaleBox.setBounds(pitchRow.removeFromLeft(130));
+            pitchRow.removeFromLeft(8);
+            octaveDownButton.setBounds(pitchRow.removeFromLeft(44));
+            octaveUpButton.setBounds(pitchRow.removeFromRight(44));
+            octaveDisplayLabel.setFont(juce::Font(13.f, juce::Font::bold));
+            octaveDisplayLabel.setBounds(pitchRow);
         }
-        ctrl.removeFromTop(10);
+        main.removeFromTop(12);
 
-        // Swing + Humanize knobs side by side
-        int knobW = ctrl.getWidth() / 2;
-        int knobH = 60;
-        auto knobRow = ctrl.removeFromTop(knobH);
+        // Swing + Humanize — larger knobs, centred
+        int knobH = 80;
+        int knobW = juce::jmin(main.getWidth() / 2, 120);
+        int kTotalW = knobW * 2;
+        auto knobRow = main.removeFromTop(knobH)
+                           .withSizeKeepingCentre(kTotalW, knobH);
         auto placeKnob = [&](juce::Slider& k, juce::Label& l, juce::Rectangle<int> cell) {
-            l.setBounds(cell.removeFromBottom(14));
+            l.setBounds(cell.removeFromBottom(16));
             k.setBounds(cell);
         };
         placeKnob(swingKnob,    swingLabel,    knobRow.removeFromLeft(knobW));
@@ -881,6 +914,7 @@ void GrooveLockEditor::refreshFromTemplate()
 
     presetNameLabel.setText(t->name + "  |  " + t->genre + "  |  " + t->mood,
                             juce::dontSendNotification);
+    grooveDropdown.setSelectedId(proc.templateIndex.get() + 1, juce::dontSendNotification);
     infoBar.setText(t->description, juce::dontSendNotification);
 
     drumView.setDrumRows(&t->drums);

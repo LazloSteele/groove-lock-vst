@@ -35,6 +35,9 @@ private:
     juce::ListBox       templateList;
     juce::StringArray   listItems;
 
+    //=== Main view — groove selector ===
+    juce::ComboBox      grooveDropdown;
+
     //=== Sidebar — global controls ===
     juce::Slider  swingKnob, humanizeKnob,
                   timingOffKnob, gateScaleKnob, glideKnob;
