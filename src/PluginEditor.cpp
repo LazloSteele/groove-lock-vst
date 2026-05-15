@@ -1034,6 +1034,9 @@ void GrooveLockEditor::refreshFromTemplate()
     // Sync density hint from template if present
     if (t->pitch.hasPitchData)
         pitchDensitySlider.setValue(t->pitch.densityHint, juce::sendNotification);
+
+    // Load template's natural swing so the knob reflects the groove's character
+    swingKnob.setValue(t->swingPercent, juce::sendNotification);
 }
 
 void GrooveLockEditor::rebuildTemplateList()

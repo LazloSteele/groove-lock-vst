@@ -209,7 +209,7 @@ void LockEngine::process(MidiOutputManager& midiOut,
     auto swingDelaySamples = [&](int step) -> int64 {
         if (step % 2 == 0) return 0;
         float swingFrac = juce::jlimit(0.f, 100.f, params.swingPercent) / 100.f;
-        return (int64)(swingFrac * 0.5 * currentStepDurSamples);
+        return (int64)(swingFrac * 0.67 * currentStepDurSamples);
     };
 
     for (int s = 0; s < numSamples; ++s)

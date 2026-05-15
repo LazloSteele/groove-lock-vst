@@ -40,7 +40,7 @@ struct GenreProfile
     float defaultGatePercent  = 0.65f;
     float staccatoGatePercent = 0.40f;
     float legatoGatePercent   = 0.88f;
-    float gateHumanizeRange   = 0.05f;
+    float gateHumanizeRange   = 0.12f;
 
     // Articulation
     float slideGlideTimeMs         = 80.f;
@@ -51,8 +51,8 @@ struct GenreProfile
 
     // Humanization
     float defaultHumanizePercent   = 0.20f;
-    float timingJitterMaxMs        = 5.f;
-    float velocityJitterMax        = 8.f;
+    float timingJitterMaxMs        = 20.f;
+    float velocityJitterMax        = 20.f;
     float timingToVelocityRatio    = 0.5f;   // 0=timing only, 1=vel only
 
     // Phrase expansion limits (PHRASE_EXPANSION.md)
@@ -93,7 +93,8 @@ struct GenreProfile
             p.pitchBendRangeSemitones = 0.5f;
             p.allowBendsOnPrimaryHits = false;
             p.defaultHumanizePercent  = 0.18f;
-            p.timingJitterMaxMs = 3.f;
+            p.timingJitterMaxMs   = 14.f;
+            p.velocityJitterMax   = 15.f;
             p.timingToVelocityRatio = 0.3f;
             p.maxDeviation = 0.5f;
             p.densityClampMin = 0.2f; p.densityClampMax = 0.8f;
@@ -127,7 +128,8 @@ struct GenreProfile
             p.allowSlidesOnPrimaryHits = false;
             p.allowBendsOnPrimaryHits  = false;
             p.defaultHumanizePercent   = 0.08f;
-            p.timingJitterMaxMs = 1.f;
+            p.timingJitterMaxMs   = 8.f;
+            p.velocityJitterMax   = 12.f;
             p.timingToVelocityRatio = 0.8f;
             p.maxDeviation = 0.3f;
             p.densityClampMin = 0.1f; p.densityClampMax = 0.6f;
@@ -158,7 +160,8 @@ struct GenreProfile
             p.slideGlideTimeMs    = 60.f;
             p.allowBendsOnPrimaryHits = false;
             p.defaultHumanizePercent  = 0.28f;
-            p.timingJitterMaxMs = 5.f;
+            p.timingJitterMaxMs   = 20.f;
+            p.velocityJitterMax   = 18.f;
             p.timingToVelocityRatio = 0.35f;
             p.maxDeviation = 0.7f;
             p.densityClampMin = 0.3f; p.densityClampMax = 1.0f;
@@ -192,7 +195,9 @@ struct GenreProfile
             p.allowSlidesOnPrimaryHits = true;
             p.allowBendsOnPrimaryHits  = true;
             p.defaultHumanizePercent   = 0.40f;
-            p.timingJitterMaxMs = 8.f;
+            p.timingJitterMaxMs   = 28.f;
+            p.velocityJitterMax   = 22.f;
+            p.gateHumanizeRange   = 0.20f;
             p.timingToVelocityRatio = 0.5f;
             p.maxDeviation = 1.0f;
             p.densityClampMin = 0.2f; p.densityClampMax = 1.0f;
@@ -225,7 +230,7 @@ struct GenreProfile
             p.pitchBendRangeSemitones = 0.25f;
             p.allowBendsOnPrimaryHits = false;
             p.defaultHumanizePercent  = 0.20f;
-            p.timingJitterMaxMs = 4.f;
+            p.timingJitterMaxMs   = 16.f;
             p.timingToVelocityRatio = 0.4f;
             p.maxDeviation = 0.6f;
             p.densityClampMin = 0.2f; p.densityClampMax = 0.9f;
