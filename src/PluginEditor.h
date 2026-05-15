@@ -35,6 +35,9 @@ private:
     juce::ListBox       templateList;
     juce::StringArray   listItems;
 
+    //=== Main view — groove selector ===
+    juce::ComboBox      grooveDropdown;
+
     //=== Sidebar — global controls ===
     juce::Slider  swingKnob, humanizeKnob,
                   timingOffKnob, gateScaleKnob, glideKnob;
@@ -77,12 +80,21 @@ private:
     juce::Label        tempoLabel;
     juce::Array<juce::DrawableRectangle*> stepDots;
 
+    //=== View toggle ===
+    juce::TextButton   patternToggleBtn { "Pattern" };
+    bool               showPatternView = false;
+
+    //=== Hi-fi knob look and feel ===
+    class HifiKnobLookAndFeel;
+    std::unique_ptr<HifiKnobLookAndFeel> hifiLnF;
+
     //=== Internal ===
     juce::AudioPlayHead::CurrentPositionInfo lastPos;
 
     void timerCallback() override;
     void refreshFromTemplate();
     void rebuildTemplateList();
+    void applyViewMode();
     void setupKnob(juce::Slider& k, juce::Label& l, const juce::String& name,
                    double lo, double hi, double def, const juce::String& suffix = {});
 

@@ -342,10 +342,104 @@ private:
     }
 };
 
+// ─── HifiKnobLookAndFeel ─────────────────────────────────────────────────────
+
+class GrooveLockEditor::HifiKnobLookAndFeel : public juce::LookAndFeel_V4
+{
+public:
+    void drawRotarySlider(juce::Graphics& g,
+                          int x, int y, int width, int height,
+                          float sliderPos,
+                          float rotaryStartAngle, float rotaryEndAngle,
+                          juce::Slider&) override
+    {
+        const float cx     = x + width  * 0.5f;
+        const float cy     = y + height * 0.5f;
+        const float outerR = juce::jmin(width, height) * 0.5f - 1.f;
+        const float knobR  = outerR * 0.76f;
+        const float arcR   = outerR * 0.91f;
+        const float arcW   = outerR * 0.095f;
+        const float angle  = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
+
+        // Drop shadow
+        g.setColour(juce::Colour(0x60000000));
+        g.fillEllipse(cx - knobR + 1.5f, cy - knobR + 2.5f, knobR * 2.f, knobR * 2.f);
+
+        // Outer metallic rim
+        {
+            juce::ColourGradient rim(
+                juce::Colour(0xff4e5a66), cx - knobR * 0.4f, cy - knobR * 0.4f,
+                juce::Colour(0xff191d22), cx + knobR * 0.6f, cy + knobR * 0.7f,
+                true);
+            g.setGradientFill(rim);
+            g.fillEllipse(cx - knobR, cy - knobR, knobR * 2.f, knobR * 2.f);
+        }
+
+        // Knob body — sphere gradient lit from top-left
+        const float bR = knobR * 0.86f;
+        {
+            juce::ColourGradient body(
+                juce::Colour(0xff505c68), cx - bR * 0.28f, cy - bR * 0.26f,
+                juce::Colour(0xff0c0f13), cx + bR * 0.55f, cy + bR * 0.60f,
+                true);
+            body.addColour(0.40, juce::Colour(0xff1e252e));
+            body.addColour(0.72, juce::Colour(0xff111518));
+            g.setGradientFill(body);
+            g.fillEllipse(cx - bR, cy - bR, bR * 2.f, bR * 2.f);
+        }
+
+        // Rim light: warm orange-tinted glow at bottom edge
+        {
+            juce::ColourGradient rl(
+                juce::Colour(0x28ff9f4c), cx, cy + bR * 0.65f,
+                juce::Colour(0x00ff9f4c), cx, cy,
+                true);
+            g.setGradientFill(rl);
+            g.fillEllipse(cx - bR * 0.65f, cy + bR * 0.25f, bR * 1.3f, bR * 0.75f);
+        }
+
+        // Track arc (unfilled)
+        {
+            juce::Path bg;
+            bg.addCentredArc(cx, cy, arcR, arcR, 0.f,
+                             rotaryStartAngle, rotaryEndAngle, true);
+            g.setColour(juce::Colour(0xff1c222c));
+            g.strokePath(bg, juce::PathStrokeType(arcW, juce::PathStrokeType::curved,
+                                                  juce::PathStrokeType::rounded));
+        }
+
+        // Value arc (orange)
+        if (angle > rotaryStartAngle + 0.01f)
+        {
+            juce::Path val;
+            val.addCentredArc(cx, cy, arcR, arcR, 0.f,
+                              rotaryStartAngle, angle, true);
+            g.setColour(juce::Colour(0xffff9f1c));
+            g.strokePath(val, juce::PathStrokeType(arcW, juce::PathStrokeType::curved,
+                                                   juce::PathStrokeType::rounded));
+
+            // Arc end cap glow
+            const float capX = cx + std::sin(angle) * arcR;
+            const float capY = cy - std::cos(angle) * arcR;
+            g.setColour(juce::Colour(0x60ff9f1c));
+            g.fillEllipse(capX - arcW, capY - arcW, arcW * 2.f, arcW * 2.f);
+        }
+
+        // Indicator dot
+        const float dotDist = bR * 0.66f;
+        const float dotX = cx + std::sin(angle) * dotDist;
+        const float dotY = cy - std::cos(angle) * dotDist;
+        g.setColour(juce::Colour(0xccffffff));
+        g.fillEllipse(dotX - 3.f, dotY - 3.f, 6.f, 6.f);
+        g.setColour(juce::Colours::white);
+        g.fillEllipse(dotX - 1.5f, dotY - 1.5f, 3.f, 3.f);
+    }
+};
+
 // ─── Editor ───────────────────────────────────────────────────────────────────
 
 GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
-    : AudioProcessorEditor(p), proc(p)
+    : AudioProcessorEditor(p), proc(p), hifiLnF(std::make_unique<HifiKnobLookAndFeel>())
 {
 
     // Header
@@ -411,6 +505,31 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     templateList.setRowHeight(40);
     templateList.setColour(juce::ListBox::backgroundColourId, juce::Colour(0xff141414));
 
+    // Groove selector dropdown — used in main view instead of full browser
+    addAndMakeVisible(grooveDropdown);
+    grooveDropdown.setTextWhenNothingSelected("Select a groove...");
+    grooveDropdown.setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff1a1d21));
+    grooveDropdown.setColour(juce::ComboBox::textColourId,       juce::Colours::white);
+    grooveDropdown.setColour(juce::ComboBox::outlineColourId,    juce::Colour(0xff3a4652));
+    grooveDropdown.setColour(juce::ComboBox::arrowColourId,      juce::Colour(0xffff9f1c));
+    {
+        auto& tb = proc.getTemplateBrowser();
+        for (int i = 0; i < tb.getNumTemplates(); ++i)
+        {
+            auto* t = tb.getTemplate(i);
+            juce::String label = t ? (t->name + "  \xe2\x80\x94  " + t->genre) : juce::String("Template " + juce::String(i));
+            grooveDropdown.addItem(label, i + 1);
+        }
+    }
+    grooveDropdown.onChange = [this] {
+        int idx = grooveDropdown.getSelectedId() - 1;
+        if (idx >= 0)
+        {
+            proc.loadTemplate(idx);
+            refreshFromTemplate();
+        }
+    };
+
     // XY pad — Density (X) / Tension (Y)
     xyPad = std::make_unique<DensityTensionPad>();
     addAndMakeVisible(*xyPad);
@@ -461,6 +580,9 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     timingOffKnob.onValueChange = [this] { proc.timingOffsetMs.set((float)timingOffKnob.getValue()); };
     gateScaleKnob.onValueChange = [this] { proc.gateLengthScale.set((float)gateScaleKnob.getValue() / 100.f); };
     glideKnob.onValueChange     = [this] { proc.glideTimeMs.set((float)glideKnob.getValue()); };
+
+    for (auto* k : { &swingKnob, &humanizeKnob, &timingOffKnob, &gateScaleKnob, &glideKnob })
+        k->setLookAndFeel(hifiLnF.get());
 
     // I/O config
     addAndMakeVisible(inputModeToggle);
@@ -587,17 +709,29 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     rebuildTemplateList();
     refreshFromTemplate();
 
+    // View toggle button
+    addAndMakeVisible(patternToggleBtn);
+    patternToggleBtn.setColour(juce::TextButton::buttonColourId,   juce::Colour(0xff1e2226));
+    patternToggleBtn.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xff3a4652));
+    patternToggleBtn.onClick = [this] {
+        showPatternView = !showPatternView;
+        applyViewMode();
+    };
+    applyViewMode(); // set initial visibility before first resize
+
     // setSize must come after all child components are constructed so that
     // resized() fires with every component already existing.
     setResizable(true, false);
-    setResizeLimits(800, 600, 1600, 1200);
-    setSize(900, 700);
+    setResizeLimits(480, 520, 1600, 1200);
+    setSize(560, 580);
 
     startTimerHz(15);
 }
 
 GrooveLockEditor::~GrooveLockEditor()
 {
+    for (auto* k : { &swingKnob, &humanizeKnob, &timingOffKnob, &gateScaleKnob, &glideKnob })
+        k->setLookAndFeel(nullptr);
     stopTimer();
     templateList.setModel(nullptr);
 }
@@ -617,19 +751,59 @@ void GrooveLockEditor::setupKnob(juce::Slider& k, juce::Label& l,
     k.setColour(juce::Slider::rotarySliderFillColourId,    juce::Colour(0xffff9f1c));
     k.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff3a4652));
     l.setText(name, juce::dontSendNotification);
-    l.setFont(juce::Font(9.f));
-    l.setColour(juce::Label::textColourId, juce::Colour(0xff8899aa));
+    l.setFont(juce::Font(11.f));
+    l.setColour(juce::Label::textColourId, juce::Colour(0xffaabbcc));
     l.setJustificationType(juce::Justification::centred);
+}
+
+void GrooveLockEditor::applyViewMode()
+{
+    const bool pat = showPatternView;
+    patternToggleBtn.setButtonText(pat ? "Pattern  \xe2\x8a\xa0" : "Pattern");
+
+    // Groove dropdown — only in main view; full browser used in pattern view
+    grooveDropdown.setVisible(!pat);
+
+    // Grids — only visible in pattern view
+    drumView.setVisible(pat);
+    lockView.setVisible(pat);
+    bassView.setVisible(pat);
+    infoBar.setVisible(pat);
+
+    // Secondary knobs
+    timingOffKnob.setVisible(pat);   timingOffLabel.setVisible(pat);
+    gateScaleKnob.setVisible(pat);   gateScaleLabel.setVisible(pat);
+    glideKnob.setVisible(pat);       glideLabel.setVisible(pat);
+
+    // I/O section
+    inputModeToggle.setVisible(pat);
+    if (drumMapPanel) drumMapPanel->setVisible(pat && proc.inputMode.get() == 0);
+    outputChannelBox.setVisible(pat);
+    panicButton.setVisible(pat);
+
+    // Regen mode (auto-regen still runs; dropdown is a setup control)
+    regenModeBox.setVisible(pat);
+    regenButton.setVisible(pat && regenModeBox.getSelectedId() == 3);
+
+    // Advanced pitch controls
+    pitchDensitySlider.setVisible(pat);
+    pitchDensityLabel.setVisible(pat);
+    pitchChromaticToggle.setVisible(pat);
+
+    resized();
+    repaint();
 }
 
 void GrooveLockEditor::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colour(0xff121417));
 
-    // Divider lines
-    int sidebarX = (int)(getWidth() * 0.70f);
-    g.setColour(juce::Colour(0xff1e2226));
-    g.drawVerticalLine(sidebarX, 30.0f, (float)(getHeight() - 28));
+    if (showPatternView)
+    {
+        int divX = (int)(getWidth() * 0.70f);
+        g.setColour(juce::Colour(0xff1e2226));
+        g.drawVerticalLine(divX, 30.0f, (float)(getHeight() - 28));
+    }
 
     g.setColour(juce::Colour(0xff1a1d21));
     g.drawHorizontalLine(30, 0, (float)getWidth());
@@ -638,9 +812,7 @@ void GrooveLockEditor::paint(juce::Graphics& g)
 
 void GrooveLockEditor::resized()
 {
-    auto area    = getLocalBounds();
-    int  W       = area.getWidth();
-    int  sidebar = (int)(W * 0.30f);
+    auto area = getLocalBounds();
 
     // Header (30px)
     auto header = area.removeFromTop(30);
@@ -652,102 +824,154 @@ void GrooveLockEditor::resized()
     // Transport bar (28px bottom)
     auto transport = area.removeFromBottom(28);
     tempoLabel.setBounds(transport.removeFromRight(160));
+    patternToggleBtn.setBounds(transport.removeFromLeft(90).reduced(2, 3));
     if (phraseBarIndicator)
         phraseBarIndicator->setBounds(transport.removeFromLeft(130).reduced(2, 4));
 
-    // Main + sidebar
-    auto sidebar_area = area.removeFromRight(sidebar).reduced(4);
-    auto mainArea     = area.reduced(4, 2);
-
-    // Sidebar layout
+    if (!showPatternView)
     {
-        auto s = sidebar_area;
-        // Browser header
-        searchBox.setBounds(s.removeFromTop(24));
-        genreFilter.setBounds(s.removeFromTop(24));
-        int listH = juce::jmax(80, (int)(s.getHeight() * 0.13f));
-        templateList.setBounds(s.removeFromTop(listH));
+        // ── Main view: anchor bottom controls, XY pad fills centre ────────
+        auto main = area.reduced(12, 4);
 
-        s.removeFromTop(4);
+        // Groove selector — top
+        grooveDropdown.setBounds(main.removeFromTop(30));
+        main.removeFromTop(8);
 
-        int xySize = juce::jmin(s.getWidth(), 120);
-        xyPad->setBounds(s.removeFromTop(xySize));
-        xyCoordLabel.setBounds(s.removeFromTop(14));
+        // Pitch row — flush against transport (bottom)
         {
-            auto regenRow = s.removeFromTop(22);
-            regenModeBox.setBounds(regenButton.isVisible()
-                                    ? regenRow.removeFromLeft(regenRow.getWidth() - 54)
-                                    : regenRow);
-            if (regenButton.isVisible())
-                regenButton.setBounds(regenRow);
+            auto pitchRow = main.removeFromBottom(28);
+            pitchEnabledToggle.setBounds(pitchRow.removeFromLeft(80));
+            pitchRow.removeFromLeft(4);
+            pitchRootBox.setBounds(pitchRow.removeFromLeft(68));
+            pitchRow.removeFromLeft(4);
+            pitchScaleBox.setBounds(pitchRow.removeFromLeft(130));
+            pitchRow.removeFromLeft(8);
+            octaveDownButton.setBounds(pitchRow.removeFromLeft(44));
+            octaveUpButton.setBounds(pitchRow.removeFromRight(44));
+            octaveDisplayLabel.setFont(juce::Font(13.f, juce::Font::bold));
+            octaveDisplayLabel.setBounds(pitchRow);
         }
 
-        s.removeFromTop(4);
-
-        // Global controls (2×3 grid of knobs)
-        int knobW = s.getWidth() / 3;
-        int knobH = 60;
-        auto knobRow1 = s.removeFromTop(knobH);
-        auto knobRow2 = s.removeFromTop(knobH);
-
-        auto place = [&](juce::Slider& k, juce::Label& l, juce::Rectangle<int> cell) {
-            l.setBounds(cell.removeFromBottom(14));
-            k.setBounds(cell);
-        };
-        place(swingKnob,     swingLabel,     knobRow1.removeFromLeft(knobW));
-        place(humanizeKnob,  humanizeLabel,  knobRow1.removeFromLeft(knobW));
-        place(timingOffKnob, timingOffLabel, knobRow1.removeFromLeft(knobW));
-        place(gateScaleKnob, gateScaleLabel, knobRow2.removeFromLeft(knobW));
-        place(glideKnob,     glideLabel,     knobRow2.removeFromLeft(knobW));
-
-        s.removeFromTop(6);
-        inputModeToggle.setBounds(s.removeFromTop(22));
-        if (drumMapPanel && drumMapPanel->isVisible())
+        // Swing + Humanize — above pitch row
+        main.removeFromBottom(6);
         {
-            s.removeFromTop(2);
-            drumMapPanel->setBounds(s.removeFromTop(86)); // 20px preset + 3*20px rows + 6px padding
-            s.removeFromTop(2);
+            int knobH   = 76;
+            int knobW   = juce::jmin(main.getWidth() / 2, 110);
+            auto knobRow = main.removeFromBottom(knobH)
+                               .withSizeKeepingCentre(knobW * 2, knobH);
+            auto placeKnob = [&](juce::Slider& k, juce::Label& l, juce::Rectangle<int> cell) {
+                l.setBounds(cell.removeFromBottom(16));
+                k.setBounds(cell);
+            };
+            placeKnob(swingKnob,    swingLabel,    knobRow.removeFromLeft(knobW));
+            placeKnob(humanizeKnob, humanizeLabel, knobRow.removeFromLeft(knobW));
         }
-        outputChannelBox.setBounds(s.removeFromTop(22));
-        // rootNoteBox omitted — root note is set via the pitch panel's Root + Oct controls
-        s.removeFromTop(4);
-        panicButton.setBounds(s.removeFromTop(26));
 
-        s.removeFromTop(6);
+        // Coord readout — above knobs
+        main.removeFromBottom(4);
+        xyCoordLabel.setFont(juce::Font(11.f));
+        xyCoordLabel.setBounds(main.removeFromBottom(16));
 
-        // Pitch panel
-        pitchEnabledToggle.setBounds(s.removeFromTop(22));
-        pitchRootBox.setBounds(s.removeFromTop(22));
-        pitchScaleBox.setBounds(s.removeFromTop(22));
-        {
-            auto densRow = s.removeFromTop(22);
-            pitchDensityLabel.setBounds(densRow.removeFromLeft(50));
-            pitchDensitySlider.setBounds(densRow);
-        }
-        pitchChromaticToggle.setBounds(s.removeFromTop(22));
-        {
-            auto octRow = s.removeFromTop(26);
-            octaveDownButton.setBounds(octRow.removeFromLeft(40));
-            octaveUpButton.setBounds(octRow.removeFromRight(40));
-            octaveDisplayLabel.setBounds(octRow);
-        }
+        // XY pad — fills remaining centre space
+        int xySize = juce::jlimit(120, 260, juce::jmin(main.getWidth(), main.getHeight()));
+        int xyX    = main.getX() + (main.getWidth()  - xySize) / 2;
+        int xyY    = main.getY() + (main.getHeight() - xySize) / 2;
+        xyPad->setBounds(xyX, xyY, xySize, xySize);
     }
-
-    // Main area: drum / lock / bass / info
+    else
     {
-        auto m = mainArea;
-        int drumH    = 22 * 3 + 14; // ~3 rows + step numbers
-        int lockH    = 20;
-        int infoH    = 36;
-        int bassH    = m.getHeight() - drumH - lockH - infoH - 8;
+        // ── Pattern view: original full layout ────────────────────────────
+        int W       = area.getWidth();
+        int sidebar = (int)(W * 0.30f);
+        auto sidebar_area = area.removeFromRight(sidebar).reduced(4);
+        auto mainArea     = area.reduced(4, 2);
 
-        drumView.setBounds(m.removeFromTop(drumH));
-        m.removeFromTop(2);
-        lockView.setBounds(m.removeFromTop(lockH));
-        m.removeFromTop(2);
-        bassView.setBounds(m.removeFromTop(bassH));
-        m.removeFromTop(2);
-        infoBar.setBounds(m.removeFromTop(infoH));
+        // Sidebar
+        {
+            auto s = sidebar_area;
+            searchBox.setBounds(s.removeFromTop(24));
+            genreFilter.setBounds(s.removeFromTop(24));
+            int listH = juce::jmax(80, (int)(s.getHeight() * 0.13f));
+            templateList.setBounds(s.removeFromTop(listH));
+
+            s.removeFromTop(4);
+
+            int xySize = juce::jmin(s.getWidth(), 120);
+            xyPad->setBounds(s.removeFromTop(xySize));
+            xyCoordLabel.setBounds(s.removeFromTop(14));
+            {
+                auto regenRow = s.removeFromTop(22);
+                regenModeBox.setBounds(regenButton.isVisible()
+                                        ? regenRow.removeFromLeft(regenRow.getWidth() - 54)
+                                        : regenRow);
+                if (regenButton.isVisible())
+                    regenButton.setBounds(regenRow);
+            }
+
+            s.removeFromTop(4);
+
+            int knobW = s.getWidth() / 3;
+            int knobH = 60;
+            auto knobRow1 = s.removeFromTop(knobH);
+            auto knobRow2 = s.removeFromTop(knobH);
+
+            auto place = [&](juce::Slider& k, juce::Label& l, juce::Rectangle<int> cell) {
+                l.setBounds(cell.removeFromBottom(14));
+                k.setBounds(cell);
+            };
+            place(swingKnob,     swingLabel,     knobRow1.removeFromLeft(knobW));
+            place(humanizeKnob,  humanizeLabel,  knobRow1.removeFromLeft(knobW));
+            place(timingOffKnob, timingOffLabel, knobRow1.removeFromLeft(knobW));
+            place(gateScaleKnob, gateScaleLabel, knobRow2.removeFromLeft(knobW));
+            place(glideKnob,     glideLabel,     knobRow2.removeFromLeft(knobW));
+
+            s.removeFromTop(6);
+            inputModeToggle.setBounds(s.removeFromTop(22));
+            if (drumMapPanel && drumMapPanel->isVisible())
+            {
+                s.removeFromTop(2);
+                drumMapPanel->setBounds(s.removeFromTop(86));
+                s.removeFromTop(2);
+            }
+            outputChannelBox.setBounds(s.removeFromTop(22));
+            s.removeFromTop(4);
+            panicButton.setBounds(s.removeFromTop(26));
+
+            s.removeFromTop(6);
+
+            pitchEnabledToggle.setBounds(s.removeFromTop(22));
+            pitchRootBox.setBounds(s.removeFromTop(22));
+            pitchScaleBox.setBounds(s.removeFromTop(22));
+            {
+                auto densRow = s.removeFromTop(22);
+                pitchDensityLabel.setBounds(densRow.removeFromLeft(50));
+                pitchDensitySlider.setBounds(densRow);
+            }
+            pitchChromaticToggle.setBounds(s.removeFromTop(22));
+            {
+                auto octRow = s.removeFromTop(26);
+                octaveDownButton.setBounds(octRow.removeFromLeft(40));
+                octaveUpButton.setBounds(octRow.removeFromRight(40));
+                octaveDisplayLabel.setBounds(octRow);
+            }
+        }
+
+        // Main area: drum / lock / bass / info
+        {
+            auto m = mainArea;
+            int drumH = 22 * 3 + 14;
+            int lockH = 20;
+            int infoH = 36;
+            int bassH = m.getHeight() - drumH - lockH - infoH - 8;
+
+            drumView.setBounds(m.removeFromTop(drumH));
+            m.removeFromTop(2);
+            lockView.setBounds(m.removeFromTop(lockH));
+            m.removeFromTop(2);
+            bassView.setBounds(m.removeFromTop(bassH));
+            m.removeFromTop(2);
+            infoBar.setBounds(m.removeFromTop(infoH));
+        }
     }
 }
 
@@ -789,6 +1013,7 @@ void GrooveLockEditor::refreshFromTemplate()
 
     presetNameLabel.setText(t->name + "  |  " + t->genre + "  |  " + t->mood,
                             juce::dontSendNotification);
+    grooveDropdown.setSelectedId(proc.templateIndex.get() + 1, juce::dontSendNotification);
     infoBar.setText(t->description, juce::dontSendNotification);
 
     drumView.setDrumRows(&t->drums);
