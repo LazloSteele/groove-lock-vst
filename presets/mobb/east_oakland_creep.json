@@ -7,8 +7,8 @@
     "mood": "Dark / menacing",
     "tempoMin": 80,
     "tempoMax": 86,
-    "swingPercent": 0,
-    "description": "Half-time. Snare on 3 only. Long 808 kick with max sustain. Cold, mechanical, zero swing. Every hit is deliberate. Stark and threatening."
+    "swingPercent": 20,
+    "description": "Half-time. Snare on 3 only. Long 808 kick with max sustain. Cold, mechanical, minimal swing. Every hit is deliberate. Stark and threatening."
   },
   "drums": [
     {

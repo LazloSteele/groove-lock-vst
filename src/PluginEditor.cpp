@@ -1071,7 +1071,10 @@ void GrooveLockEditor::refreshFromTemplate()
         pitchDensitySlider.setValue(t->pitch.densityHint, juce::sendNotification);
 
     // Update stepped knob reference values from template and genre, then reset to Heavy (step 2)
-    templateSwingPct = t->swingPercent;
+    // Floor templateSwingPct so Heavy always produces audible swing even on
+    // deliberately sparse patterns (e.g. east_oakland_creep was 0%).
+    // Use at least 35% of the genre's allowed swing ceiling.
+    templateSwingPct = juce::jmax((float)t->swingPercent, profile.swingMax * 0.35f);
     genreHumanizePct = profile.defaultHumanizePercent * 100.f;
     swingKnob.setValue   (2, juce::sendNotification); // Heavy = groove's natural swing
     humanizeKnob.setValue(2, juce::sendNotification); // Heavy = genre's natural feel
