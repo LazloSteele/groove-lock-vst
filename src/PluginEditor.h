@@ -88,6 +88,10 @@ private:
     class HifiKnobLookAndFeel;
     std::unique_ptr<HifiKnobLookAndFeel> hifiLnF;
 
+    // Reference values for stepped swing/feel knobs (updated on template load)
+    float templateSwingPct   = 55.f;  // groove's natural swing (0-100)
+    float genreHumanizePct   = 20.f;  // genre's natural feel (0-100)
+
     //=== Internal ===
     juce::AudioPlayHead::CurrentPositionInfo lastPos;
 

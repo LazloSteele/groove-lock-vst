@@ -351,7 +351,7 @@ public:
                           int x, int y, int width, int height,
                           float sliderPos,
                           float rotaryStartAngle, float rotaryEndAngle,
-                          juce::Slider&) override
+                          juce::Slider& slider) override
     {
         const float cx     = x + width  * 0.5f;
         const float cy     = y + height * 0.5f;
@@ -423,6 +423,24 @@ public:
             const float capY = cy - std::cos(angle) * arcR;
             g.setColour(juce::Colour(0x60ff9f1c));
             g.fillEllipse(capX - arcW, capY - arcW, arcW * 2.f, arcW * 2.f);
+        }
+
+        // Step markers for 4-position knobs (range 0-3, interval 1)
+        const bool isStepped = (slider.getMinimum() == 0.0 && slider.getMaximum() == 3.0
+                                && slider.getInterval() == 1.0);
+        if (isStepped)
+        {
+            int activeStep = (int)std::round(sliderPos * 3.f);
+            for (int i = 0; i < 4; ++i)
+            {
+                float tickAngle = rotaryStartAngle + (i / 3.f) * (rotaryEndAngle - rotaryStartAngle);
+                float tickDist  = arcR + arcW * 1.8f;
+                float tickX = cx + std::sin(tickAngle) * tickDist;
+                float tickY = cy - std::cos(tickAngle) * tickDist;
+                float dotR  = (i == activeStep) ? 3.5f : 2.0f;
+                g.setColour(i == activeStep ? juce::Colour(0xffff9f1c) : juce::Colour(0xff3a4652));
+                g.fillEllipse(tickX - dotR, tickY - dotR, dotR * 2.f, dotR * 2.f);
+            }
         }
 
         // Indicator dot
@@ -569,14 +587,31 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     addAndMakeVisible(*phraseBarIndicator);
 
     // Knobs
-    setupKnob(swingKnob,      swingLabel,      "Swing",      0,   100, 55,  "%");
-    setupKnob(humanizeKnob,   humanizeLabel,   "Feel",       0,   100, 20,  "%");
+    setupKnob(swingKnob,    swingLabel,    "Swing", 0, 3, 2, "");
+    setupKnob(humanizeKnob, humanizeLabel, "Feel",  0, 3, 2, "");
+
+    static const char* stepNames[] = { "Straight", "Light", "Heavy", "Full" };
+    auto stepText = [](double v) -> juce::String {
+        return stepNames[juce::jlimit(0, 3, (int)std::round(v))];
+    };
+    swingKnob.textFromValueFunction    = stepText;
+    humanizeKnob.textFromValueFunction = stepText;
+    swingKnob.setTextBoxStyle   (juce::Slider::TextBoxBelow, false, 64, 14);
+    humanizeKnob.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 64, 14);
     setupKnob(timingOffKnob,  timingOffLabel,  "Push / Lay", -20, 20,  0,   "ms");
     setupKnob(gateScaleKnob,  gateScaleLabel,  "Length",    50,  150, 100, "%");
     setupKnob(glideKnob,      glideLabel,      "Glide",     10,  300, 100, "ms");
 
-    swingKnob.onValueChange     = [this] { proc.swingPercent.set((float)swingKnob.getValue()); };
-    humanizeKnob.onValueChange  = [this] { proc.humanizePercent.set((float)humanizeKnob.getValue()); };
+    swingKnob.onValueChange = [this] {
+        int step = (int)std::round(swingKnob.getValue());
+        float val[] = { 0.f, templateSwingPct * 0.5f, templateSwingPct, 100.f };
+        proc.swingPercent.set(val[juce::jlimit(0, 3, step)]);
+    };
+    humanizeKnob.onValueChange = [this] {
+        int step = (int)std::round(humanizeKnob.getValue());
+        float val[] = { 0.f, genreHumanizePct * 0.5f, genreHumanizePct, 100.f };
+        proc.humanizePercent.set(val[juce::jlimit(0, 3, step)]);
+    };
     timingOffKnob.onValueChange = [this] { proc.timingOffsetMs.set((float)timingOffKnob.getValue()); };
     gateScaleKnob.onValueChange = [this] { proc.gateLengthScale.set((float)gateScaleKnob.getValue() / 100.f); };
     glideKnob.onValueChange     = [this] { proc.glideTimeMs.set((float)glideKnob.getValue()); };
@@ -1035,8 +1070,11 @@ void GrooveLockEditor::refreshFromTemplate()
     if (t->pitch.hasPitchData)
         pitchDensitySlider.setValue(t->pitch.densityHint, juce::sendNotification);
 
-    // Load template's natural swing so the knob reflects the groove's character
-    swingKnob.setValue(t->swingPercent, juce::sendNotification);
+    // Update stepped knob reference values from template and genre, then reset to Heavy (step 2)
+    templateSwingPct = t->swingPercent;
+    genreHumanizePct = profile.defaultHumanizePercent * 100.f;
+    swingKnob.setValue   (2, juce::sendNotification); // Heavy = groove's natural swing
+    humanizeKnob.setValue(2, juce::sendNotification); // Heavy = genre's natural feel
 }
 
 void GrooveLockEditor::rebuildTemplateList()
