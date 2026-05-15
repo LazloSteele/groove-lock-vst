@@ -398,28 +398,6 @@ public:
             g.fillEllipse(cx - bR * 0.65f, cy + bR * 0.25f, bR * 1.3f, bR * 0.75f);
         }
 
-        // Primary specular highlight (large, soft)
-        {
-            const float hr  = bR * 0.32f;
-            const float hcx = cx - bR * 0.27f;
-            const float hcy = cy - bR * 0.25f;
-            juce::ColourGradient hl(
-                juce::Colour(0x7affffff), hcx, hcy,
-                juce::Colour(0x00ffffff), hcx + hr * 1.5f, hcy + hr * 1.5f,
-                true);
-            g.setGradientFill(hl);
-            g.fillEllipse(hcx - hr, hcy - hr, hr * 2.f, hr * 2.f);
-        }
-
-        // Secondary specular (sharp micro-glint)
-        {
-            const float hr  = bR * 0.09f;
-            const float hcx = cx - bR * 0.46f;
-            const float hcy = cy - bR * 0.43f;
-            g.setColour(juce::Colour(0x60ffffff));
-            g.fillEllipse(hcx - hr, hcy - hr, hr * 2.f, hr * 2.f);
-        }
-
         // Track arc (unfilled)
         {
             juce::Path bg;
@@ -852,43 +830,16 @@ void GrooveLockEditor::resized()
 
     if (!showPatternView)
     {
-        // ── Main view: XY pad front and centre ────────────────────────────
+        // ── Main view: anchor bottom controls, XY pad fills centre ────────
         auto main = area.reduced(12, 4);
 
-        // Groove selector — full width
+        // Groove selector — top
         grooveDropdown.setBounds(main.removeFromTop(30));
         main.removeFromTop(8);
 
-        // XY pad — large, centred horizontally
-        int xyMax  = juce::jmin(main.getWidth(), main.getHeight() - 120);
-        int xySize = juce::jlimit(160, 260, xyMax);
-        int xyX    = main.getX() + (main.getWidth() - xySize) / 2;
-        xyPad->setBounds(xyX, main.getY(), xySize, xySize);
-        main.removeFromTop(xySize);
-
-        // Coord readout centred below pad
-        xyCoordLabel.setFont(juce::Font(11.f));
-        xyCoordLabel.setBounds(main.removeFromTop(16));
-        main.removeFromTop(6);
-
-        // Swing + Humanize — below pad, above pitch controls
+        // Pitch row — flush against transport (bottom)
         {
-            int knobH   = 76;
-            int knobW   = juce::jmin(main.getWidth() / 2, 110);
-            auto knobRow = main.removeFromTop(knobH)
-                               .withSizeKeepingCentre(knobW * 2, knobH);
-            auto placeKnob = [&](juce::Slider& k, juce::Label& l, juce::Rectangle<int> cell) {
-                l.setBounds(cell.removeFromBottom(16));
-                k.setBounds(cell);
-            };
-            placeKnob(swingKnob,    swingLabel,    knobRow.removeFromLeft(knobW));
-            placeKnob(humanizeKnob, humanizeLabel, knobRow.removeFromLeft(knobW));
-        }
-        main.removeFromTop(8);
-
-        // Pitch row: Melody toggle | Root | Scale | Oct- | display | Oct+
-        {
-            auto pitchRow = main.removeFromTop(28);
+            auto pitchRow = main.removeFromBottom(28);
             pitchEnabledToggle.setBounds(pitchRow.removeFromLeft(80));
             pitchRow.removeFromLeft(4);
             pitchRootBox.setBounds(pitchRow.removeFromLeft(68));
@@ -900,6 +851,32 @@ void GrooveLockEditor::resized()
             octaveDisplayLabel.setFont(juce::Font(13.f, juce::Font::bold));
             octaveDisplayLabel.setBounds(pitchRow);
         }
+
+        // Swing + Humanize — above pitch row
+        main.removeFromBottom(6);
+        {
+            int knobH   = 76;
+            int knobW   = juce::jmin(main.getWidth() / 2, 110);
+            auto knobRow = main.removeFromBottom(knobH)
+                               .withSizeKeepingCentre(knobW * 2, knobH);
+            auto placeKnob = [&](juce::Slider& k, juce::Label& l, juce::Rectangle<int> cell) {
+                l.setBounds(cell.removeFromBottom(16));
+                k.setBounds(cell);
+            };
+            placeKnob(swingKnob,    swingLabel,    knobRow.removeFromLeft(knobW));
+            placeKnob(humanizeKnob, humanizeLabel, knobRow.removeFromLeft(knobW));
+        }
+
+        // Coord readout — above knobs
+        main.removeFromBottom(4);
+        xyCoordLabel.setFont(juce::Font(11.f));
+        xyCoordLabel.setBounds(main.removeFromBottom(16));
+
+        // XY pad — fills remaining centre space
+        int xySize = juce::jlimit(120, 260, juce::jmin(main.getWidth(), main.getHeight()));
+        int xyX    = main.getX() + (main.getWidth()  - xySize) / 2;
+        int xyY    = main.getY() + (main.getHeight() - xySize) / 2;
+        xyPad->setBounds(xyX, xyY, xySize, xySize);
     }
     else
     {
