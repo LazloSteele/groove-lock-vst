@@ -616,6 +616,10 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
     gateScaleKnob.onValueChange = [this] { proc.gateLengthScale.set((float)gateScaleKnob.getValue() / 100.f); };
     glideKnob.onValueChange     = [this] { proc.glideTimeMs.set((float)glideKnob.getValue()); };
 
+    // Initialise processor values — setupKnob uses dontSendNotification so we fire explicitly
+    swingKnob.setValue   (2, juce::sendNotification);
+    humanizeKnob.setValue(2, juce::sendNotification);
+
     for (auto* k : { &swingKnob, &humanizeKnob, &timingOffKnob, &gateScaleKnob, &glideKnob })
         k->setLookAndFeel(hifiLnF.get());
 
