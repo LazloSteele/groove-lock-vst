@@ -77,9 +77,10 @@ void GrooveLockProcessor::applyMapping(const DrumMapping& m)
 void GrooveLockProcessor::syncParams()
 {
     LockEngineParams p;
-    p.swingPercent    = swingPercent.get();
-    p.humanizePercent = humanizePercent.get();
-    p.timingOffsetMs  = timingOffsetMs.get();
+    p.swingPercent             = swingPercent.get();
+    p.humanizePercent          = humanizePercent.get();
+    p.timingOffsetMs           = timingOffsetMs.get();
+    p.phraseExpansionDensity   = density.get();
     p.gateLengthScale = gateLengthScale.get();
     p.glideTimeMs     = glideTimeMs.get();
     p.outputChannel   = outputChannel.get();

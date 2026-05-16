@@ -8,11 +8,12 @@
 
 struct LockEngineParams
 {
-    float swingPercent       = 55.f;
-    float humanizePercent    = 20.f;
-    float timingOffsetMs     = 0.f;
-    float gateLengthScale    = 1.0f;
-    float glideTimeMs        = 100.f;
+    float swingPercent             = 55.f;
+    float humanizePercent          = 20.f;
+    float timingOffsetMs           = 0.f;
+    float gateLengthScale          = 1.0f;
+    float glideTimeMs              = 100.f;
+    float phraseExpansionDensity   = 0.5f; // 0=sparse(suppress fills) … 1=full
     int   outputChannel      = 2;
     int   outputRootNote     = 36;
     int   pitchBendRange     = 2;
