@@ -30,8 +30,8 @@
   "bass": [
     {
       "label": "Bass",
-      "steps": [4, 0, 0, 0, 2, 1, 2, 0, 4, 0, 0, 1, 0, 2, 0, 1],
-      "timing": ["grid","grid","grid","grid","legato","slide","lay","grid","grid","grid","grid","slide","grid","legato","grid","slide"]
+      "steps": [4, 0, 0, 1, 2, 1, 2, 0, 4, 0, 2, 1, 0, 2, 0, 1],
+      "timing": ["grid","grid","grid","slide","legato","slide","lay","grid","grid","grid","bend","slide","grid","legato","grid","slide"]
     },
     {
       "label": "Gate",
@@ -41,14 +41,18 @@
   ],
   "locks": [
     { "step": 0,  "type": "unison",     "description": "Clean beat 1 lock. Both accent, both on grid." },
-    { "step": 4,  "type": "alternate",  "description": "Bass sustains under clap. Sidechain ducks bass 3-4dB. Legato gate." },
-    { "step": 5,  "type": "anticipate", "description": "Bass ghost approach — slide into the kick on step 7. Staccato." },
+    { "step": 3,  "type": "fill",       "description": "Slide fill — HUMBLE-style chromatic connector." },
+    { "step": 4,  "type": "alternate",  "description": "Bass sustains under clap. Legato gate." },
+    { "step": 5,  "type": "anticipate", "description": "Bass ghost approach — slide into the kick on step 6." },
     { "step": 6,  "type": "unison",     "description": "Kick + bass. Both laid back. Legato bass." },
+    { "step": 8,  "type": "unison",     "description": "Beat 3 lock. Clean anchor." },
+    { "step": 10, "type": "fill",       "description": "Bend fill after beat 3 — King Kunta 3h5 style." },
     { "step": 11, "type": "anticipate", "description": "Chromatic approach slide before snare on step 13." },
-    { "step": 15, "type": "anticipate", "description": "Turnaround slide. Ghost velocity, staccato. Sets up next bar." }
+    { "step": 13, "type": "fill",       "description": "Legato fill into beat 4 area." },
+    { "step": 15, "type": "anticipate", "description": "Turnaround slide. Ghost velocity, staccato." }
   ],
   "pitch": {
-    "densityHint": 3,
+    "densityHint": 4,
     "productionComplexity": 0.5,
     "allowChromaticApproach": true,
     "preferredIntervals": ["root", "b7", "5"],
@@ -57,6 +61,8 @@
       { "step": 4,  "role": "b7" },
       { "step": 5,  "role": "approach" },
       { "step": 6,  "role": "root" },
+      { "step": 8,  "role": "root" },
+      { "step": 10, "role": "5" },
       { "step": 11, "role": "approach" },
       { "step": 13, "role": "5" },
       { "step": 15, "role": "approach" }

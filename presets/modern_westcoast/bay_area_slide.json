@@ -30,8 +30,8 @@
   "bass": [
     {
       "label": "Bass",
-      "steps": [4, 0, 0, 0, 0, 2, 2, 0, 4, 0, 0, 2, 0, 0, 2, 0],
-      "timing": ["lay","grid","grid","grid","grid","lay","bend","grid","lay","grid","grid","bend","grid","grid","lay","grid"]
+      "steps": [4, 0, 1, 0, 0, 2, 2, 1, 4, 0, 2, 1, 0, 1, 2, 0],
+      "timing": ["lay","grid","slide","grid","grid","lay","bend","push","lay","grid","bend","slide","grid","push","lay","grid"]
     },
     {
       "label": "Gate",
@@ -40,12 +40,16 @@
     }
   ],
   "locks": [
-    { "step": 0,  "type": "unison", "description": "Both laid back. Accent. The shared lateness IS the Oakland slide." },
-    { "step": 5,  "type": "unison", "description": "Kick + bass together. Both laid back. Bass legato." },
-    { "step": 6,  "type": "fill",   "description": "Bass melodic fill. Pitch bend. No kick. Expression moment." },
-    { "step": 8,  "type": "unison", "description": "Beat 3 lock. Both laid back." },
-    { "step": 11, "type": "fill",   "description": "Bass fill with pitch bend. Legato into beat 4's kick." },
-    { "step": 14, "type": "unison", "description": "Both laid back. Bass legato sustains to bar end." }
+    { "step": 0,  "type": "unison",     "description": "Both laid back. Accent. The shared lateness IS the Oakland slide." },
+    { "step": 2,  "type": "fill",       "description": "Slide fill — King Kunta-style hammer approach into mid-bar." },
+    { "step": 5,  "type": "unison",     "description": "Kick + bass together. Both laid back. Bass legato." },
+    { "step": 6,  "type": "fill",       "description": "Bass melodic fill. Pitch bend. No kick. Expression moment." },
+    { "step": 7,  "type": "fill",       "description": "Pushed fill — technique density before beat 3." },
+    { "step": 8,  "type": "unison",     "description": "Beat 3 lock. Both laid back." },
+    { "step": 10, "type": "fill",       "description": "Pitch bend fill after beat 3. King Kunta 3h5 equivalent." },
+    { "step": 11, "type": "anticipate", "description": "Chromatic approach slide before next accent." },
+    { "step": 13, "type": "fill",       "description": "Push fill into beat 4 area." },
+    { "step": 14, "type": "unison",     "description": "Both laid back. Bass legato sustains to bar end." }
   ],
   "bass2": [
     {
@@ -67,7 +71,7 @@
     { "step": 14, "type": "unison", "description": "Both laid back. Same as bar 1." }
   ],
   "pitch": {
-    "densityHint": 3,
+    "densityHint": 4,
     "productionComplexity": 0.4,
     "allowChromaticApproach": true,
     "preferredIntervals": ["root", "5", "4"],
@@ -75,8 +79,10 @@
       { "step": 0,  "role": "root" },
       { "step": 5,  "role": "root" },
       { "step": 6,  "role": "4" },
+      { "step": 7,  "role": "5" },
       { "step": 8,  "role": "root" },
-      { "step": 11, "role": "5" },
+      { "step": 10, "role": "5" },
+      { "step": 11, "role": "approach" },
       { "step": 14, "role": "root" }
     ]
   }

@@ -30,8 +30,8 @@
   "bass": [
     {
       "label": "Bass",
-      "steps": [0, 2, 0, 1, 0, 0, 2, 0, 0, 2, 0, 0, 1, 0, 0, 2],
-      "timing": ["grid","bend","grid","push","grid","grid","bend","grid","grid","bend","grid","grid","staccato","grid","grid","slide"]
+      "steps": [0, 2, 0, 1, 0, 1, 2, 1, 0, 2, 2, 0, 1, 1, 0, 2],
+      "timing": ["grid","bend","grid","push","grid","staccato","bend","staccato","grid","bend","staccato","grid","staccato","push","grid","slide"]
     },
     {
       "label": "Gate",
@@ -43,15 +43,18 @@
     { "step": 0,  "type": "alternate",  "description": "Kick hits, bass silent. The space IS the pocket." },
     { "step": 1,  "type": "fill",       "description": "Bass answers with pitch bend. Legato. The call-response engine." },
     { "step": 3,  "type": "fill",       "description": "Ghost tail after beat 1 kick. Push timing for energy." },
-    { "step": 5,  "type": "alternate",  "description": "Kick hits pushed early. Bass waits." },
+    { "step": 5,  "type": "fill",       "description": "Octave bounce fill. Tell Me When to Go-style 16th-note activity." },
     { "step": 6,  "type": "fill",       "description": "Bass answer. Pitch bend. Legato sustain." },
+    { "step": 7,  "type": "fill",       "description": "Dense hyphy fill — staccato between calls." },
     { "step": 8,  "type": "alternate",  "description": "Beat 3 kick. Bass rests." },
     { "step": 9,  "type": "fill",       "description": "Bass mid hit in open zone between kicks 8 and 11." },
+    { "step": 10, "type": "fill",       "description": "Continued 16th-note fill. Federation-style density." },
     { "step": 12, "type": "fill",       "description": "Ghost pickup before beat 4 end. Staccato." },
+    { "step": 13, "type": "fill",       "description": "Push fill — builds energy into turnaround." },
     { "step": 15, "type": "anticipate", "description": "Bass slide turnaround — sets up next bar's beat 1 kick." }
   ],
   "pitch": {
-    "densityHint": 5,
+    "densityHint": 7,
     "allowChromaticApproach": true,
     "preferredIntervals": ["root", "5", "octave", "b7"],
     "stepHints": [

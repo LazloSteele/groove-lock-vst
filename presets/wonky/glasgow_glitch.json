@@ -30,8 +30,8 @@
   "bass": [
     {
       "label": "Bass",
-      "steps": [0, 3, 0, 2, 0, 0, 1, 0, 0, 3, 0, 0, 2, 0, 1, 0],
-      "timing": ["grid","slide","grid","lay","grid","grid","staccato","grid","grid","slide","grid","grid","bend","grid","staccato","grid"]
+      "steps": [0, 3, 1, 2, 0, 0, 1, 2, 0, 3, 1, 0, 2, 1, 1, 0],
+      "timing": ["grid","slide","staccato","lay","grid","grid","staccato","bend","grid","slide","staccato","grid","bend","push","staccato","grid"]
     },
     {
       "label": "Gate",
@@ -41,14 +41,18 @@
   ],
   "locks": [
     { "step": 1,  "type": "alternate",  "description": "Bass enters on 'e' of 1 while kick is silent. Displacement is the hook." },
-    { "step": 3,  "type": "alternate",  "description": "Bass second 16th. Kick still absent. Off-kilter pair completes." },
-    { "step": 6,  "type": "anticipate", "description": "Ghost bass pre-shadows kick landing on step 7. Staccato." },
-    { "step": 7,  "type": "alternate",  "description": "Kick full hit. Bass just fired its ghost, now rests." },
-    { "step": 9,  "type": "alternate",  "description": "Bass accent in the drum-free zone between kick-7 and kick-11." },
-    { "step": 12, "type": "alternate",  "description": "The one conventional downbeat hit — earned by surrounding chaos. Bend subverts it." }
+    { "step": 2,  "type": "fill",       "description": "Stonecutters-style staccato cluster — dense fill after displacement." },
+    { "step": 3,  "type": "alternate",  "description": "Bass second 16th. Off-kilter pair completes." },
+    { "step": 6,  "type": "anticipate", "description": "Ghost bass pre-shadows kick. Staccato." },
+    { "step": 7,  "type": "alternate",  "description": "Kick full. Bass bend fills the space." },
+    { "step": 9,  "type": "alternate",  "description": "Bass accent in drum-free zone." },
+    { "step": 10, "type": "fill",       "description": "Never Catch Me-style density — fill continues the harmonic motion." },
+    { "step": 12, "type": "alternate",  "description": "The one conventional downbeat hit. Bend subverts it." },
+    { "step": 13, "type": "fill",       "description": "Push fill — builds through the last beat cluster." },
+    { "step": 14, "type": "fill",       "description": "Staccato cluster tail — completes the dense bar-end group." }
   ],
   "pitch": {
-    "densityHint": 6,
+    "densityHint": 7,
     "allowChromaticApproach": true,
     "preferredIntervals": ["root", "b7", "b3", "5"],
     "chordSequence": [

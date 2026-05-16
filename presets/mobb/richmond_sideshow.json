@@ -30,8 +30,8 @@
   "bass": [
     {
       "label": "Bass",
-      "steps": [4, 0, 0, 0, 0, 0, 0, 1, 4, 0, 2, 0, 0, 0, 0, 0],
-      "timing": ["grid","grid","grid","grid","grid","grid","grid","slide","grid","grid","lay","grid","grid","grid","grid","grid"]
+      "steps": [4, 0, 1, 0, 0, 2, 0, 1, 4, 0, 2, 0, 2, 0, 2, 0],
+      "timing": ["grid","grid","slide","grid","grid","grid","grid","slide","grid","grid","lay","grid","staccato","grid","grid","grid"]
     },
     {
       "label": "Gate",
@@ -41,20 +41,24 @@
   ],
   "locks": [
     { "step": 0,  "type": "unison",     "description": "Beat 1 lock. Both on grid, both accent." },
-    { "step": 7,  "type": "anticipate", "description": "Bass chromatic approach — slide into beat 3. Ghost velocity, staccato." },
+    { "step": 2,  "type": "fill",       "description": "Slide fill — Cocktails-style fretless approach into mid-bar." },
+    { "step": 5,  "type": "fill",       "description": "Mid-bar fill. Oakland-style chop note between unisons." },
+    { "step": 7,  "type": "anticipate", "description": "Bass chromatic approach — slide into beat 3. Ghost velocity." },
     { "step": 8,  "type": "unison",     "description": "Beat 3 triple impact: kick + snare flam + bass. Massive." },
-    { "step": 10, "type": "unison",     "description": "Kick double = bass octave drop. Both laid back." },
-    { "step": 13, "type": "fill",       "description": "Bass drops out. Tom fill speaks alone. Re-enter hard on next bar." }
+    { "step": 10, "type": "fill",       "description": "Chromatic fill after beat 3. I'm A Player A-string run." },
+    { "step": 12, "type": "fill",       "description": "Snare-adjacent staccato fill. Oakland chop." },
+    { "step": 14, "type": "fill",       "description": "Phrase approach — fills space before bar 2." }
   ],
   "pitch": {
-    "densityHint": 2,
-    "allowChromaticApproach": false,
-    "preferredIntervals": ["root", "5"],
+    "densityHint": 3,
+    "allowChromaticApproach": true,
+    "preferredIntervals": ["root", "5", "4", "b3"],
     "stepHints": [
       { "step": 0,  "role": "root" },
       { "step": 7,  "role": "approach" },
       { "step": 8,  "role": "root" },
-      { "step": 10, "role": "root" }
+      { "step": 10, "role": "4" },
+      { "step": 12, "role": "b3" }
     ]
   }
 }

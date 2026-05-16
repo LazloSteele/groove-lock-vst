@@ -30,43 +30,56 @@
   "bass": [
     {
       "label": "Bass",
-      "steps": [4, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0],
-      "timing": ["grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid","grid"]
+      "steps": [4, 0, 0, 2, 0, 2, 0, 0, 3, 0, 2, 2, 0, 1, 2, 0],
+      "timing": ["grid","grid","grid","lay","grid","grid","grid","grid","grid","grid","lay","grid","grid","staccato","staccato","grid"]
     },
     {
       "label": "Gate",
       "steps": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      "timing": ["legato","grid","grid","grid","grid","grid","grid","grid","legato","grid","grid","grid","grid","grid","grid","grid"]
+      "timing": ["legato","grid","grid","staccato","grid","staccato","grid","grid","legato","grid","staccato","staccato","grid","staccato","staccato","grid"]
     }
   ],
   "locks": [
-    { "step": 0, "type": "unison", "description": "Beat 1. Both accent. Bass sustains through the entire half. Sidechain the bass under kick." },
-    { "step": 8, "type": "unison", "description": "Beat 3 with snare. Triple lock — kick, snare, bass all hit. Maximum impact." }
+    { "step": 0,  "type": "unison", "description": "Beat 1. Accent. Oakland root anchor." },
+    { "step": 3,  "type": "fill",   "description": "Descending chromatic fill. I'm A Player-style E-string descent." },
+    { "step": 5,  "type": "fill",   "description": "Continuing chop run into mid-bar." },
+    { "step": 8,  "type": "unison", "description": "Beat 3. Triple lock. Maximum impact." },
+    { "step": 10, "type": "fill",   "description": "Oakland chop ascending run — A|4→6 equivalent." },
+    { "step": 11, "type": "fill",   "description": "Chop accent — A|7 equivalent at the arc peak." },
+    { "step": 13, "type": "fill",   "description": "Ghost chop returning down." },
+    { "step": 14, "type": "fill",   "description": "Chop return — A|4 equivalent." }
   ],
   "bass2": [
     {
       "label": "Bass",
-      "steps": [4, 0, 0, 0, 0, 0, 1, 0, 3, 0, 0, 0, 0, 0, 0, 0],
-      "timing": ["grid","grid","grid","grid","grid","grid","staccato","grid","grid","grid","grid","grid","grid","grid","grid","grid"]
+      "steps": [4, 0, 0, 2, 0, 0, 1, 0, 3, 0, 2, 2, 0, 1, 0, 2],
+      "timing": ["grid","grid","grid","lay","grid","grid","staccato","grid","grid","grid","lay","grid","grid","staccato","grid","slide"]
     },
     {
       "label": "Gate",
       "steps": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      "timing": ["legato","grid","grid","grid","grid","grid","staccato","grid","legato","grid","grid","grid","grid","grid","grid","grid"]
+      "timing": ["legato","grid","grid","staccato","grid","grid","staccato","grid","legato","grid","staccato","staccato","grid","staccato","grid","staccato"]
     }
   ],
   "locks2": [
-    { "step": 0, "type": "unison", "description": "Beat 1. Same as bar 1." },
-    { "step": 6, "type": "fill",   "description": "One ghost note breaks the silence. Staccato. Root — just a reminder the bass is still there." },
-    { "step": 8, "type": "unison", "description": "Beat 3 triple impact. Same as bar 1." }
+    { "step": 0,  "type": "unison", "description": "Beat 1. Same as bar 1." },
+    { "step": 3,  "type": "fill",   "description": "Chop fill. Bar 2 variation." },
+    { "step": 6,  "type": "fill",   "description": "Ghost fill — single chop note where bar 1 had two." },
+    { "step": 8,  "type": "unison", "description": "Beat 3 triple impact. Same as bar 1." },
+    { "step": 10, "type": "fill",   "description": "Ascending chop run." },
+    { "step": 11, "type": "fill",   "description": "Chop arc peak." },
+    { "step": 13, "type": "fill",   "description": "Ghost chop." },
+    { "step": 15, "type": "anticipate", "description": "Slide into beat 1 — bar 2 turnaround." }
   ],
   "pitch": {
-    "densityHint": 1,
-    "allowChromaticApproach": false,
-    "preferredIntervals": ["root"],
+    "densityHint": 3,
+    "allowChromaticApproach": true,
+    "preferredIntervals": ["root", "b3", "5", "b5"],
     "stepHints": [
-      { "step": 0, "role": "root" },
-      { "step": 8, "role": "root" }
+      { "step": 0,  "role": "root" },
+      { "step": 8,  "role": "root" },
+      { "step": 11, "role": "5" },
+      { "step": 15, "role": "approach" }
     ]
   }
 }

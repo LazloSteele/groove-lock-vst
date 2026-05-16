@@ -30,8 +30,8 @@
   "bass": [
     {
       "label": "Bass",
-      "steps": [4, 0, 1, 0, 0, 0, 3, 2, 4, 0, 0, 1, 0, 2, 1, 0],
-      "timing": ["grid","grid","lay","grid","grid","grid","grid","push","grid","grid","grid","lay","grid","lay","lay","grid"]
+      "steps": [4, 0, 1, 1, 1, 0, 3, 2, 4, 0, 2, 1, 0, 2, 1, 2],
+      "timing": ["grid","grid","lay","lay","slide","grid","grid","push","grid","grid","lay","lay","grid","lay","lay","slide"]
     },
     {
       "label": "Gate",
@@ -41,13 +41,17 @@
   ],
   "locks": [
     { "step": 0,  "type": "unison",    "description": "Beat 1 lock. Both accent, both on grid." },
-    { "step": 2,  "type": "alternate", "description": "Bass ghost mirrors rim ghost. Both laid back. Staccato gate." },
+    { "step": 2,  "type": "alternate", "description": "Bass ghost mirrors rim ghost. Both laid back." },
+    { "step": 3,  "type": "fill",      "description": "Chromatic run step — G Thang-style walk into beat 2." },
+    { "step": 4,  "type": "fill",      "description": "Chromatic run continues into bounce." },
     { "step": 6,  "type": "unison",    "description": "Bounce moment — bass octave jump matches double kick exactly." },
     { "step": 7,  "type": "unison",    "description": "Second bounce hit. Both pushed early for pickup energy." },
-    { "step": 13, "type": "alternate", "description": "Bass fills where kick hits. Both laid back. Legato gate sustains through." }
+    { "step": 10, "type": "fill",      "description": "Mid-bar fill. Regulate-style A-string walk." },
+    { "step": 13, "type": "alternate", "description": "Bass fills where kick hits. Both laid back. Legato gate sustains through." },
+    { "step": 15, "type": "anticipate","description": "Turnaround approach. Slide into beat 1." }
   ],
   "pitch": {
-    "densityHint": 3,
+    "densityHint": 4,
     "allowChromaticApproach": true,
     "preferredIntervals": ["root", "5", "octave"],
     "stepHints": [
@@ -55,7 +59,9 @@
       { "step": 2,  "role": "b7" },
       { "step": 6,  "role": "octave" },
       { "step": 7,  "role": "octave" },
-      { "step": 13, "role": "5" }
+      { "step": 10, "role": "5" },
+      { "step": 13, "role": "5" },
+      { "step": 15, "role": "approach" }
     ]
   }
 }
