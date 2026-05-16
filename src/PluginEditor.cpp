@@ -663,7 +663,8 @@ GrooveLockEditor::GrooveLockEditor(GrooveLockProcessor& p)
 
     // Pitch panel
     addAndMakeVisible(pitchEnabledToggle);
-    pitchEnabledToggle.setToggleState(false, juce::dontSendNotification);
+    pitchEnabledToggle.setToggleState(true, juce::dontSendNotification);
+    proc.pitchEnabled.set(1); // seed processor — dontSendNotification skips onStateChange
     pitchEnabledToggle.setColour(juce::ToggleButton::tickColourId,         juce::Colour(0xffff9f1c));
     pitchEnabledToggle.setColour(juce::ToggleButton::tickDisabledColourId, juce::Colour(0xff555555));
     pitchEnabledToggle.onStateChange = [this] {

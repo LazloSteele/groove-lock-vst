@@ -135,12 +135,13 @@ void LockEngine::processStep(int step, int64 stepSamplePos, double sampleRate,
 
     // Density gate: suppress fill/alternate notes at low density so the Dense
     // axis can pull a busy seed pattern back to a skeleton.
-    if (params.phraseExpansionDensity < 0.5f && lp)
+    if (params.phraseExpansionDensity < 0.4f && lp)
     {
         const bool suppressible = (lp->type == LockType::FILL || lp->type == LockType::ALTERNATE);
         if (suppressible)
         {
-            const float suppression = 1.f - params.phraseExpansionDensity * 2.f;
+            // suppression: 0.4→0.0, 0.2→0.5, 0.0→1.0 — gate is silent at 0.4
+            const float suppression = 1.f - params.phraseExpansionDensity / 0.4f;
             if (velTier == 1 && suppression > 0.05f) return; // ghost fills first
             if (velTier == 2 && suppression > 0.55f) return; // medium fills below ¼
         }
